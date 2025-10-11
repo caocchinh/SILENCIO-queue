@@ -74,3 +74,14 @@ export const verification = pgTable("verification", {
     () => /* @__PURE__ */ new Date()
   ),
 });
+
+export const customer = pgTable("customer", {
+  studentId: text("student_id").notNull().primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  homeroom: text("homeroom").notNull(),
+  ticketType: text("ticket_type").notNull(),
+  createdAt: timestamp("created_at").$defaultFn(
+    () => /* @__PURE__ */ new Date()
+  ),
+});
