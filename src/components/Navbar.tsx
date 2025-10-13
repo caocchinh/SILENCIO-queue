@@ -44,7 +44,7 @@ const Navbar = ({
         </div>
         <div>
           <CardTitle className="text-sm">
-            {student!.name} - {student?.homeroom}
+            {student!.name} - {student?.homeroom} - Vé {student?.ticketType}
           </CardTitle>
           <CardDescription className="text-[10px]">
             {session.user.email}

@@ -14,6 +14,7 @@ import { customer } from "@/drizzle/schema";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
+import { retryAuth } from "@/dal/retry";
 
 type HomeProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -45,9 +46,15 @@ export default async function HomePage({ searchParams }: HomeProps) {
       UNSUPPORT_TICKET_TYPE.includes(currentCustomer.ticketType)
     ) {
       try {
-        await auth.api.signOut({
-          headers: await headers(),
-        });
+        retryAuth(async () => {
+          const response = await auth.api.signOut({
+            headers: await headers(),
+          });
+          if (!response.success) {
+            throw new Error("Failed to sign out user");
+          }
+          return response;
+        }, "Sign out");
       } catch (signOutError) {
         console.error("Failed to sign out user:", signOutError);
         // Continue with redirect even if sign out fails
@@ -94,7 +101,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
   return (
     <div className="h-[calc(100vh-40px)] relative flex items-center justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover">
       <div className="bg-[url('/assets/bg-2.png')] bg-no-repeat bg-cover bg-top max-w-[90%] relative">
-        <div className=" absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-[40%] flex items-center justify-center flex-col w-[90%]">
+        <div className=" absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-[40%] flex items-center justify-center flex-col min-w-[330px] w-[90%]">
           <h1 className="text-[#FFD700] -mt-10 mb-2 login_title text-[42px] font-bold font-italianno text-center  ">
             Cổng đăng nhập lấy số thứ tự
           </h1>

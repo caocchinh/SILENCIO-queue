@@ -12,6 +12,8 @@ import { customer } from "@/drizzle/schema";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
+import Navbar from "@/components/Navbar";
+import { retryAuth } from "@/dal/retry";
 
 export default async function DashboardPage() {
   let session;
@@ -27,43 +29,7 @@ export default async function DashboardPage() {
     );
   }
 
-  if (session) {
-    const currentCustomer = await db.query.customer.findFirst({
-      where: eq(customer.email, session.user.email),
-    });
-
-    // Check if user should be signed out (no customer or unsupported ticket type)
-
-    if (
-      !currentCustomer ||
-      UNSUPPORT_TICKET_TYPE.includes(currentCustomer.ticketType)
-    ) {
-      try {
-        await auth.api.signOut({
-          headers: await headers(),
-        });
-      } catch (signOutError) {
-        console.error("Failed to sign out user:", signOutError);
-        // Continue with redirect even if sign out fails
-      }
-      let errorCode;
-      if (
-        currentCustomer &&
-        UNSUPPORT_TICKET_TYPE.includes(currentCustomer.ticketType)
-      ) {
-        errorCode = ERROR_CODES.TICKET_TYPE_NOT_SUPPORTED;
-      } else {
-        errorCode = ERROR_CODES.DOES_NOT_HAVE_TICKET;
-      }
-      return (
-        <RedirectMessage
-          message={ERROR_MESSAGES[errorCode]}
-          subMessage="Đang chuyển hướng đến trang đăng nhập..."
-          redirectTo={`/?error=${errorCode}`}
-        />
-      );
-    }
-  } else {
+  if (!session) {
     return (
       <RedirectMessage
         message="Bạn chưa đăng nhập!"
@@ -73,5 +39,53 @@ export default async function DashboardPage() {
     );
   }
 
-  return <div>DashboardPage</div>;
+  const currentCustomer = await db.query.customer.findFirst({
+    where: eq(customer.email, session.user.email),
+  });
+
+  // Check if user should be signed out (no customer or unsupported ticket type)
+
+  if (
+    !currentCustomer ||
+    UNSUPPORT_TICKET_TYPE.includes(currentCustomer.ticketType)
+  ) {
+    try {
+      retryAuth(async () => {
+        const response = await auth.api.signOut({
+          headers: await headers(),
+        });
+        if (!response.success) {
+          throw new Error("Failed to sign out user");
+        }
+      }, "Sign out");
+    } catch (signOutError) {
+      console.error("Failed to sign out user:", signOutError);
+    }
+    // Continue with redirect even if sign out fails
+    let errorCode;
+    if (
+      currentCustomer &&
+      UNSUPPORT_TICKET_TYPE.includes(currentCustomer.ticketType)
+    ) {
+      errorCode = ERROR_CODES.TICKET_TYPE_NOT_SUPPORTED;
+    } else {
+      errorCode = ERROR_CODES.DOES_NOT_HAVE_TICKET;
+    }
+    return (
+      <RedirectMessage
+        message={ERROR_MESSAGES[errorCode]}
+        subMessage="Đang chuyển hướng đến trang đăng nhập..."
+        redirectTo={`/?error=${errorCode}`}
+      />
+    );
+  }
+
+  return (
+    <div className="h-[calc(100vh-40px)] relative flex items-start justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover p-4 flex-col">
+      <Navbar session={session} student={currentCustomer} />
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+      </div>
+    </div>
+  );
 }
