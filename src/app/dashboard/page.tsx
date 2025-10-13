@@ -1,5 +1,3 @@
-import { GoogleSignInButton } from "@/components/GoogleSignInButton";
-import Image from "next/image";
 import { ErrorCard } from "@/components/ErrorCard";
 import { verifySession } from "@/dal/verifySession";
 import {
@@ -15,11 +13,7 @@ import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
 
-type HomeProps = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
-
-export default async function HomePage({ searchParams }: HomeProps) {
+export default async function DashboardPage() {
   let session;
 
   try {
@@ -69,48 +63,15 @@ export default async function HomePage({ searchParams }: HomeProps) {
         />
       );
     }
-
-    // Valid customer with supported ticket type - redirect to dashboard
+  } else {
     return (
       <RedirectMessage
-        message="Đang chuyển hướng đến trang lấy số thứ tự"
-        subMessage="Vui lòng chờ trong giây lát.."
-        redirectTo="/dashboard"
+        message="Bạn chưa đăng nhập!"
+        subMessage="Đang chuyển hướng đến trang đăng nhập..."
+        redirectTo={`/?error=${ERROR_CODES.NOT_LOGGED_IN}`}
       />
     );
   }
 
-  let errorMessage = null;
-  try {
-    const resolvedSearchParams = await searchParams;
-    errorMessage = resolvedSearchParams.error
-      ? getErrorMessage(resolvedSearchParams.error as string)
-      : null;
-  } catch (searchParamsError) {
-    console.error("Failed to resolve search params:", searchParamsError);
-    errorMessage = getErrorMessage(ERROR_CODES.UNKNOWN_ERROR);
-  }
-
-  return (
-    <div className="h-[calc(100vh-40px)] relative flex items-center justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover">
-      <div className="bg-[url('/assets/bg-2.png')] bg-no-repeat bg-cover bg-top max-w-[90%] relative">
-        <div className=" absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-[40%] flex items-center justify-center flex-col w-[90%]">
-          <h1 className="text-[#FFD700] -mt-10 mb-2 login_title text-[42px] font-bold font-italianno text-center  ">
-            Cổng đăng nhập lấy số thứ tự
-          </h1>
-          <GoogleSignInButton />
-          {errorMessage && (
-            <p className="text-red-500 mt-3 text-center">{errorMessage}</p>
-          )}
-        </div>
-        <Image
-          src="/assets/frame.png"
-          alt="Frame"
-          width={540}
-          height={675}
-          className="max-h-[90vh] h-auto w-auto"
-        />
-      </div>
-    </div>
-  );
+  return <div>DashboardPage</div>;
 }

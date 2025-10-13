@@ -10,6 +10,8 @@ export const ERROR_CODES = {
   DATABASE_ERROR: "database-error",
   INTERNAL_SERVER_ERROR: "internal-server-error",
   UNKNOWN_ERROR: "unknown-error",
+  DOES_NOT_HAVE_TICKET: "does-not-have-ticket",
+  TICKET_TYPE_NOT_SUPPORTED: "ticket-type-not-supported",
 } as const;
 
 // User-friendly error messages
@@ -23,6 +25,9 @@ export const ERROR_MESSAGES = {
     "Lỗi máy chủ nội bộ. Vui lòng thử lại sau.",
   [ERROR_CODES.UNKNOWN_ERROR]:
     "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+  [ERROR_CODES.DOES_NOT_HAVE_TICKET]: "Bạn chưa mua vé. Vui lòng mua vé trước.",
+  [ERROR_CODES.TICKET_TYPE_NOT_SUPPORTED]:
+    "Loại vé bạn mua không được chơi nhà ma.",
 } as const;
 
 // HTTP status codes for API responses

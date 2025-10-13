@@ -30,7 +30,7 @@ export default function RootLayout({
         <link href="/assets/favicon.ico" rel="icon" />
       </head>
       <body
-        className={`${pangolin.variable} ${italianno.variable} ${carnevalee.variable} antialiased`}
+        className={`${pangolin.variable} ${italianno.variable} antialiased`}
       >
         {children}
         <Toaster />{" "}
