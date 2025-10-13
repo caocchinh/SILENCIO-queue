@@ -46,14 +46,13 @@ export default async function HomePage({ searchParams }: HomeProps) {
       UNSUPPORT_TICKET_TYPE.includes(currentCustomer.ticketType)
     ) {
       try {
-        retryAuth(async () => {
+        await retryAuth(async () => {
           const response = await auth.api.signOut({
             headers: await headers(),
           });
           if (!response.success) {
             throw new Error("Failed to sign out user");
           }
-          return response;
         }, "Sign out");
       } catch (signOutError) {
         console.error("Failed to sign out user:", signOutError);

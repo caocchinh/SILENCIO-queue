@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     UNSUPPORT_TICKET_TYPE.includes(currentCustomer.ticketType)
   ) {
     try {
-      retryAuth(async () => {
+      await retryAuth(async () => {
         const response = await auth.api.signOut({
           headers: await headers(),
         });
