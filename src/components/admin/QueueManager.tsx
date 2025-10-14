@@ -341,7 +341,7 @@ export function QueueManager({ houses }: Props) {
     });
   };
 
-  const handleDelete = (queueId: string) => {
+  const handleDelete = (hauntedHouseName: string, queueNumber: number) => {
     if (
       !confirm(
         "Bạn có chắc chắn muốn xóa lượt này? Tất cả các đặt chỗ liên quan sẽ bị xóa."
@@ -350,7 +350,7 @@ export function QueueManager({ houses }: Props) {
       return;
     }
 
-    deleteQueueMutation.mutate({ queueId });
+    deleteQueueMutation.mutate({ hauntedHouseName, queueNumber });
   };
 
   return (
@@ -861,37 +861,42 @@ export function QueueManager({ houses }: Props) {
         {houses.map((house) => (
           <Card key={house.name}>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle>{house.name}</CardTitle>
-                  <CardDescription>
-                    {house.queues && house.queues.length > 0
-                      ? `${house.queues.length} lượt đang hoạt động`
-                      : "Chưa có lượt nào"}
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(house.name)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              <CardTitle>{house.name}</CardTitle>
+              <CardDescription>
+                {house.queues && house.queues.length > 0
+                  ? `${house.queues.length} lượt đang hoạt động`
+                  : "Chưa có lượt nào"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground">
                 {house.queues && house.queues.length > 0 ? (
                   <div>
                     {house.queues.length} lượt
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-2">
                       {house.queues.map((q) => (
-                        <div key={q.id} className="flex justify-between">
-                          <span>Lượt {q.queueNumber}:</span>
-                          <span>
-                            {q.stats.occupiedSpots}/{q.stats.totalSpots} đã hết
-                            chỗ
-                          </span>
+                        <div
+                          key={`${q.hauntedHouseName}-${q.queueNumber}`}
+                          className="flex justify-between items-center p-2 border rounded-lg bg-gray-50"
+                        >
+                          <div className="flex-1">
+                            <span className="font-medium">
+                              Lượt {q.queueNumber}
+                            </span>
+                            <span className="ml-4 text-muted-foreground">
+                              {q.stats.occupiedSpots}/{q.stats.totalSpots} đã
+                              đặt
+                            </span>
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() =>
+                              handleDelete(q.hauntedHouseName, q.queueNumber)
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>

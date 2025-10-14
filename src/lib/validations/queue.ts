@@ -68,7 +68,8 @@ export const updateQueueSchema = z.object({
 
 // Customer queue operations
 export const joinQueueSchema = z.object({
-  queueId: z.string().min(1, "Queue ID is required"),
+  hauntedHouseName: z.string().min(1, "Haunted house name is required"),
+  queueNumber: z.number().int().min(1, "Queue number is required"),
   customerData: z.object({
     studentId: z.string().min(1, "Student ID is required"),
     name: z.string().min(1, "Name is required"),
@@ -80,7 +81,8 @@ export const joinQueueSchema = z.object({
 
 // Reservation schemas
 export const createReservationSchema = z.object({
-  queueId: z.string().min(1, "Queue ID is required"),
+  hauntedHouseName: z.string().min(1, "Haunted house name is required"),
+  queueNumber: z.number().int().min(1, "Queue number is required"),
   maxSpots: z
     .number()
     .int()

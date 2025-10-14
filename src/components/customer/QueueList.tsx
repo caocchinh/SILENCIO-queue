@@ -66,7 +66,7 @@ export function QueueList({ houses, customerData }: Props) {
               <div className="grid gap-3">
                 {house.queues.map((queue: QueueWithStats) => (
                   <div
-                    key={queue.id}
+                    key={`${queue.hauntedHouseName}-${queue.queueNumber}`}
                     className="flex items-center justify-between p-4 border rounded-lg bg-gray-50"
                   >
                     <div className="flex-1">
@@ -93,7 +93,12 @@ export function QueueList({ houses, customerData }: Props) {
                       </div>
                     </div>
                     <Button
-                      onClick={() => handleJoinQueue(queue.id)}
+                      onClick={() =>
+                        handleJoinQueue(
+                          queue.hauntedHouseName,
+                          queue.queueNumber
+                        )
+                      }
                       disabled={
                         joinQueueMutation.isPending ||
                         queue.stats.availableSpots === 0

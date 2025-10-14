@@ -97,7 +97,6 @@ export const hauntedHouse = pgTable("haunted_house", {
 export const queue = pgTable(
   "queue",
   {
-    id: text("id").primaryKey(),
     hauntedHouseName: text("haunted_house_name")
       .notNull()
       .references(() => hauntedHouse.name, { onDelete: "cascade" }),
@@ -112,7 +111,12 @@ export const queue = pgTable(
       .$defaultFn(() => new Date())
       .notNull(),
   },
-  (table) => [index("idx_queue_haunted_house").on(table.hauntedHouseName)]
+  (table) => ({
+    pk: {
+      name: "queue_pkey",
+      columns: [table.hauntedHouseName, table.queueNumber],
+    },
+  })
 );
 
 // Queue spot table - individual spots in a queue
@@ -120,9 +124,8 @@ export const queueSpot = pgTable(
   "queue_spot",
   {
     id: text("id").primaryKey(),
-    queueId: text("queue_id")
-      .notNull()
-      .references(() => queue.id, { onDelete: "cascade" }),
+    queueHauntedHouseName: text("queue_haunted_house_name").notNull(),
+    queueNumber: integer("queue_number").notNull(),
     spotNumber: integer("spot_number").notNull(), // Position in queue
     customerId: text("customer_id").references(() => customer.studentId, {
       onDelete: "set null",
@@ -139,11 +142,21 @@ export const queueSpot = pgTable(
       .$defaultFn(() => new Date())
       .notNull(),
   },
-  (table) => [
-    index("idx_queue_spot_queue").on(table.queueId),
-    index("idx_queue_spot_customer").on(table.customerId),
-    index("idx_queue_spot_reservation").on(table.reservationId),
-  ]
+  (table) => ({
+    queueFk: {
+      name: "queue_spot_queue_fk",
+      columns: [table.queueHauntedHouseName, table.queueNumber],
+      foreignColumns: [queue.hauntedHouseName, queue.queueNumber],
+    },
+    idxQueueSpotQueue: index("idx_queue_spot_queue").on(
+      table.queueHauntedHouseName,
+      table.queueNumber
+    ),
+    idxQueueSpotCustomer: index("idx_queue_spot_customer").on(table.customerId),
+    idxQueueSpotReservation: index("idx_queue_spot_reservation").on(
+      table.reservationId
+    ),
+  })
 );
 
 // Reservation table - for group reservations with codes
@@ -151,9 +164,8 @@ export const reservation = pgTable(
   "reservation",
   {
     id: text("id").primaryKey(),
-    queueId: text("queue_id")
-      .notNull()
-      .references(() => queue.id, { onDelete: "cascade" }),
+    queueHauntedHouseName: text("queue_haunted_house_name").notNull(),
+    queueNumber: integer("queue_number").notNull(),
     representativeCustomerId: text("representative_customer_id")
       .notNull()
       .references(() => customer.studentId, { onDelete: "cascade" }),
@@ -169,11 +181,21 @@ export const reservation = pgTable(
       .$defaultFn(() => new Date())
       .notNull(),
   },
-  (table) => [
-    index("idx_reservation_queue").on(table.queueId),
-    index("idx_reservation_representative").on(table.representativeCustomerId),
-    index("idx_reservation_code").on(table.code),
-  ]
+  (table) => ({
+    queueFk: {
+      name: "reservation_queue_fk",
+      columns: [table.queueHauntedHouseName, table.queueNumber],
+      foreignColumns: [queue.hauntedHouseName, queue.queueNumber],
+    },
+    idxReservationQueue: index("idx_reservation_queue").on(
+      table.queueHauntedHouseName,
+      table.queueNumber
+    ),
+    idxReservationRepresentative: index("idx_reservation_representative").on(
+      table.representativeCustomerId
+    ),
+    idxReservationCode: index("idx_reservation_code").on(table.code),
+  })
 );
 
 export const customer = pgTable("customer", {
@@ -204,8 +226,8 @@ export const queueRelations = relations(queue, ({ one, many }) => ({
 
 export const queueSpotRelations = relations(queueSpot, ({ one }) => ({
   queue: one(queue, {
-    fields: [queueSpot.queueId],
-    references: [queue.id],
+    fields: [queueSpot.queueHauntedHouseName, queueSpot.queueNumber],
+    references: [queue.hauntedHouseName, queue.queueNumber],
   }),
   customer: one(customer, {
     fields: [queueSpot.customerId],
@@ -219,8 +241,8 @@ export const queueSpotRelations = relations(queueSpot, ({ one }) => ({
 
 export const reservationRelations = relations(reservation, ({ one, many }) => ({
   queue: one(queue, {
-    fields: [reservation.queueId],
-    references: [queue.id],
+    fields: [reservation.queueHauntedHouseName, reservation.queueNumber],
+    references: [queue.hauntedHouseName, queue.queueNumber],
   }),
   representative: one(customer, {
     fields: [reservation.representativeCustomerId],

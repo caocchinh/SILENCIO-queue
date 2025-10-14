@@ -69,7 +69,8 @@ export async function joinQueue(params: unknown): Promise<ActionResponse> {
       );
     }
 
-    const { queueId, customerData } = validationResult.data;
+    const { hauntedHouseName, queueNumber, customerData } =
+      validationResult.data;
 
     // Get or create customer first
     const customer = await getOrCreateCustomer(customerData);
@@ -87,7 +88,7 @@ export async function joinQueue(params: unknown): Promise<ActionResponse> {
     }
 
     // Find first available spot
-    const spot = await findFirstAvailableSpot(queueId);
+    const spot = await findFirstAvailableSpot(hauntedHouseName, queueNumber);
     if (!spot) {
       return createActionError("NO_AVAILABLE_SPOTS");
     }
@@ -265,7 +266,8 @@ export async function createReservation(
       );
     }
 
-    const { queueId, maxSpots, customerData } = validationResult.data;
+    const { hauntedHouseName, queueNumber, maxSpots, customerData } =
+      validationResult.data;
 
     // Get or create customer
     const customer = await getOrCreateCustomer(customerData);
@@ -288,7 +290,10 @@ export async function createReservation(
     }
 
     // Check if queue has enough available spots
-    const availableCount = await getAvailableSpotCount(queueId);
+    const availableCount = await getAvailableSpotCount(
+      hauntedHouseName,
+      queueNumber
+    );
     if (availableCount < maxSpots) {
       return createActionError(
         "NO_AVAILABLE_SPOTS",
@@ -320,7 +325,8 @@ export async function createReservation(
       () =>
         db.insert(reservation).values({
           id: reservationId,
-          queueId,
+          queueHauntedHouseName: hauntedHouseName,
+          queueNumber,
           representativeCustomerId: customer.studentId,
           code,
           maxSpots,
@@ -336,7 +342,8 @@ export async function createReservation(
       () =>
         db.query.queueSpot.findMany({
           where: and(
-            eq(queueSpot.queueId, queueId),
+            eq(queueSpot.queueHauntedHouseName, hauntedHouseName),
+            eq(queueSpot.queueNumber, queueNumber),
             eq(queueSpot.status, "available")
           ),
           orderBy: asc(queueSpot.spotNumber),

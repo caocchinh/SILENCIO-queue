@@ -1,74 +1,44 @@
-"use client";
+import { ErrorCard } from "@/components/ErrorCard";
+import { verifySession } from "@/dal/verifySession";
+import { ERROR_CODES, getErrorMessage } from "@/constants/errors";
+import RedirectMessage from "@/components/RedirectMessage";
 
-import { useQuery } from "@tanstack/react-query";
-import { HauntedHouseManager } from "@/components/admin/HauntedHouseManager";
-import { QueueManager } from "@/components/admin/QueueManager";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { RefreshCw } from "lucide-react";
-import { HauntedHouseWithQueues } from "@/lib/types/queue";
-import { cn } from "@/lib/utils";
+import AdminIndex from "./Index";
 
-async function fetchHauntedHouses(): Promise<HauntedHouseWithQueues[]> {
-  const response = await fetch("/api/haunted-houses");
-  const result = await response.json();
+export default async function AdminPage() {
+  let session;
 
-  if (!result.success) {
-    throw new Error(result.error || "Failed to fetch haunted houses");
+  try {
+    session = await verifySession();
+  } catch (sessionError) {
+    console.error("Failed to verify session:", sessionError);
+    return (
+      <ErrorCard
+        message={getErrorMessage(ERROR_CODES.SESSION_VERIFICATION_FAILED)}
+      />
+    );
   }
 
-  return result.data || [];
-}
+  if (!session) {
+    return (
+      <RedirectMessage
+        message="Bạn chưa đăng nhập!"
+        subMessage="Đang chuyển hướng đến trang đăng nhập..."
+        redirectTo={`/?error=${ERROR_CODES.NOT_LOGGED_IN}`}
+      />
+    );
+  }
 
-export default function AdminPage() {
-  const {
-    data: houses = [],
-    isLoading: loading,
-    refetch,
-    isError,
-  } = useQuery({
-    queryKey: ["haunted-houses"],
-    queryFn: fetchHauntedHouses,
-  });
+  if (session.user.role !== "admin") {
+    return (
+      <RedirectMessage
+        message="Bạn không có quyền truy cập trang này!"
+        subMessage="Đang chuyển hướng đến trang đăng nhập..."
+        redirectTo={`/?error=${ERROR_CODES.UNAUTHORIZED}`}
+      />
+    );
+  }
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-semibold">Bảng điều khiển</h1>
-          <Button onClick={() => refetch()} disabled={loading}>
-            <RefreshCw
-              className={cn("mr-2 h-4 w-4", loading ? "animate-spin" : "")}
-            />
-            Tải lại
-          </Button>
-        </div>
-
-        {isError ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">
-              Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.
-            </p>
-          </div>
-        ) : loading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Đang tải dữ liệu...</p>
-          </div>
-        ) : (
-          <Tabs defaultValue="houses" className="w-full">
-            <TabsList>
-              <TabsTrigger value="houses">Nhà ma</TabsTrigger>
-              <TabsTrigger value="queues">Hàng đợi lấy số</TabsTrigger>
-            </TabsList>
-            <TabsContent value="houses">
-              <HauntedHouseManager houses={houses} />
-            </TabsContent>
-            <TabsContent value="queues">
-              <QueueManager houses={houses} />
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-    </div>
-  );
+  // Redirect customers to queue interface
+  return <AdminIndex />;
 }

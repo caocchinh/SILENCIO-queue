@@ -149,7 +149,10 @@ export function HauntedHouseManager({ houses }: Props) {
                     {house.queues.length} lượt
                     <div className="mt-2 space-y-1">
                       {house.queues.map((q) => (
-                        <div key={q.id} className="flex justify-between">
+                        <div
+                          key={q.hauntedHouseName + q.queueNumber}
+                          className="flex justify-between"
+                        >
                           <span>Lượt {q.queueNumber}:</span>
                           <span>
                             {q.stats.occupiedSpots}/{q.stats.totalSpots} đã hết
