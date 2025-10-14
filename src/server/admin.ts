@@ -389,8 +389,10 @@ export async function createBatchQueues(
 // Update queue
 export async function updateQueue(params: {
   id: string;
-  newQueueNumber?: number;
+  queueNumber?: number;
   maxCustomers?: number;
+  queueStartTime?: Date;
+  queueEndTime?: Date;
 }): Promise<ActionResponse> {
   try {
     const authCheck = await verifyAdminAccess();
@@ -398,7 +400,8 @@ export async function updateQueue(params: {
       return authCheck;
     }
 
-    const { id, newQueueNumber, maxCustomers } = params;
+    const { id, queueNumber, maxCustomers, queueStartTime, queueEndTime } =
+      params;
 
     // Check if queue exists
     const existing = await retryDatabase(
@@ -419,8 +422,10 @@ export async function updateQueue(params: {
         db
           .update(queue)
           .set({
-            queueNumber: newQueueNumber ?? existing.queueNumber,
+            queueNumber: queueNumber ?? existing.queueNumber,
             maxCustomers: maxCustomers ?? existing.maxCustomers,
+            queueStartTime: queueStartTime ?? existing.queueStartTime,
+            queueEndTime: queueEndTime ?? existing.queueEndTime,
             updatedAt: new Date(),
           })
           .where(eq(queue.id, id))

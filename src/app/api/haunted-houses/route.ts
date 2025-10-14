@@ -21,8 +21,17 @@ export async function GET() {
           with: {
             queues: {
               with: {
-                spots: true,
+                spots: {
+                  with: {
+                    customer: true,
+                  },
+                },
+                reservations: {
+                  where: (reservation, { eq }) =>
+                    eq(reservation.status, "active"),
+                },
               },
+              orderBy: (queue, { asc }) => [asc(queue.queueNumber)],
             },
           },
           orderBy: (hauntedHouse, { asc }) => [asc(hauntedHouse.name)],
@@ -42,6 +51,7 @@ export async function GET() {
           reservedSpots: queue.spots.filter((s) => s.status === "reserved")
             .length,
           totalSpots: queue.spots.length,
+          activeReservations: queue.reservations.length,
         },
       })),
     }));

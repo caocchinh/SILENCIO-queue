@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Check, ChevronsUpDown, Loader2, Plus, Trash2 } from "lucide-react";
-import { HauntedHouseWithQueues } from "@/lib/types/queue";
+import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { createQueue, createBatchQueues, deleteQueue } from "@/server/admin";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  houses: HauntedHouseWithQueues[];
+  houses: HauntedHouseWithDetailedQueues[];
 }
 
 export function QueueManager({ houses }: Props) {
@@ -874,29 +874,31 @@ export function QueueManager({ houses }: Props) {
                   <div>
                     {house.queues.length} lượt
                     <div className="mt-2 space-y-2">
-                      {house.queues.map((q) => (
-                        <div
-                          key={q.id}
-                          className="flex justify-between items-center p-2 border rounded-lg bg-gray-50"
-                        >
-                          <div className="flex-1">
-                            <span className="font-medium">
-                              Lượt {q.queueNumber}
-                            </span>
-                            <span className="ml-4 text-muted-foreground">
-                              {q.stats.occupiedSpots}/{q.stats.totalSpots} đã
-                              đặt
-                            </span>
-                          </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(q.id)}
+                      {house.queues
+                        .toSorted((a, b) => a.queueNumber - b.queueNumber)
+                        .map((q) => (
+                          <div
+                            key={q.id}
+                            className="flex justify-between items-center p-2 border rounded-lg bg-gray-50"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
+                            <div className="flex-1">
+                              <span className="font-medium">
+                                Lượt {q.queueNumber}
+                              </span>
+                              <span className="ml-4 text-muted-foreground">
+                                {q.stats.occupiedSpots}/{q.stats.totalSpots} đã
+                                đặt
+                              </span>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(q.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 ) : (

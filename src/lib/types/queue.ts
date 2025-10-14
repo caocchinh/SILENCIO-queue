@@ -32,6 +32,20 @@ export type QueueWithStats = Queue & {
   hauntedHouse?: HauntedHouse;
 };
 
+export type QueueWithDetails = Queue & {
+  stats: {
+    availableSpots: number;
+    occupiedSpots: number;
+    reservedSpots: number;
+    totalSpots: number;
+    activeReservations?: number;
+  };
+  hauntedHouse?: HauntedHouse;
+  spots?: (QueueSpot & {
+    customer?: Customer;
+  })[];
+};
+
 export type QueueSpotWithDetails = QueueSpot & {
   queue?: Queue & {
     hauntedHouse?: HauntedHouse;
@@ -50,6 +64,10 @@ export type ReservationWithDetails = Reservation & {
 
 export type HauntedHouseWithQueues = HauntedHouse & {
   queues?: QueueWithStats[];
+};
+
+export type HauntedHouseWithDetailedQueues = HauntedHouse & {
+  queues?: QueueWithDetails[];
 };
 
 // Import standardized response types

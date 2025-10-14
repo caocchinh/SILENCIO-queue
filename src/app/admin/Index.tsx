@@ -6,10 +6,10 @@ import { QueueManager } from "@/components/admin/QueueManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
-import { HauntedHouseWithQueues } from "@/lib/types/queue";
+import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { cn } from "@/lib/utils";
 
-async function fetchHauntedHouses(): Promise<HauntedHouseWithQueues[]> {
+async function fetchHauntedHouses(): Promise<HauntedHouseWithDetailedQueues[]> {
   const response = await fetch("/api/haunted-houses");
   const result = await response.json();
 

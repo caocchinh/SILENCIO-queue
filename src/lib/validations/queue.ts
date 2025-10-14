@@ -60,11 +60,26 @@ export const createBatchQueuesSchema = z.object({
   firstQueueStartTime: z.date(),
 });
 
-export const updateQueueSchema = z.object({
-  queueId: z.string().min(1),
-  queueNumber: z.number().int().min(1).optional(),
-  maxCustomers: z.number().int().min(1).max(100).optional(),
-});
+export const updateQueueSchema = z
+  .object({
+    queueId: z.string().min(1),
+    queueNumber: z.number().int().min(1).optional(),
+    maxCustomers: z.number().int().min(1).max(100).optional(),
+    queueStartTime: z.date().optional(),
+    queueEndTime: z.date().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.queueStartTime && data.queueEndTime) {
+        return data.queueEndTime > data.queueStartTime;
+      }
+      return true;
+    },
+    {
+      message: "End time must be after start time",
+      path: ["queueEndTime"],
+    }
+  );
 
 // Customer queue operations
 export const joinQueueSchema = z.object({
