@@ -3,13 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { HauntedHouseWithQueues } from "@/lib/types/queue";
 import { createHauntedHouse, deleteHauntedHouse } from "@/server/admin";
@@ -25,23 +19,7 @@ export function HauntedHouseManager({ houses }: Props) {
   const queryClient = useQueryClient();
   const [newHouse, setNewHouse] = useState({
     name: "",
-    duration: 0,
-    breakTimePerQueue: 0,
   });
-  const [validationErrors, setValidationErrors] = useState({
-    duration: "",
-    breakTimePerQueue: "",
-  });
-
-  const validateTimeValue = (value: number, fieldName: string): string => {
-    if (value <= 0) {
-      return `${fieldName} phải lớn hơn 0`;
-    }
-    if (value > 120) {
-      return `${fieldName} không được vượt quá 120 phút`;
-    }
-    return "";
-  };
 
   const createHouseMutation = useMutation({
     mutationFn: createHauntedHouse,
@@ -53,8 +31,7 @@ export function HauntedHouseManager({ houses }: Props) {
             "Nhà ma đã được tạo thành công. Vui lòng thêm lượt cho nhà ma này.",
         });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
-        setNewHouse({ name: "", duration: 0, breakTimePerQueue: 0 });
-        setValidationErrors({ duration: "", breakTimePerQueue: "" });
+        setNewHouse({ name: "" });
       } else {
         throw new Error(
           data.message || "Không thể tạo nhà ma. Đã có lỗi xảy ra."
@@ -93,13 +70,7 @@ export function HauntedHouseManager({ houses }: Props) {
   });
 
   const isFormValid = () => {
-    return (
-      newHouse.name &&
-      newHouse.duration > 0 &&
-      newHouse.breakTimePerQueue > 0 &&
-      !validationErrors.duration &&
-      !validationErrors.breakTimePerQueue
-    );
+    return newHouse.name.trim().length > 0;
   };
 
   const handleCreate = () => {
@@ -138,73 +109,6 @@ export function HauntedHouseManager({ houses }: Props) {
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="house-duration">Độ dài mỗi lượt</Label>
-              <Input
-                id="house-duration"
-                type="number"
-                placeholder="Thời gian (phút)"
-                value={newHouse.duration || ""}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  const numValue = isNaN(value) ? 0 : value;
-                  setNewHouse({
-                    ...newHouse,
-                    duration: numValue,
-                  });
-                  setValidationErrors((prev) => ({
-                    ...prev,
-                    duration: validateTimeValue(numValue, "Độ dài mỗi lượt"),
-                  }));
-                }}
-                className={`mt-1 ${
-                  validationErrors.duration ? "border-red-500" : ""
-                }`}
-                min="1"
-                max="120"
-              />
-              {validationErrors.duration && (
-                <p className="text-sm text-red-500 mt-1">
-                  {validationErrors.duration}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="house-break-time">
-                Thời gian nghỉ giữa mỗi lượt
-              </Label>
-              <Input
-                id="house-break-time"
-                type="number"
-                placeholder="Thời gian nghỉ"
-                value={newHouse.breakTimePerQueue || ""}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  const numValue = isNaN(value) ? 0 : value;
-                  setNewHouse({
-                    ...newHouse,
-                    breakTimePerQueue: numValue,
-                  });
-                  setValidationErrors((prev) => ({
-                    ...prev,
-                    breakTimePerQueue: validateTimeValue(
-                      numValue,
-                      "Thời gian nghỉ giữa mỗi lượt"
-                    ),
-                  }));
-                }}
-                className={`mt-1 ${
-                  validationErrors.breakTimePerQueue ? "border-red-500" : ""
-                }`}
-                min="1"
-                max="120"
-              />
-              {validationErrors.breakTimePerQueue && (
-                <p className="text-sm text-red-500 mt-1">
-                  {validationErrors.breakTimePerQueue}
-                </p>
-              )}
-            </div>
             <Button
               onClick={handleCreate}
               disabled={createHouseMutation.isPending || !isFormValid()}
@@ -228,9 +132,6 @@ export function HauntedHouseManager({ houses }: Props) {
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle>{house.name}</CardTitle>
-                  <CardDescription>
-                    Độ dài mỗi lượt: {house.duration} phút
-                  </CardDescription>
                 </div>
                 <Button
                   variant="destructive"

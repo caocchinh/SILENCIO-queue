@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Clock } from "lucide-react";
+import { Users } from "lucide-react";
 import { HauntedHouseWithQueues, QueueWithStats } from "@/lib/types/queue";
 import { joinQueue } from "@/server/customer";
 
@@ -60,10 +60,6 @@ export function QueueList({ houses, customerData }: Props) {
         <Card key={house.name} className="bg-white/90 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-2xl">{house.name}</CardTitle>
-            <CardDescription className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Duration: {house.duration} minutes
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {house.queues && house.queues.length > 0 ? (

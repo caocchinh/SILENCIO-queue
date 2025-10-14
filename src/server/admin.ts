@@ -6,6 +6,7 @@ import {
   createHauntedHouseSchema,
   updateHauntedHouseSchema,
   createQueueSchema,
+  createBatchQueuesSchema,
   updateQueueSchema,
 } from "@/lib/validations/queue";
 import { auth } from "@/lib/auth/auth";
@@ -64,7 +65,7 @@ export async function createHauntedHouse(
       );
     }
 
-    const { name, duration, breakTimePerQueue } = validationResult.data;
+    const { name } = validationResult.data;
 
     // Check if haunted house already exists
     const existing = await retryDatabase(
@@ -88,8 +89,6 @@ export async function createHauntedHouse(
           .insert(hauntedHouse)
           .values({
             name,
-            duration,
-            breakTimePerQueue,
           })
           .returning(),
       "create haunted house"
@@ -125,7 +124,7 @@ export async function updateHauntedHouse(params: {
       );
     }
 
-    const { name, duration } = validationResult.data;
+    const { name } = validationResult.data;
 
     // Check if haunted house exists
     const existing = await retryDatabase(
@@ -145,7 +144,6 @@ export async function updateHauntedHouse(params: {
         db
           .update(hauntedHouse)
           .set({
-            duration: duration ?? existing.duration,
             updatedAt: new Date(),
           })
           .where(eq(hauntedHouse.name, name))
@@ -222,8 +220,13 @@ export async function createQueue(params: unknown): Promise<ActionResponse> {
       );
     }
 
-    const { hauntedHouseName, queueNumber, maxCustomers, queueStartTime } =
-      validationResult.data;
+    const {
+      hauntedHouseName,
+      queueNumber,
+      maxCustomers,
+      queueStartTime,
+      queueEndTime,
+    } = validationResult.data;
 
     const queueId = generateQueueId();
 
@@ -238,6 +241,7 @@ export async function createQueue(params: unknown): Promise<ActionResponse> {
             queueNumber,
             maxCustomers,
             queueStartTime,
+            queueEndTime,
           })
           .returning(),
       "create queue"
@@ -250,6 +254,86 @@ export async function createQueue(params: unknown): Promise<ActionResponse> {
   } catch (error) {
     console.error("Error creating queue:", error);
     return createActionError("DATABASE_ERROR", "Failed to create queue");
+  }
+}
+
+// Create batch queues
+export async function createBatchQueues(
+  params: unknown
+): Promise<ActionResponse> {
+  try {
+    const authCheck = await verifyAdminAccess();
+    if (!authCheck.success) {
+      return authCheck;
+    }
+
+    const validationResult = createBatchQueuesSchema.safeParse(params);
+
+    if (!validationResult.success) {
+      return createActionError(
+        "INVALID_INPUT",
+        validationResult.error.issues[0]?.message
+      );
+    }
+
+    const {
+      hauntedHouseName,
+      startingQueueNumber,
+      numberOfQueues,
+      maxCustomers,
+      durationPerQueue,
+      breakTimePerQueue,
+      firstQueueStartTime,
+    } = validationResult.data;
+
+    // Create queues sequentially
+    const createdQueues = [];
+    let currentStartTime = new Date(firstQueueStartTime);
+
+    for (let i = 0; i < numberOfQueues; i++) {
+      const queueNumber = startingQueueNumber + i;
+      const queueId = generateQueueId();
+
+      // Calculate end time: start time + duration
+      const currentEndTime = new Date(
+        currentStartTime.getTime() + durationPerQueue * 60000
+      );
+
+      // Create the queue
+      const [newQueue] = await retryDatabase(
+        () =>
+          db
+            .insert(queue)
+            .values({
+              id: queueId,
+              hauntedHouseName,
+              queueNumber,
+              maxCustomers,
+              queueStartTime: currentStartTime,
+              queueEndTime: currentEndTime,
+            })
+            .returning(),
+        `create queue ${queueNumber}`
+      );
+
+      // Create queue spots
+      await createQueueSpots(queueId, maxCustomers);
+
+      createdQueues.push(newQueue);
+
+      // Calculate next start time: current end time + break time
+      currentStartTime = new Date(
+        currentEndTime.getTime() + breakTimePerQueue * 60000
+      );
+    }
+
+    return createActionSuccess({
+      message: `Successfully created ${numberOfQueues} queues`,
+      queues: createdQueues,
+    });
+  } catch (error) {
+    console.error("Error creating batch queues:", error);
+    return createActionError("DATABASE_ERROR", "Failed to create batch queues");
   }
 }
 

@@ -139,12 +139,17 @@ export function MyQueueSpot({ spot }: Props) {
             </div>
           </div>
 
-          {spot.queue?.hauntedHouse?.duration && (
+          {spot.queue?.queueStartTime && spot.queue?.queueEndTime && (
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-blue-600" />
               <div>
                 <p className="font-semibold">
-                  {spot.queue.hauntedHouse.duration} minutes
+                  {Math.round(
+                    (new Date(spot.queue.queueEndTime).getTime() -
+                      new Date(spot.queue.queueStartTime).getTime()) /
+                      60000
+                  )}{" "}
+                  minutes
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Experience duration
