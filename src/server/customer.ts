@@ -2,6 +2,7 @@
 
 import { db } from "@/drizzle/db";
 import {
+  queue,
   queueSpot,
   reservation,
   customer as customerSchema,
@@ -72,6 +73,22 @@ export async function joinQueue(params: unknown): Promise<ActionResponse> {
     const { hauntedHouseName, queueNumber, customerData } =
       validationResult.data;
 
+    // Find the queue by composite key
+    const queueData = await retryDatabase(
+      () =>
+        db.query.queue.findFirst({
+          where: and(
+            eq(queue.hauntedHouseName, hauntedHouseName),
+            eq(queue.queueNumber, queueNumber)
+          ),
+        }),
+      "find queue"
+    );
+
+    if (!queueData) {
+      return createActionError("NOT_FOUND", "Queue not found");
+    }
+
     // Get or create customer first
     const customer = await getOrCreateCustomer(customerData);
 
@@ -88,7 +105,7 @@ export async function joinQueue(params: unknown): Promise<ActionResponse> {
     }
 
     // Find first available spot
-    const spot = await findFirstAvailableSpot(hauntedHouseName, queueNumber);
+    const spot = await findFirstAvailableSpot(queueData.id);
     if (!spot) {
       return createActionError("NO_AVAILABLE_SPOTS");
     }
@@ -269,6 +286,22 @@ export async function createReservation(
     const { hauntedHouseName, queueNumber, maxSpots, customerData } =
       validationResult.data;
 
+    // Find the queue by composite key
+    const queueData = await retryDatabase(
+      () =>
+        db.query.queue.findFirst({
+          where: and(
+            eq(queue.hauntedHouseName, hauntedHouseName),
+            eq(queue.queueNumber, queueNumber)
+          ),
+        }),
+      "find queue"
+    );
+
+    if (!queueData) {
+      return createActionError("NOT_FOUND", "Queue not found");
+    }
+
     // Get or create customer
     const customer = await getOrCreateCustomer(customerData);
 
@@ -290,10 +323,7 @@ export async function createReservation(
     }
 
     // Check if queue has enough available spots
-    const availableCount = await getAvailableSpotCount(
-      hauntedHouseName,
-      queueNumber
-    );
+    const availableCount = await getAvailableSpotCount(queueData.id);
     if (availableCount < maxSpots) {
       return createActionError(
         "NO_AVAILABLE_SPOTS",
@@ -325,8 +355,7 @@ export async function createReservation(
       () =>
         db.insert(reservation).values({
           id: reservationId,
-          queueHauntedHouseName: hauntedHouseName,
-          queueNumber,
+          queueId: queueData.id,
           representativeCustomerId: customer.studentId,
           code,
           maxSpots,
@@ -342,8 +371,7 @@ export async function createReservation(
       () =>
         db.query.queueSpot.findMany({
           where: and(
-            eq(queueSpot.queueHauntedHouseName, hauntedHouseName),
-            eq(queueSpot.queueNumber, queueNumber),
+            eq(queueSpot.queueId, queueData.id),
             eq(queueSpot.status, "available")
           ),
           orderBy: asc(queueSpot.spotNumber),

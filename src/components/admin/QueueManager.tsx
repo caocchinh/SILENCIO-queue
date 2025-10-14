@@ -341,7 +341,7 @@ export function QueueManager({ houses }: Props) {
     });
   };
 
-  const handleDelete = (hauntedHouseName: string, queueNumber: number) => {
+  const handleDelete = (queueId: string) => {
     if (
       !confirm(
         "Bạn có chắc chắn muốn xóa lượt này? Tất cả các đặt chỗ liên quan sẽ bị xóa."
@@ -350,12 +350,12 @@ export function QueueManager({ houses }: Props) {
       return;
     }
 
-    deleteQueueMutation.mutate({ hauntedHouseName, queueNumber });
+    deleteQueueMutation.mutate({ id: queueId });
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full">
-      <Card className="w-full lg:w-[600px] lg:flex-shrink-0">
+      <Card className="w-full h-max lg:w-[400px] lg:flex-shrink-0">
         <CardHeader>
           <CardTitle>Tạo lượt mới</CardTitle>
           <CardDescription>Thêm lượt mới cho nhà ma</CardDescription>
@@ -876,7 +876,7 @@ export function QueueManager({ houses }: Props) {
                     <div className="mt-2 space-y-2">
                       {house.queues.map((q) => (
                         <div
-                          key={`${q.hauntedHouseName}-${q.queueNumber}`}
+                          key={q.id}
                           className="flex justify-between items-center p-2 border rounded-lg bg-gray-50"
                         >
                           <div className="flex-1">
@@ -891,9 +891,7 @@ export function QueueManager({ houses }: Props) {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() =>
-                              handleDelete(q.hauntedHouseName, q.queueNumber)
-                            }
+                            onClick={() => handleDelete(q.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

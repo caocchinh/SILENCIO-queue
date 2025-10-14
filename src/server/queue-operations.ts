@@ -57,15 +57,10 @@ export async function getCustomerQueueSpot(studentId: string) {
 }
 
 // Create queue spots for a queue
-export async function createQueueSpots(
-  hauntedHouseName: string,
-  queueNumber: number,
-  maxCustomers: number
-) {
+export async function createQueueSpots(queueId: string, maxCustomers: number) {
   const spots = Array.from({ length: maxCustomers }, (_, i) => ({
     id: generateSpotId(),
-    queueHauntedHouseName: hauntedHouseName,
-    queueNumber,
+    queueId,
     spotNumber: i + 1,
     status: "available" as const,
   }));
@@ -79,17 +74,13 @@ export async function createQueueSpots(
 
 // Adjust queue spots when maxCustomers changes
 export async function adjustQueueSpots(
-  hauntedHouseName: string,
-  queueNumber: number,
+  queueId: string,
   newMaxCustomers: number
 ) {
   const existingSpots = await retryDatabase(
     () =>
       db.query.queueSpot.findMany({
-        where: and(
-          eq(queueSpot.queueHauntedHouseName, hauntedHouseName),
-          eq(queueSpot.queueNumber, queueNumber)
-        ),
+        where: eq(queueSpot.queueId, queueId),
         orderBy: asc(queueSpot.spotNumber),
       }),
     "fetch existing queue spots"
@@ -102,8 +93,7 @@ export async function adjustQueueSpots(
     const spotsToAdd = newMaxCustomers - currentCount;
     const newSpots = Array.from({ length: spotsToAdd }, (_, i) => ({
       id: generateSpotId(),
-      queueHauntedHouseName: hauntedHouseName,
-      queueNumber,
+      queueId,
       spotNumber: currentCount + i + 1,
       status: "available" as const,
     }));
@@ -129,21 +119,14 @@ export async function adjustQueueSpots(
 }
 
 // Get available spots count for a queue
-export async function getAvailableSpotCount(
-  hauntedHouseName: string,
-  queueNumber: number
-): Promise<number> {
+export async function getAvailableSpotCount(queueId: string): Promise<number> {
   const result = await retryDatabase(
     () =>
       db
         .select({ count: count() })
         .from(queueSpot)
         .where(
-          and(
-            eq(queueSpot.queueHauntedHouseName, hauntedHouseName),
-            eq(queueSpot.queueNumber, queueNumber),
-            eq(queueSpot.status, "available")
-          )
+          and(eq(queueSpot.queueId, queueId), eq(queueSpot.status, "available"))
         ),
     "get available spot count"
   );
@@ -152,16 +135,12 @@ export async function getAvailableSpotCount(
 }
 
 // Find first available spot in a queue
-export async function findFirstAvailableSpot(
-  hauntedHouseName: string,
-  queueNumber: number
-) {
+export async function findFirstAvailableSpot(queueId: string) {
   return await retryDatabase(
     () =>
       db.query.queueSpot.findFirst({
         where: and(
-          eq(queueSpot.queueHauntedHouseName, hauntedHouseName),
-          eq(queueSpot.queueNumber, queueNumber),
+          eq(queueSpot.queueId, queueId),
           eq(queueSpot.status, "available")
         ),
         orderBy: asc(queueSpot.spotNumber),
@@ -269,25 +248,29 @@ export async function expireReservations() {
   return expiredReservations.length;
 }
 
-// Get queue with availability stats
+// Get queue with availability stats (accepts either queueId or composite key)
 export async function getQueueWithAvailability(
-  hauntedHouseName: string,
-  queueNumber: number
+  queueIdOrHouseName: string,
+  queueNumber?: number
 ) {
-  const queueData = await retryDatabase(
-    () =>
-      db.query.queue.findFirst({
-        where: and(
-          eq(queue.hauntedHouseName, hauntedHouseName),
-          eq(queue.queueNumber, queueNumber)
-        ),
-        with: {
-          hauntedHouse: true,
-          spots: true,
-        },
-      }),
-    "get queue with availability"
-  );
+  const queueData = await retryDatabase(() => {
+    // If queueNumber is provided, use composite key; otherwise use queueId
+    const whereClause =
+      queueNumber !== undefined
+        ? and(
+            eq(queue.hauntedHouseName, queueIdOrHouseName),
+            eq(queue.queueNumber, queueNumber)
+          )
+        : eq(queue.id, queueIdOrHouseName);
+
+    return db.query.queue.findFirst({
+      where: whereClause,
+      with: {
+        hauntedHouse: true,
+        spots: true,
+      },
+    });
+  }, "get queue with availability");
 
   if (!queueData) return null;
 

@@ -18,6 +18,7 @@ import {
   createActionSuccess,
 } from "@/constants/errors";
 import { retryDatabase, retryAuth } from "@/dal/retry";
+import { nanoid } from "nanoid";
 
 // Helper function to verify admin access
 async function verifyAdminAccess(): Promise<ActionResponse<void>> {
@@ -223,12 +224,33 @@ export async function createQueue(params: unknown): Promise<ActionResponse> {
       queueEndTime,
     } = validationResult.data;
 
+    // Check if queue already exists
+    const existing = await retryDatabase(
+      () =>
+        db.query.queue.findFirst({
+          where: and(
+            eq(queue.hauntedHouseName, hauntedHouseName),
+            eq(queue.queueNumber, queueNumber)
+          ),
+        }),
+      "check queue exists"
+    );
+
+    if (existing) {
+      return createActionError(
+        "ALREADY_EXISTS",
+        `Queue ${queueNumber} for ${hauntedHouseName} already exists`
+      );
+    }
+
     // Create the queue
+    const queueId = nanoid(16);
     const [newQueue] = await retryDatabase(
       () =>
         db
           .insert(queue)
           .values({
+            id: queueId,
             hauntedHouseName,
             queueNumber,
             maxCustomers,
@@ -240,7 +262,7 @@ export async function createQueue(params: unknown): Promise<ActionResponse> {
     );
 
     // Create queue spots
-    await createQueueSpots(hauntedHouseName, queueNumber, maxCustomers);
+    await createQueueSpots(queueId, maxCustomers);
 
     return createActionSuccess(newQueue);
   } catch (error) {
@@ -290,26 +312,63 @@ export async function createBatchQueues(
         currentStartTime.getTime() + durationPerQueue * 60000
       );
 
-      // Create the queue
-      const [newQueue] = await retryDatabase(
+      // Check if queue already exists
+      const existing = await retryDatabase(
         () =>
-          db
-            .insert(queue)
-            .values({
-              hauntedHouseName,
-              queueNumber,
-              maxCustomers,
-              queueStartTime: currentStartTime,
-              queueEndTime: currentEndTime,
-            })
-            .returning(),
-        `create queue ${queueNumber}`
+          db.query.queue.findFirst({
+            where: and(
+              eq(queue.hauntedHouseName, hauntedHouseName),
+              eq(queue.queueNumber, queueNumber)
+            ),
+          }),
+        "check queue exists"
       );
 
-      // Create queue spots
-      await createQueueSpots(hauntedHouseName, queueNumber, maxCustomers);
+      if (existing) {
+        // Update existing queue
+        const [updated] = await retryDatabase(
+          () =>
+            db
+              .update(queue)
+              .set({
+                maxCustomers: maxCustomers,
+                queueStartTime: currentStartTime,
+                queueEndTime: currentEndTime,
+                updatedAt: new Date(),
+              })
+              .where(eq(queue.id, existing.id))
+              .returning(),
+          "update queue"
+        );
 
-      createdQueues.push(newQueue);
+        // Adjust queue spots if needed
+        await adjustQueueSpots(existing.id, maxCustomers);
+
+        createdQueues.push(updated);
+      } else {
+        // Create new queue
+        const queueId = nanoid(16);
+        const [newQueue] = await retryDatabase(
+          () =>
+            db
+              .insert(queue)
+              .values({
+                id: queueId,
+                hauntedHouseName,
+                queueNumber,
+                maxCustomers,
+                queueStartTime: currentStartTime,
+                queueEndTime: currentEndTime,
+              })
+              .returning(),
+          `create queue ${queueNumber}`
+        );
+
+        // Create queue spots
+        await createQueueSpots(queueId, maxCustomers);
+
+        createdQueues.push(newQueue);
+      }
 
       // Calculate next start time: current end time + break time
       currentStartTime = new Date(
@@ -329,8 +388,7 @@ export async function createBatchQueues(
 
 // Update queue
 export async function updateQueue(params: {
-  hauntedHouseName: string;
-  queueNumber: number;
+  id: string;
   newQueueNumber?: number;
   maxCustomers?: number;
 }): Promise<ActionResponse> {
@@ -340,17 +398,13 @@ export async function updateQueue(params: {
       return authCheck;
     }
 
-    const { hauntedHouseName, queueNumber, newQueueNumber, maxCustomers } =
-      params;
+    const { id, newQueueNumber, maxCustomers } = params;
 
     // Check if queue exists
     const existing = await retryDatabase(
       () =>
         db.query.queue.findFirst({
-          where: and(
-            eq(queue.hauntedHouseName, hauntedHouseName),
-            eq(queue.queueNumber, queueNumber)
-          ),
+          where: eq(queue.id, id),
         }),
       "check queue exists"
     );
@@ -369,23 +423,14 @@ export async function updateQueue(params: {
             maxCustomers: maxCustomers ?? existing.maxCustomers,
             updatedAt: new Date(),
           })
-          .where(
-            and(
-              eq(queue.hauntedHouseName, hauntedHouseName),
-              eq(queue.queueNumber, queueNumber)
-            )
-          )
+          .where(eq(queue.id, id))
           .returning(),
       "update queue"
     );
 
     // Adjust queue spots if maxCustomers changed
     if (maxCustomers && maxCustomers !== existing.maxCustomers) {
-      await adjustQueueSpots(
-        hauntedHouseName,
-        newQueueNumber ?? queueNumber,
-        maxCustomers
-      );
+      await adjustQueueSpots(id, maxCustomers);
     }
 
     return createActionSuccess(updated);
@@ -397,8 +442,7 @@ export async function updateQueue(params: {
 
 // Delete queue
 export async function deleteQueue(params: {
-  hauntedHouseName: string;
-  queueNumber: number;
+  id: string;
 }): Promise<ActionResponse> {
   try {
     const authCheck = await verifyAdminAccess();
@@ -406,16 +450,13 @@ export async function deleteQueue(params: {
       return authCheck;
     }
 
-    const { hauntedHouseName, queueNumber } = params;
+    const { id } = params;
 
     // Check if queue exists
     const existing = await retryDatabase(
       () =>
         db.query.queue.findFirst({
-          where: and(
-            eq(queue.hauntedHouseName, hauntedHouseName),
-            eq(queue.queueNumber, queueNumber)
-          ),
+          where: eq(queue.id, id),
         }),
       "check queue exists for deletion"
     );
@@ -425,15 +466,7 @@ export async function deleteQueue(params: {
     }
 
     await retryDatabase(
-      () =>
-        db
-          .delete(queue)
-          .where(
-            and(
-              eq(queue.hauntedHouseName, hauntedHouseName),
-              eq(queue.queueNumber, queueNumber)
-            )
-          ),
+      () => db.delete(queue).where(eq(queue.id, id)),
       "delete queue"
     );
 
