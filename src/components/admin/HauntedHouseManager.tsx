@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,40 +13,55 @@ import {
 } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { HauntedHouseWithQueues } from "@/lib/types/queue";
-import {
-  useCreateHauntedHouse,
-  useDeleteHauntedHouse,
-} from "@/hooks/useAdminMutations";
-import { errorToast } from "@/lib/utils";
+import { createHauntedHouse, deleteHauntedHouse } from "@/server/admin";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
 }
 
 export function HauntedHouseManager({ houses }: Props) {
+  const queryClient = useQueryClient();
   const [newHouse, setNewHouse] = useState({
     name: "",
     duration: 15,
     breakTimePerQueue: 5,
   });
-  const createHouseMutation = useCreateHauntedHouse();
-  const deleteHouseMutation = useDeleteHauntedHouse();
+
+  const createHouseMutation = useMutation({
+    mutationFn: createHauntedHouse,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Haunted house created successfully!");
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+        setNewHouse({ name: "", duration: 15, breakTimePerQueue: 5 });
+      } else {
+        toast.error(data.message || "Failed to create haunted house");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to create haunted house");
+      console.error(error);
+    },
+  });
+
+  const deleteHouseMutation = useMutation({
+    mutationFn: deleteHauntedHouse,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Haunted house deleted successfully!");
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+      } else {
+        toast.error(data.message || "Failed to delete haunted house");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to delete haunted house");
+      console.error(error);
+    },
+  });
 
   const handleCreate = () => {
-    createHouseMutation.mutate(newHouse, {
-      onSuccess: (data) => {
-        if (data.success) {
-          setNewHouse({ name: "", duration: 15, breakTimePerQueue: 5 });
-        } else {
-          throw new Error(data.message || "Failed to create haunted house");
-        }
-      },
-      onError: (error) => {
-        errorToast({
-          message: error.message || "Failed to create haunted house",
-        });
-      },
-    });
+    createHouseMutation.mutate(newHouse);
   };
 
   const handleDelete = (name: string) => {

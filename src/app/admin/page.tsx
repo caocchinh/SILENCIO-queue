@@ -1,12 +1,24 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { HauntedHouseManager } from "@/components/admin/HauntedHouseManager";
 import { QueueManager } from "@/components/admin/QueueManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
-import { useHauntedHouses } from "@/hooks/useHauntedHouses";
+import { HauntedHouseWithQueues } from "@/lib/types/queue";
 import { cn } from "@/lib/utils";
+
+async function fetchHauntedHouses(): Promise<HauntedHouseWithQueues[]> {
+  const response = await fetch("/api/haunted-houses");
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch haunted houses");
+  }
+
+  return result.data || [];
+}
 
 export default function AdminPage() {
   const {
@@ -14,7 +26,11 @@ export default function AdminPage() {
     isLoading: loading,
     refetch,
     isError,
-  } = useHauntedHouses();
+  } = useQuery({
+    queryKey: ["haunted-houses"],
+    queryFn: fetchHauntedHouses,
+    refetchInterval: 30000,
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

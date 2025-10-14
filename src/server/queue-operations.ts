@@ -1,3 +1,4 @@
+import "server-only";
 import { db } from "@/drizzle/db";
 import { queue, queueSpot, reservation, customer } from "@/drizzle/schema";
 import { eq, and, lt, sql, asc, count } from "drizzle-orm";

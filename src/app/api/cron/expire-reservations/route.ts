@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { expireReservations } from "@/lib/utils/queue-operations";
+import { expireReservations } from "@/server/queue-operations";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
 
 // GET /api/cron/expire-reservations - Background job to expire reservations

@@ -1,5 +1,7 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Users, Clock } from "lucide-react";
 import { HauntedHouseWithQueues, QueueWithStats } from "@/lib/types/queue";
-import { useJoinQueue } from "@/hooks/useCustomerMutations";
+import { joinQueue } from "@/server/customer";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
@@ -24,7 +26,26 @@ interface Props {
 }
 
 export function QueueList({ houses, customerData }: Props) {
-  const joinQueueMutation = useJoinQueue();
+  const queryClient = useQueryClient();
+
+  const joinQueueMutation = useMutation({
+    mutationFn: joinQueue,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Successfully joined the queue!");
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", customerData.studentId],
+        });
+      } else {
+        toast.error(data.message || "Failed to join queue");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to join queue");
+      console.error(error);
+    },
+  });
 
   const handleJoinQueue = (queueId: string) => {
     joinQueueMutation.mutate({

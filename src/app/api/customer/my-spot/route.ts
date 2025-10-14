@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustomerQueueSpot } from "@/lib/utils/queue-operations";
+import { getCustomerQueueSpot } from "@/server/queue-operations";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
 
 // GET /api/customer/my-spot?studentId=xxx - Get customer's current queue spot

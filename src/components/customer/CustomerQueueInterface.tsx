@@ -1,15 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { QueueList } from "./QueueList";
 import { ReservationForm } from "./ReservationForm";
 import { JoinReservation } from "./JoinReservation";
 import { MyQueueSpot } from "./MyQueueSpot";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, ArrowLeft } from "lucide-react";
-import { Customer } from "@/lib/types/queue";
-import { useHauntedHouses } from "@/hooks/useHauntedHouses";
-import { useCustomerSpot } from "@/hooks/useCustomerSpot";
+import {
+  Customer,
+  HauntedHouseWithQueues,
+  QueueSpotWithDetails,
+} from "@/lib/types/queue";
+
+async function fetchHauntedHouses(): Promise<HauntedHouseWithQueues[]> {
+  const response = await fetch("/api/haunted-houses");
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch haunted houses");
+  }
+
+  return result.data || [];
+}
+
+async function fetchCustomerSpot(
+  studentId: string
+): Promise<QueueSpotWithDetails | null> {
+  const response = await fetch(`/api/customer/my-spot?studentId=${studentId}`);
+  const result = await response.json();
+
+  if (!result.success) {
+    return null;
+  }
+
+  return result.data || null;
+}
 
 interface Props {
   customer: Customer;
@@ -28,17 +55,26 @@ export function CustomerQueueInterface({ customer }: Props) {
     ticketType: customer.ticketType,
   };
 
-  // Use TanStack Query hooks
   const {
     data: houses = [],
     isLoading: housesLoading,
     refetch: refetchHouses,
-  } = useHauntedHouses();
+  } = useQuery({
+    queryKey: ["haunted-houses"],
+    queryFn: fetchHauntedHouses,
+    refetchInterval: 30000,
+  });
+
   const {
     data: mySpot = null,
     isLoading: spotLoading,
     refetch: refetchSpot,
-  } = useCustomerSpot(customer.studentId);
+  } = useQuery({
+    queryKey: ["customer-spot", customer.studentId],
+    queryFn: () => fetchCustomerSpot(customer.studentId),
+    refetchInterval: 30000,
+    enabled: !!customer.studentId,
+  });
 
   const loading = housesLoading || spotLoading;
 

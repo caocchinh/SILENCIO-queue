@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getQueueWithAvailability } from "@/lib/utils/queue-operations";
+import { getQueueWithAvailability } from "@/server/queue-operations";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
 
 type Params = Promise<{ queueId: string }>;

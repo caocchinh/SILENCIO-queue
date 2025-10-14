@@ -15,7 +15,7 @@ import {
   generateQueueId,
   createQueueSpots,
   adjustQueueSpots,
-} from "@/lib/utils/queue-operations";
+} from "@/server/queue-operations";
 import {
   ActionResponse,
   createActionError,

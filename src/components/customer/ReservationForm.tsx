@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { HauntedHouseWithQueues, QueueWithStats } from "@/lib/types/queue";
-import { useCreateReservation } from "@/hooks/useCustomerMutations";
+import { createReservation } from "@/server/customer";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
@@ -30,10 +32,31 @@ export function ReservationForm({
   customerData,
   reservationAttempts,
 }: Props) {
+  const queryClient = useQueryClient();
   const [selectedQueue, setSelectedQueue] = useState("");
   const [maxSpots, setMaxSpots] = useState(2);
 
-  const createReservationMutation = useCreateReservation();
+  const createReservationMutation = useMutation({
+    mutationFn: createReservation,
+    onSuccess: (data) => {
+      if (data.success) {
+        const reservationCode = (data.data as { code?: string })?.code || "N/A";
+        toast.success(`Reservation created! Your code is: ${reservationCode}`, {
+          duration: 10000,
+        });
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", customerData.studentId],
+        });
+      } else {
+        toast.error(data.message || "Failed to create reservation");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to create reservation");
+      console.error(error);
+    },
+  });
 
   const handleCreateReservation = () => {
     createReservationMutation.mutate({
@@ -55,9 +78,9 @@ export function ReservationForm({
       <CardHeader>
         <CardTitle>Create Group Reservation</CardTitle>
         <CardDescription>
-          Reserve multiple spots for you and your friends. You'll get a code
-          they can use to join. Each person adds 5 minutes to the expiration
-          time.
+          Reserve multiple spots for you and your friends. You&apos;ll get a
+          code they can use to join. Each person adds 5 minutes to the
+          expiration time.
         </CardDescription>
       </CardHeader>
       <CardContent>

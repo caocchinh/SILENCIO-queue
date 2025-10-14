@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Ticket } from "lucide-react";
-import { useJoinReservation } from "@/hooks/useCustomerMutations";
+import { joinReservation } from "@/server/customer";
 
 interface Props {
   customerData: {
@@ -23,23 +25,34 @@ interface Props {
 }
 
 export function JoinReservation({ customerData }: Props) {
+  const queryClient = useQueryClient();
   const [code, setCode] = useState("");
-  const joinReservationMutation = useJoinReservation();
+
+  const joinReservationMutation = useMutation({
+    mutationFn: joinReservation,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Successfully joined the reservation!");
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", customerData.studentId],
+        });
+        setCode("");
+      } else {
+        toast.error(data.message || "Failed to join reservation");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to join reservation");
+      console.error(error);
+    },
+  });
 
   const handleJoinReservation = () => {
-    joinReservationMutation.mutate(
-      {
-        code: code.toUpperCase(),
-        customerData,
-      },
-      {
-        onSuccess: (data) => {
-          if (data.success) {
-            setCode("");
-          }
-        },
-      }
-    );
+    joinReservationMutation.mutate({
+      code: code.toUpperCase(),
+      customerData,
+    });
   };
 
   return (

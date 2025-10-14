@@ -1,5 +1,7 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -27,14 +29,33 @@ import {
   LogOut,
 } from "lucide-react";
 import { QueueSpotWithDetails } from "@/lib/types/queue";
-import { useLeaveQueue } from "@/hooks/useCustomerMutations";
+import { leaveQueue } from "@/server/customer";
 
 interface Props {
   spot: QueueSpotWithDetails;
 }
 
 export function MyQueueSpot({ spot }: Props) {
-  const leaveQueueMutation = useLeaveQueue();
+  const queryClient = useQueryClient();
+
+  const leaveQueueMutation = useMutation({
+    mutationFn: leaveQueue,
+    onSuccess: (data, variables) => {
+      if (data.success) {
+        toast.success("Successfully left the queue");
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", variables.studentId],
+        });
+      } else {
+        toast.error(data.message || "Failed to leave queue");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to leave queue");
+      console.error(error);
+    },
+  });
 
   const handleLeaveQueue = () => {
     if (!spot.customerId) return;

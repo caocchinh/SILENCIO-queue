@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,34 +13,59 @@ import {
 } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { HauntedHouseWithQueues, QueueWithStats } from "@/lib/types/queue";
-import { useCreateQueue, useDeleteQueue } from "@/hooks/useAdminMutations";
+import { createQueue, deleteQueue } from "@/server/admin";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
 }
 
 export function QueueManager({ houses }: Props) {
+  const queryClient = useQueryClient();
   const [newQueue, setNewQueue] = useState({
     hauntedHouseName: "",
     queueNumber: 1,
     maxCustomers: 20,
   });
 
-  const createQueueMutation = useCreateQueue();
-  const deleteQueueMutation = useDeleteQueue();
+  const createQueueMutation = useMutation({
+    mutationFn: createQueue,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Queue created successfully!");
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+        setNewQueue({
+          hauntedHouseName: "",
+          queueNumber: 1,
+          maxCustomers: 20,
+        });
+      } else {
+        toast.error(data.message || "Failed to create queue");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to create queue");
+      console.error(error);
+    },
+  });
+
+  const deleteQueueMutation = useMutation({
+    mutationFn: deleteQueue,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Queue deleted successfully!");
+        queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
+      } else {
+        toast.error(data.message || "Failed to delete queue");
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to delete queue");
+      console.error(error);
+    },
+  });
 
   const handleCreate = () => {
-    createQueueMutation.mutate(newQueue, {
-      onSuccess: (data) => {
-        if (data.success) {
-          setNewQueue({
-            hauntedHouseName: "",
-            queueNumber: 1,
-            maxCustomers: 20,
-          });
-        }
-      },
-    });
+    createQueueMutation.mutate(newQueue);
   };
 
   const handleDelete = (queueId: string) => {

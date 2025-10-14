@@ -16,7 +16,7 @@ import {
   generateReservationId,
   generateReservationCode,
   calculateReservationExpiry,
-} from "@/lib/utils/queue-operations";
+} from "@/server/queue-operations";
 import {
   ActionResponse,
   createActionError,
@@ -137,7 +137,7 @@ export async function leaveQueue(params: {
                 occupiedAt: null,
                 updatedAt: new Date(),
               })
-              .where(eq(queueSpot.reservationId, spot.reservationId)),
+              .where(eq(queueSpot.reservationId, spot.reservationId!)),
           "clear reservation spots"
         );
 
@@ -149,7 +149,7 @@ export async function leaveQueue(params: {
                 status: "cancelled",
                 updatedAt: new Date(),
               })
-              .where(eq(reservation.id, spot.reservationId)),
+              .where(eq(reservation.id, spot.reservationId!)),
           "cancel reservation on representative leave"
         );
       } else {
@@ -176,7 +176,7 @@ export async function leaveQueue(params: {
                 currentSpots: sql`${reservation.currentSpots} - 1`,
                 updatedAt: new Date(),
               })
-              .where(eq(reservation.id, spot.reservationId)),
+              .where(eq(reservation.id, spot.reservationId!)),
           "decrement reservation spot count"
         );
       }
