@@ -11,6 +11,11 @@ export const createHauntedHouseSchema = z.object({
     .int()
     .min(1, "Duration must be at least 1 minute")
     .max(120, "Duration must be less than 120 minutes"),
+  breakTimePerQueue: z
+    .number()
+    .int()
+    .min(0, "Break time must be at least 0 minutes")
+    .max(60, "Break time must be less than 60 minutes"),
 });
 
 export const updateHauntedHouseSchema = z.object({
@@ -21,10 +26,7 @@ export const updateHauntedHouseSchema = z.object({
 // Queue schemas
 export const createQueueSchema = z.object({
   hauntedHouseName: z.string().min(1, "Haunted house name is required"),
-  queueNumber: z
-    .number()
-    .int()
-    .min(1, "Queue number must be at least 1"),
+  queueNumber: z.number().int().min(1, "Queue number must be at least 1"),
   maxCustomers: z
     .number()
     .int()
@@ -94,4 +96,3 @@ export type JoinQueueInput = z.infer<typeof joinQueueSchema>;
 export type CreateReservationInput = z.infer<typeof createReservationSchema>;
 export type JoinReservationInput = z.infer<typeof joinReservationSchema>;
 export type CancelReservationInput = z.infer<typeof cancelReservationSchema>;
-

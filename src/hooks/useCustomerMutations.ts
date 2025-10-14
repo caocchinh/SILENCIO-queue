@@ -2,6 +2,12 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  joinQueue,
+  leaveQueue,
+  createReservation,
+  joinReservation,
+} from "@/actions/customer";
 
 interface CustomerData {
   studentId: string;
@@ -31,9 +37,9 @@ interface LeaveQueueParams {
   studentId: string;
 }
 
-interface ApiResponse {
+interface ApiResponse<T = unknown> {
   success: boolean;
-  data?: any;
+  data?: T;
   error?: string;
 }
 
@@ -42,20 +48,14 @@ export function useJoinQueue() {
 
   return useMutation({
     mutationFn: async (params: JoinQueueParams): Promise<ApiResponse> => {
-      const response = await fetch("/api/customer/join-queue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      });
-      return response.json();
+      return await joinQueue(params);
     },
     onSuccess: (data, variables) => {
       if (data.success) {
         toast.success("Successfully joined the queue!");
-        // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
-        queryClient.invalidateQueries({ 
-          queryKey: ["customer-spot", variables.customerData.studentId] 
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", variables.customerData.studentId],
         });
       } else {
         toast.error(data.error || "Failed to join queue");
@@ -72,24 +72,19 @@ export function useCreateReservation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: CreateReservationParams): Promise<ApiResponse> => {
-      const response = await fetch("/api/customer/create-reservation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      });
-      return response.json();
+    mutationFn: async (
+      params: CreateReservationParams
+    ): Promise<ApiResponse> => {
+      return await createReservation(params);
     },
     onSuccess: (data, variables) => {
       if (data.success) {
-        toast.success(
-          `Reservation created! Your code is: ${data.data.code}`,
-          { duration: 10000 }
-        );
-        // Invalidate queries to refresh data
+        toast.success(`Reservation created! Your code is: ${data.data.code}`, {
+          duration: 10000,
+        });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
-        queryClient.invalidateQueries({ 
-          queryKey: ["customer-spot", variables.customerData.studentId] 
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", variables.customerData.studentId],
         });
       } else {
         toast.error(data.error || "Failed to create reservation");
@@ -107,20 +102,14 @@ export function useJoinReservation() {
 
   return useMutation({
     mutationFn: async (params: JoinReservationParams): Promise<ApiResponse> => {
-      const response = await fetch("/api/customer/join-reservation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      });
-      return response.json();
+      return await joinReservation(params);
     },
     onSuccess: (data, variables) => {
       if (data.success) {
         toast.success("Successfully joined the reservation!");
-        // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
-        queryClient.invalidateQueries({ 
-          queryKey: ["customer-spot", variables.customerData.studentId] 
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", variables.customerData.studentId],
         });
       } else {
         toast.error(data.error || "Failed to join reservation");
@@ -138,20 +127,14 @@ export function useLeaveQueue() {
 
   return useMutation({
     mutationFn: async (params: LeaveQueueParams): Promise<ApiResponse> => {
-      const response = await fetch("/api/customer/leave-queue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      });
-      return response.json();
+      return await leaveQueue(params);
     },
     onSuccess: (data, variables) => {
       if (data.success) {
         toast.success("Successfully left the queue");
-        // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
-        queryClient.invalidateQueries({ 
-          queryKey: ["customer-spot", variables.studentId] 
+        queryClient.invalidateQueries({
+          queryKey: ["customer-spot", variables.studentId],
         });
       } else {
         toast.error(data.error || "Failed to leave queue");
@@ -163,4 +146,3 @@ export function useLeaveQueue() {
     },
   });
 }
-

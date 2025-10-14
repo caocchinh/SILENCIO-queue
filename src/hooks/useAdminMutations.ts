@@ -2,6 +2,12 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  createHauntedHouse,
+  deleteHauntedHouse,
+  createQueue,
+  deleteQueue,
+} from "@/actions/admin";
 
 interface CreateHouseParams {
   name: string;
@@ -23,9 +29,9 @@ interface DeleteQueueParams {
   queueId: string;
 }
 
-interface ApiResponse {
+interface ApiResponse<T = unknown> {
   success: boolean;
-  data?: any;
+  data?: T;
   error?: string;
 }
 
@@ -34,12 +40,7 @@ export function useCreateHauntedHouse() {
 
   return useMutation({
     mutationFn: async (params: CreateHouseParams): Promise<ApiResponse> => {
-      const response = await fetch("/api/haunted-houses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      });
-      return response.json();
+      return await createHauntedHouse(params);
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -61,13 +62,7 @@ export function useDeleteHauntedHouse() {
 
   return useMutation({
     mutationFn: async (params: DeleteHouseParams): Promise<ApiResponse> => {
-      const response = await fetch(
-        `/api/haunted-houses/${encodeURIComponent(params.name)}`,
-        {
-          method: "DELETE",
-        }
-      );
-      return response.json();
+      return await deleteHauntedHouse(params);
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -89,12 +84,7 @@ export function useCreateQueue() {
 
   return useMutation({
     mutationFn: async (params: CreateQueueParams): Promise<ApiResponse> => {
-      const response = await fetch("/api/queues", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      });
-      return response.json();
+      return await createQueue(params);
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -116,10 +106,7 @@ export function useDeleteQueue() {
 
   return useMutation({
     mutationFn: async (params: DeleteQueueParams): Promise<ApiResponse> => {
-      const response = await fetch(`/api/queues/${params.queueId}`, {
-        method: "DELETE",
-      });
-      return response.json();
+      return await deleteQueue(params);
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -135,4 +122,3 @@ export function useDeleteQueue() {
     },
   });
 }
-
