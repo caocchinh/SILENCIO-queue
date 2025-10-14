@@ -10,74 +10,43 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { HauntedHouseWithQueues, QueueWithStats } from "@/lib/types/queue";
+import { useCreateQueue, useDeleteQueue } from "@/hooks/useAdminMutations";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
-  onRefresh: () => void;
 }
 
-export function QueueManager({ houses, onRefresh }: Props) {
-  const [creating, setCreating] = useState(false);
+export function QueueManager({ houses }: Props) {
   const [newQueue, setNewQueue] = useState({
     hauntedHouseName: "",
     queueNumber: 1,
     maxCustomers: 20,
   });
 
-  const handleCreate = async () => {
-    try {
-      setCreating(true);
-      const response = await fetch("/api/queues", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newQueue),
-      });
+  const createQueueMutation = useCreateQueue();
+  const deleteQueueMutation = useDeleteQueue();
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Queue created successfully!");
-        setNewQueue({
-          hauntedHouseName: "",
-          queueNumber: 1,
-          maxCustomers: 20,
-        });
-        onRefresh();
-      } else {
-        toast.error(result.error || "Failed to create queue");
-      }
-    } catch (error) {
-      toast.error("Failed to create queue");
-      console.error(error);
-    } finally {
-      setCreating(false);
-    }
+  const handleCreate = () => {
+    createQueueMutation.mutate(newQueue, {
+      onSuccess: (data) => {
+        if (data.success) {
+          setNewQueue({
+            hauntedHouseName: "",
+            queueNumber: 1,
+            maxCustomers: 20,
+          });
+        }
+      },
+    });
   };
 
-  const handleDelete = async (queueId: string) => {
+  const handleDelete = (queueId: string) => {
     if (!confirm("Are you sure you want to delete this queue?")) {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/queues/${queueId}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Queue deleted successfully!");
-        onRefresh();
-      } else {
-        toast.error(result.error || "Failed to delete queue");
-      }
-    } catch (error) {
-      toast.error("Failed to delete queue");
-      console.error(error);
-    }
+    deleteQueueMutation.mutate({ queueId });
   };
 
   return (
@@ -132,10 +101,12 @@ export function QueueManager({ houses, onRefresh }: Props) {
             />
             <Button
               onClick={handleCreate}
-              disabled={creating || !newQueue.hauntedHouseName}
+              disabled={
+                createQueueMutation.isPending || !newQueue.hauntedHouseName
+              }
             >
               <Plus className="mr-2 h-4 w-4" />
-              Create
+              {createQueueMutation.isPending ? "Creating..." : "Create"}
             </Button>
           </div>
         </CardContent>
@@ -213,4 +184,3 @@ export function QueueManager({ houses, onRefresh }: Props) {
     </div>
   );
 }
-

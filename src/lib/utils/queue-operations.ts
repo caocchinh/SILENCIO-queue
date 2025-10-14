@@ -1,12 +1,6 @@
 import { db } from "@/drizzle/db";
-import {
-  hauntedHouse,
-  queue,
-  queueSpot,
-  reservation,
-  customer,
-} from "@/drizzle/schema";
-import { eq, and, isNull, lt, sql, asc, count } from "drizzle-orm";
+import { queue, queueSpot, reservation, customer } from "@/drizzle/schema";
+import { eq, and, lt, sql, asc, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 // Generate unique IDs

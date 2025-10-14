@@ -1,26 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { QueueList } from "./QueueList";
 import { ReservationForm } from "./ReservationForm";
 import { JoinReservation } from "./JoinReservation";
 import { MyQueueSpot } from "./MyQueueSpot";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, ArrowLeft } from "lucide-react";
-import {
-  HauntedHouseWithQueues,
-  QueueSpotWithDetails,
-  Customer,
-} from "@/lib/types/queue";
+import { Customer } from "@/lib/types/queue";
+import { useHauntedHouses } from "@/hooks/useHauntedHouses";
+import { useCustomerSpot } from "@/hooks/useCustomerSpot";
 
 interface Props {
   customer: Customer;
 }
 
 export function CustomerQueueInterface({ customer }: Props) {
-  const [houses, setHouses] = useState<HauntedHouseWithQueues[]>([]);
-  const [mySpot, setMySpot] = useState<QueueSpotWithDetails | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"join" | "reserve" | "code">(
     "join"
   );
@@ -33,40 +28,24 @@ export function CustomerQueueInterface({ customer }: Props) {
     ticketType: customer.ticketType,
   };
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  // Use TanStack Query hooks
+  const {
+    data: houses = [],
+    isLoading: housesLoading,
+    refetch: refetchHouses,
+  } = useHauntedHouses();
+  const {
+    data: mySpot = null,
+    isLoading: spotLoading,
+    refetch: refetchSpot,
+  } = useCustomerSpot(customer.studentId);
 
-      // Fetch houses
-      const housesResponse = await fetch("/api/haunted-houses");
-      const housesResult = await housesResponse.json();
-      if (housesResult.success) {
-        setHouses(housesResult.data);
-      }
+  const loading = housesLoading || spotLoading;
 
-      // Fetch customer's spot
-      const spotResponse = await fetch(
-        `/api/customer/my-spot?studentId=${customer.studentId}`
-      );
-      const spotResult = await spotResponse.json();
-      if (spotResult.success && spotResult.data) {
-        setMySpot(spotResult.data);
-      } else {
-        setMySpot(null);
-      }
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleRefresh = () => {
+    refetchHouses();
+    refetchSpot();
   };
-
-  useEffect(() => {
-    fetchData();
-    // Refresh every 30 seconds to check for changes
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, [customer.studentId]);
 
   return (
     <div className="p-4 md:p-8">
@@ -80,7 +59,11 @@ export function CustomerQueueInterface({ customer }: Props) {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={fetchData} disabled={loading} variant="secondary">
+            <Button
+              onClick={handleRefresh}
+              disabled={loading}
+              variant="secondary"
+            >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
               />
@@ -123,7 +106,7 @@ export function CustomerQueueInterface({ customer }: Props) {
         {/* Main Content */}
         {mySpot ? (
           <div className="mb-8">
-            <MyQueueSpot spot={mySpot} onLeave={fetchData} />
+            <MyQueueSpot spot={mySpot} />
           </div>
         ) : (
           <>
@@ -177,25 +160,17 @@ export function CustomerQueueInterface({ customer }: Props) {
             ) : (
               <>
                 {activeTab === "join" && (
-                  <QueueList
-                    houses={houses}
-                    customerData={customerData}
-                    onJoined={fetchData}
-                  />
+                  <QueueList houses={houses} customerData={customerData} />
                 )}
                 {activeTab === "reserve" && (
                   <ReservationForm
                     houses={houses}
                     customerData={customerData}
-                    onCreated={fetchData}
                     reservationAttempts={customer.reservationAttempts}
                   />
                 )}
                 {activeTab === "code" && (
-                  <JoinReservation
-                    customerData={customerData}
-                    onJoined={fetchData}
-                  />
+                  <JoinReservation customerData={customerData} />
                 )}
               </>
             )}

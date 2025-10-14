@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -27,42 +26,22 @@ import {
   Ticket as TicketIcon,
   LogOut,
 } from "lucide-react";
-import { toast } from "sonner";
 import { QueueSpotWithDetails } from "@/lib/types/queue";
+import { useLeaveQueue } from "@/hooks/useCustomerMutations";
 
 interface Props {
   spot: QueueSpotWithDetails;
-  onLeave: () => void;
 }
 
-export function MyQueueSpot({ spot, onLeave }: Props) {
-  const [leaving, setLeaving] = useState(false);
+export function MyQueueSpot({ spot }: Props) {
+  const leaveQueueMutation = useLeaveQueue();
 
-  const handleLeaveQueue = async () => {
-    try {
-      setLeaving(true);
-      const response = await fetch("/api/customer/leave-queue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: spot.customerId,
-        }),
-      });
+  const handleLeaveQueue = () => {
+    if (!spot.customerId) return;
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Successfully left the queue");
-        onLeave();
-      } else {
-        toast.error(result.error || "Failed to leave queue");
-      }
-    } catch (error) {
-      toast.error("Failed to leave queue");
-      console.error(error);
-    } finally {
-      setLeaving(false);
-    }
+    leaveQueueMutation.mutate({
+      studentId: spot.customerId,
+    });
   };
 
   const isRepresentative =
@@ -80,7 +59,11 @@ export function MyQueueSpot({ spot, onLeave }: Props) {
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" disabled={leaving}>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={leaveQueueMutation.isPending}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Leave Queue
               </Button>
@@ -114,7 +97,9 @@ export function MyQueueSpot({ spot, onLeave }: Props) {
                   onClick={handleLeaveQueue}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  {leaving ? "Leaving..." : "Yes, Leave Queue"}
+                  {leaveQueueMutation.isPending
+                    ? "Leaving..."
+                    : "Yes, Leave Queue"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

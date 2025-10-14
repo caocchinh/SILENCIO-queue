@@ -9,67 +9,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Trash2, Edit2 } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Trash2 } from "lucide-react";
 import { HauntedHouseWithQueues } from "@/lib/types/queue";
+import {
+  useCreateHauntedHouse,
+  useDeleteHauntedHouse,
+} from "@/hooks/useAdminMutations";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
-  onRefresh: () => void;
 }
 
-export function HauntedHouseManager({ houses, onRefresh }: Props) {
-  const [creating, setCreating] = useState(false);
+export function HauntedHouseManager({ houses }: Props) {
   const [newHouse, setNewHouse] = useState({ name: "", duration: 15 });
 
-  const handleCreate = async () => {
-    try {
-      setCreating(true);
-      const response = await fetch("/api/haunted-houses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newHouse),
-      });
+  const createHouseMutation = useCreateHauntedHouse();
+  const deleteHouseMutation = useDeleteHauntedHouse();
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Haunted house created successfully!");
-        setNewHouse({ name: "", duration: 15 });
-        onRefresh();
-      } else {
-        toast.error(result.error || "Failed to create haunted house");
-      }
-    } catch (error) {
-      toast.error("Failed to create haunted house");
-      console.error(error);
-    } finally {
-      setCreating(false);
-    }
+  const handleCreate = () => {
+    createHouseMutation.mutate(newHouse, {
+      onSuccess: (data) => {
+        if (data.success) {
+          setNewHouse({ name: "", duration: 15 });
+        }
+      },
+    });
   };
 
-  const handleDelete = async (name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This will delete all associated queues and spots.`)) {
+  const handleDelete = (name: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${name}"? This will delete all associated queues and spots.`
+      )
+    ) {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/haunted-houses/${encodeURIComponent(name)}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Haunted house deleted successfully!");
-        onRefresh();
-      } else {
-        toast.error(result.error || "Failed to delete haunted house");
-      }
-    } catch (error) {
-      toast.error("Failed to delete haunted house");
-      console.error(error);
-    }
+    deleteHouseMutation.mutate({ name });
   };
 
   return (
@@ -106,10 +82,10 @@ export function HauntedHouseManager({ houses, onRefresh }: Props) {
             />
             <Button
               onClick={handleCreate}
-              disabled={creating || !newHouse.name}
+              disabled={createHouseMutation.isPending || !newHouse.name}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Create
+              {createHouseMutation.isPending ? "Creating..." : "Create"}
             </Button>
           </div>
         </CardContent>
@@ -145,7 +121,8 @@ export function HauntedHouseManager({ houses, onRefresh }: Props) {
                         <div key={q.id} className="flex justify-between">
                           <span>Queue {q.queueNumber}:</span>
                           <span>
-                            {q.stats.occupiedSpots}/{q.stats.totalSpots} occupied
+                            {q.stats.occupiedSpots}/{q.stats.totalSpots}{" "}
+                            occupied
                           </span>
                         </div>
                       ))}
@@ -162,4 +139,3 @@ export function HauntedHouseManager({ houses, onRefresh }: Props) {
     </div>
   );
 }
-

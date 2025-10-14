@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,8 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Users, Clock } from "lucide-react";
-import { toast } from "sonner";
 import { HauntedHouseWithQueues, QueueWithStats } from "@/lib/types/queue";
+import { useJoinQueue } from "@/hooks/useCustomerMutations";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
@@ -22,38 +21,16 @@ interface Props {
     homeroom: string;
     ticketType: string;
   };
-  onJoined: () => void;
 }
 
-export function QueueList({ houses, customerData, onJoined }: Props) {
-  const [joining, setJoining] = useState<string | null>(null);
+export function QueueList({ houses, customerData }: Props) {
+  const joinQueueMutation = useJoinQueue();
 
-  const handleJoinQueue = async (queueId: string) => {
-    try {
-      setJoining(queueId);
-      const response = await fetch("/api/customer/join-queue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          queueId,
-          customerData,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Successfully joined the queue!");
-        onJoined();
-      } else {
-        toast.error(result.error || "Failed to join queue");
-      }
-    } catch (error) {
-      toast.error("Failed to join queue");
-      console.error(error);
-    } finally {
-      setJoining(null);
-    }
+  const handleJoinQueue = (queueId: string) => {
+    joinQueueMutation.mutate({
+      queueId,
+      customerData,
+    });
   };
 
   return (
@@ -76,7 +53,9 @@ export function QueueList({ houses, customerData, onJoined }: Props) {
                     className="flex items-center justify-between p-4 border rounded-lg bg-gray-50"
                   >
                     <div className="flex-1">
-                      <div className="font-semibold">Queue {queue.queueNumber}</div>
+                      <div className="font-semibold">
+                        Queue {queue.queueNumber}
+                      </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
                         {queue.stats.availableSpots} spots available out of{" "}
@@ -99,11 +78,11 @@ export function QueueList({ houses, customerData, onJoined }: Props) {
                     <Button
                       onClick={() => handleJoinQueue(queue.id)}
                       disabled={
-                        joining === queue.id ||
+                        joinQueueMutation.isPending ||
                         queue.stats.availableSpots === 0
                       }
                     >
-                      {joining === queue.id
+                      {joinQueueMutation.isPending
                         ? "Joining..."
                         : queue.stats.availableSpots === 0
                         ? "Full"
@@ -121,4 +100,3 @@ export function QueueList({ houses, customerData, onJoined }: Props) {
     </div>
   );
 }
-

@@ -1,43 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { HauntedHouseManager } from "@/components/admin/HauntedHouseManager";
 import { QueueManager } from "@/components/admin/QueueManager";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { HauntedHouseWithQueues } from "@/lib/types/queue";
+import { useHauntedHouses } from "@/hooks/useHauntedHouses";
 
 export default function AdminPage() {
-  const [houses, setHouses] = useState<HauntedHouseWithQueues[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"houses" | "queues">("houses");
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/haunted-houses");
-      const result = await response.json();
-      if (result.success) {
-        setHouses(result.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: houses = [], isLoading: loading, refetch } = useHauntedHouses();
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <Button onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          <Button onClick={() => refetch()} disabled={loading}>
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -73,16 +56,11 @@ export default function AdminPage() {
           </div>
         ) : (
           <>
-            {activeTab === "houses" && (
-              <HauntedHouseManager houses={houses} onRefresh={fetchData} />
-            )}
-            {activeTab === "queues" && (
-              <QueueManager houses={houses} onRefresh={fetchData} />
-            )}
+            {activeTab === "houses" && <HauntedHouseManager houses={houses} />}
+            {activeTab === "queues" && <QueueManager houses={houses} />}
           </>
         )}
       </div>
     </div>
   );
 }
-

@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Users } from "lucide-react";
-import { toast } from "sonner";
 import { HauntedHouseWithQueues, QueueWithStats } from "@/lib/types/queue";
+import { useCreateReservation } from "@/hooks/useCustomerMutations";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
@@ -22,50 +22,25 @@ interface Props {
     homeroom: string;
     ticketType: string;
   };
-  onCreated: () => void;
   reservationAttempts: number;
 }
 
 export function ReservationForm({
   houses,
   customerData,
-  onCreated,
   reservationAttempts,
 }: Props) {
-  const [creating, setCreating] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState("");
   const [maxSpots, setMaxSpots] = useState(2);
 
-  const handleCreateReservation = async () => {
-    try {
-      setCreating(true);
-      const response = await fetch("/api/customer/create-reservation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          queueId: selectedQueue,
-          maxSpots,
-          customerData,
-        }),
-      });
+  const createReservationMutation = useCreateReservation();
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(
-          `Reservation created! Your code is: ${result.data.code}`,
-          { duration: 10000 }
-        );
-        onCreated();
-      } else {
-        toast.error(result.error || "Failed to create reservation");
-      }
-    } catch (error) {
-      toast.error("Failed to create reservation");
-      console.error(error);
-    } finally {
-      setCreating(false);
-    }
+  const handleCreateReservation = () => {
+    createReservationMutation.mutate({
+      queueId: selectedQueue,
+      maxSpots,
+      customerData,
+    });
   };
 
   const queues = houses.flatMap((house) =>
@@ -162,10 +137,14 @@ export function ReservationForm({
 
           <Button
             onClick={handleCreateReservation}
-            disabled={creating || !selectedQueue || reservationAttempts >= 2}
+            disabled={
+              createReservationMutation.isPending ||
+              !selectedQueue ||
+              reservationAttempts >= 2
+            }
             className="w-full"
           >
-            {creating
+            {createReservationMutation.isPending
               ? "Creating..."
               : reservationAttempts >= 2
               ? "Max Attempts Reached"
