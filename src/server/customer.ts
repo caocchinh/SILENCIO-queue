@@ -16,7 +16,6 @@ import { eq, and, isNull, sql, asc } from "drizzle-orm";
 import {
   customerHasQueueSpot,
   findFirstAvailableSpot,
-  getOrCreateCustomer,
   getAvailableSpotCount,
   generateReservationId,
   generateReservationCode,
@@ -28,35 +27,7 @@ import {
   createActionSuccess,
 } from "@/constants/errors";
 import { retryDatabase } from "@/dal/retry";
-import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
-
-// Helper function to verify customer ticket type
-async function verifyCustomerTicketType(
-  studentId: string
-): Promise<ActionResponse<void>> {
-  try {
-    const customer = await retryDatabase(
-      () =>
-        db.query.customer.findFirst({
-          where: eq(customerSchema.studentId, studentId),
-        }),
-      "verify customer ticket type"
-    );
-
-    if (!customer) {
-      return createActionError("DOES_NOT_HAVE_TICKET");
-    }
-
-    if (UNSUPPORT_TICKET_TYPE.includes(customer.ticketType)) {
-      return createActionError("TICKET_TYPE_NOT_SUPPORTED");
-    }
-
-    return createActionSuccess();
-  } catch (err) {
-    console.error("Customer ticket verification failed:", err);
-    return createActionError("DATABASE_ERROR");
-  }
-}
+import { verifyCustomerSession } from "@/dal/verifySession";
 
 // Join a queue
 export async function joinQueue(params: unknown): Promise<ActionResponse> {
@@ -90,13 +61,16 @@ export async function joinQueue(params: unknown): Promise<ActionResponse> {
     }
 
     // Get or create customer first
-    const customer = await getOrCreateCustomer(customerData);
+    const customerSession = await verifyCustomerSession();
 
-    // Verify customer ticket type
-    const ticketCheck = await verifyCustomerTicketType(customer.studentId);
-    if (!ticketCheck.success) {
-      return ticketCheck;
+    if (!customerSession.session) {
+      return createActionError("UNAUTHORIZED");
     }
+
+    if (!customerSession.customer) {
+      return createActionError("UNAUTHORIZED");
+    }
+    const customer = customerSession.customer;
 
     // Check if customer already has a queue spot
     const hasSpot = await customerHasQueueSpot(customerData.studentId);
@@ -161,16 +135,24 @@ export async function leaveQueue(params: {
     }
 
     // Verify customer ticket type
-    const ticketCheck = await verifyCustomerTicketType(studentId);
-    if (!ticketCheck.success) {
-      return ticketCheck;
+    const customerSession = await verifyCustomerSession();
+    if (!customerSession.session) {
+      return createActionError("UNAUTHORIZED");
     }
 
+    if (!customerSession.customer) {
+      return createActionError("UNAUTHORIZED");
+    }
+    const customer = customerSession.customer;
+
+    if (studentId !== customer.studentId) {
+      return createActionError("UNAUTHORIZED");
+    }
     // Find customer's current spot
     const spot = await retryDatabase(
       () =>
         db.query.queueSpot.findFirst({
-          where: eq(queueSpot.customerId, studentId),
+          where: eq(queueSpot.customerId, customer.studentId),
           with: {
             reservation: true,
           },
@@ -185,7 +167,7 @@ export async function leaveQueue(params: {
     // If customer is part of a reservation
     if (spot.reservationId && spot.reservation) {
       const isRepresentative =
-        spot.reservation.representativeCustomerId === studentId;
+        spot.reservation.representativeCustomerId === customer.studentId;
 
       if (isRepresentative) {
         // If representative leaves, cancel the entire reservation and increment their attempts
@@ -298,6 +280,20 @@ export async function createReservation(
     const { hauntedHouseName, queueNumber, maxSpots, customerData } =
       validationResult.data;
 
+    const customerSession = await verifyCustomerSession();
+    if (!customerSession.session) {
+      return createActionError("UNAUTHORIZED");
+    }
+
+    if (!customerSession.customer) {
+      return createActionError("UNAUTHORIZED");
+    }
+    const customer = customerSession.customer;
+
+    if (customerData.studentId !== customer.studentId) {
+      return createActionError("UNAUTHORIZED");
+    }
+
     // Find the queue by composite key
     const queueData = await retryDatabase(
       () =>
@@ -312,15 +308,6 @@ export async function createReservation(
 
     if (!queueData) {
       return createActionError("NOT_FOUND", "Queue not found");
-    }
-
-    // Get or create customer
-    const customer = await getOrCreateCustomer(customerData);
-
-    // Verify customer ticket type
-    const ticketCheck = await verifyCustomerTicketType(customer.studentId);
-    if (!ticketCheck.success) {
-      return ticketCheck;
     }
 
     // Check if customer already has a queue spot
@@ -476,15 +463,20 @@ export async function joinReservation(
     const { code, customerData } = validationResult.data;
 
     // Get or create customer
-    const customer = await getOrCreateCustomer(customerData);
-
-    // Verify customer ticket type
-    const ticketCheck = await verifyCustomerTicketType(customer.studentId);
-    if (!ticketCheck.success) {
-      return ticketCheck;
+    const customerSession = await verifyCustomerSession();
+    if (!customerSession.session) {
+      return createActionError("UNAUTHORIZED");
     }
 
-    // Check if customer already has a queue spot
+    if (!customerSession.customer) {
+      return createActionError("UNAUTHORIZED");
+    }
+
+    const customer = customerSession.customer;
+    if (customerData.studentId !== customer.studentId) {
+      return createActionError("UNAUTHORIZED");
+    }
+
     const hasSpot = await customerHasQueueSpot(customer.studentId);
     if (hasSpot) {
       return createActionError("ALREADY_IN_QUEUE");

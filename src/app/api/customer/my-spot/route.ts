@@ -9,7 +9,15 @@ export async function GET(request: NextRequest) {
     // Verify customer session and ticket type
     const customerSession = await verifyCustomerSession();
 
-    if (!customerSession.session && !customerSession.customer) {
+    if (!customerSession.session) {
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "Valid customer session required"
+      );
+    }
+
+    if (!customerSession.customer) {
       return createApiError(
         "UNAUTHORIZED",
         HTTP_STATUS.FORBIDDEN,

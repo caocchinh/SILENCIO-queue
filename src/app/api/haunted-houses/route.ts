@@ -7,14 +7,27 @@ import { retryDatabase } from "@/dal/retry";
 // GET /api/haunted-houses - Get all haunted houses
 export async function GET() {
   try {
-    const session = await verifyCustomerSession();
+    const customerSession = await verifyCustomerSession();
+
+    if (!customerSession.session) {
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "Valid customer session required"
+      );
+    }
 
     if (
-      session.session === null ||
-      (session.customer === null && session.session.user.role !== "admin")
+      !customerSession.customer &&
+      customerSession.session.user.role !== "admin"
     ) {
-      return createApiError("UNAUTHORIZED", HTTP_STATUS.FORBIDDEN);
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "Valid customer session required"
+      );
     }
+
     const houses = await retryDatabase(
       () =>
         db.query.hauntedHouse.findMany({

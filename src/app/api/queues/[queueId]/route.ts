@@ -14,7 +14,18 @@ export async function GET(
     // Verify customer session and ticket type
     const customerSession = await verifyCustomerSession();
 
-    if (!customerSession) {
+    if (!customerSession.session) {
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "Valid customer session required"
+      );
+    }
+
+    if (
+      !customerSession.customer &&
+      customerSession.session.user.role !== "admin"
+    ) {
       return createApiError(
         "UNAUTHORIZED",
         HTTP_STATUS.FORBIDDEN,

@@ -174,41 +174,6 @@ export function calculateReservationExpiry(maxSpots: number): Date {
   return new Date(Date.now() + minutesToAdd * 60 * 1000);
 }
 
-// Get or create customer
-export async function getOrCreateCustomer(customerData: {
-  studentId: string;
-  name: string;
-  email: string;
-  homeroom: string;
-  ticketType: string;
-}) {
-  const existingCustomer = await retryDatabase(
-    () =>
-      db.query.customer.findFirst({
-        where: eq(customer.studentId, customerData.studentId),
-      }),
-    "check existing customer"
-  );
-
-  if (existingCustomer) {
-    return existingCustomer;
-  }
-
-  const [newCustomer] = await retryDatabase(
-    () =>
-      db
-        .insert(customer)
-        .values({
-          ...customerData,
-          reservationAttempts: 0,
-        })
-        .returning(),
-    "create new customer"
-  );
-
-  return newCustomer;
-}
-
 // Expire reservations (background job function)
 export async function expireReservations() {
   const now = new Date();
