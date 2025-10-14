@@ -12,8 +12,10 @@ import { customer } from "@/drizzle/schema";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
-import Navbar from "@/components/Navbar";
 import { retryAuth } from "@/dal/retry";
+import { Suspense } from "react";
+import { CustomerQueueInterface } from "@/components/customer/CustomerQueueInterface";
+import Navbar from "@/components/Navbar";
 
 export default async function DashboardPage() {
   let session;
@@ -80,12 +82,24 @@ export default async function DashboardPage() {
     );
   }
 
+  // Check if user is admin - redirect to admin dashboard
+  if (session.user.role === "admin") {
+    return (
+      <RedirectMessage
+        message="Redirecting to Admin Dashboard..."
+        subMessage="Please wait..."
+        redirectTo="/admin"
+      />
+    );
+  }
+
+  // Redirect customers to queue interface
   return (
-    <div className="h-[calc(100vh-40px)] relative flex items-start justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover p-4 flex-col">
-      <Navbar session={session} student={currentCustomer} />
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="h-[calc(100vh-40px)] relative flex items-start justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover p-4 flex-col">
+        <Navbar session={session} student={currentCustomer} />
+        <CustomerQueueInterface customer={currentCustomer} />
       </div>
-    </div>
+    </Suspense>
   );
 }
