@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustomerQueueSpot } from "@/server/queue-operations";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
+import { verifyCustomerSession } from "@/dal/verifySession";
 
 // GET /api/customer/my-spot?studentId=xxx - Get customer's current queue spot
 export async function GET(request: NextRequest) {
   try {
+    // Verify customer session and ticket type
+    const customerSession = await verifyCustomerSession();
+
+    if (!customerSession) {
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "Valid customer session required"
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const studentId = searchParams.get("studentId");
 
@@ -13,6 +25,15 @@ export async function GET(request: NextRequest) {
         "INVALID_INPUT",
         HTTP_STATUS.BAD_REQUEST,
         "Student ID is required"
+      );
+    }
+
+    // Verify that the studentId matches the authenticated customer
+    if (studentId !== customerSession.customer.studentId) {
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "You can only view your own queue spot"
       );
     }
 

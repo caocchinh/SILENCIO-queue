@@ -29,7 +29,6 @@ export default function AdminPage() {
   } = useQuery({
     queryKey: ["haunted-houses"],
     queryFn: fetchHauntedHouses,
-    refetchInterval: 30000,
   });
 
   return (

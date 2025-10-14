@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getQueueWithAvailability } from "@/server/queue-operations";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
+import { verifyCustomerSession } from "@/dal/verifySession";
 
 type Params = Promise<{ queueId: string }>;
 
@@ -10,6 +11,17 @@ export async function GET(
   { params }: { params: Params }
 ) {
   try {
+    // Verify customer session and ticket type
+    const customerSession = await verifyCustomerSession();
+
+    if (!customerSession) {
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "Valid customer session required"
+      );
+    }
+
     const { queueId } = await params;
 
     const queueData = await getQueueWithAvailability(queueId);

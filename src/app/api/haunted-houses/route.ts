@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/drizzle/db";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
+import { verifyCustomerSession } from "@/dal/verifySession";
 import { retryDatabase } from "@/dal/retry";
 
 // GET /api/haunted-houses - Get all haunted houses
 export async function GET() {
   try {
+    const session = await verifyCustomerSession();
+
+    if (
+      session.session === null ||
+      (session.customer === null && session.session.user.role !== "admin")
+    ) {
+      return createApiError("UNAUTHORIZED", HTTP_STATUS.FORBIDDEN);
+    }
     const houses = await retryDatabase(
       () =>
         db.query.hauntedHouse.findMany({

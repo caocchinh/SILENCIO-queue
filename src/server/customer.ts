@@ -1,7 +1,11 @@
 "use server";
 
 import { db } from "@/drizzle/db";
-import { queueSpot, reservation } from "@/drizzle/schema";
+import {
+  queueSpot,
+  reservation,
+  customer as customerSchema,
+} from "@/drizzle/schema";
 import {
   joinQueueSchema,
   createReservationSchema,
@@ -23,6 +27,35 @@ import {
   createActionSuccess,
 } from "@/constants/errors";
 import { retryDatabase } from "@/dal/retry";
+import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
+
+// Helper function to verify customer ticket type
+async function verifyCustomerTicketType(
+  studentId: string
+): Promise<ActionResponse<void>> {
+  try {
+    const customer = await retryDatabase(
+      () =>
+        db.query.customer.findFirst({
+          where: eq(customerSchema.studentId, studentId),
+        }),
+      "verify customer ticket type"
+    );
+
+    if (!customer) {
+      return createActionError("DOES_NOT_HAVE_TICKET");
+    }
+
+    if (UNSUPPORT_TICKET_TYPE.includes(customer.ticketType)) {
+      return createActionError("TICKET_TYPE_NOT_SUPPORTED");
+    }
+
+    return createActionSuccess();
+  } catch (err) {
+    console.error("Customer ticket verification failed:", err);
+    return createActionError("DATABASE_ERROR");
+  }
+}
 
 // Join a queue
 export async function joinQueue(params: unknown): Promise<ActionResponse> {
@@ -38,6 +71,15 @@ export async function joinQueue(params: unknown): Promise<ActionResponse> {
 
     const { queueId, customerData } = validationResult.data;
 
+    // Get or create customer first
+    const customer = await getOrCreateCustomer(customerData);
+
+    // Verify customer ticket type
+    const ticketCheck = await verifyCustomerTicketType(customer.studentId);
+    if (!ticketCheck.success) {
+      return ticketCheck;
+    }
+
     // Check if customer already has a queue spot
     const hasSpot = await customerHasQueueSpot(customerData.studentId);
     if (hasSpot) {
@@ -49,9 +91,6 @@ export async function joinQueue(params: unknown): Promise<ActionResponse> {
     if (!spot) {
       return createActionError("NO_AVAILABLE_SPOTS");
     }
-
-    // Get or create customer
-    const customer = await getOrCreateCustomer(customerData);
 
     // Assign customer to spot
     const [updatedSpot] = await retryDatabase(
@@ -101,6 +140,12 @@ export async function leaveQueue(params: {
 
     if (!studentId) {
       return createActionError("INVALID_INPUT", "Student ID is required");
+    }
+
+    // Verify customer ticket type
+    const ticketCheck = await verifyCustomerTicketType(studentId);
+    if (!ticketCheck.success) {
+      return ticketCheck;
     }
 
     // Find customer's current spot
@@ -224,6 +269,12 @@ export async function createReservation(
 
     // Get or create customer
     const customer = await getOrCreateCustomer(customerData);
+
+    // Verify customer ticket type
+    const ticketCheck = await verifyCustomerTicketType(customer.studentId);
+    if (!ticketCheck.success) {
+      return ticketCheck;
+    }
 
     // Check if customer already has a queue spot
     const hasSpot = await customerHasQueueSpot(customer.studentId);
@@ -367,6 +418,12 @@ export async function joinReservation(
 
     // Get or create customer
     const customer = await getOrCreateCustomer(customerData);
+
+    // Verify customer ticket type
+    const ticketCheck = await verifyCustomerTicketType(customer.studentId);
+    if (!ticketCheck.success) {
+      return ticketCheck;
+    }
 
     // Check if customer already has a queue spot
     const hasSpot = await customerHasQueueSpot(customer.studentId);

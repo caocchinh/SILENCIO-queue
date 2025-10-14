@@ -4,6 +4,7 @@ import { hauntedHouse } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
 import { retryDatabase } from "@/dal/retry";
+import { verifyCustomerSession } from "@/dal/verifySession";
 
 type Params = Promise<{ name: string }>;
 
@@ -13,6 +14,17 @@ export async function GET(
   { params }: { params: Params }
 ) {
   try {
+    // Verify customer session and ticket type
+    const customerSession = await verifyCustomerSession();
+
+    if (!customerSession) {
+      return createApiError(
+        "UNAUTHORIZED",
+        HTTP_STATUS.FORBIDDEN,
+        "Valid customer session required"
+      );
+    }
+
     const { name } = await params;
     const decodedName = decodeURIComponent(name);
 
