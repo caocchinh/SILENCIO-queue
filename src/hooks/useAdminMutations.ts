@@ -6,6 +6,7 @@ import { toast } from "sonner";
 interface CreateHouseParams {
   name: string;
   duration: number;
+  breakTimePerQueue: number;
 }
 
 interface DeleteHouseParams {

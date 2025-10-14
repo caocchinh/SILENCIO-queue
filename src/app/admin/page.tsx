@@ -1,64 +1,57 @@
 "use client";
 
-import { useState } from "react";
 import { HauntedHouseManager } from "@/components/admin/HauntedHouseManager";
 import { QueueManager } from "@/components/admin/QueueManager";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
 import { useHauntedHouses } from "@/hooks/useHauntedHouses";
+import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"houses" | "queues">("houses");
-
-  const { data: houses = [], isLoading: loading, refetch } = useHauntedHouses();
+  const {
+    data: houses = [],
+    isLoading: loading,
+    refetch,
+    isError,
+  } = useHauntedHouses();
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-3xl font-semibold">Bảng điều khiển</h1>
           <Button onClick={() => refetch()} disabled={loading}>
             <RefreshCw
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              className={cn("mr-2 h-4 w-4", loading ? "animate-spin" : "")}
             />
-            Refresh
+            Tải lại
           </Button>
         </div>
 
-        <div className="mb-6">
-          <div className="flex gap-2 border-b">
-            <button
-              onClick={() => setActiveTab("houses")}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === "houses"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Haunted Houses
-            </button>
-            <button
-              onClick={() => setActiveTab("queues")}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === "queues"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Queues
-            </button>
-          </div>
-        </div>
-
-        {loading ? (
+        {isError ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">Loading...</p>
+            <p className="text-gray-500">
+              Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.
+            </p>
+          </div>
+        ) : loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Đang tải dữ liệu...</p>
           </div>
         ) : (
-          <>
-            {activeTab === "houses" && <HauntedHouseManager houses={houses} />}
-            {activeTab === "queues" && <QueueManager houses={houses} />}
-          </>
+          <Tabs defaultValue="houses" className="w-full">
+            <TabsList>
+              <TabsTrigger value="houses">Nhà ma</TabsTrigger>
+              <TabsTrigger value="queues">Hàng đợi lấy số</TabsTrigger>
+            </TabsList>
+            <TabsContent value="houses">
+              <HauntedHouseManager houses={houses} />
+            </TabsContent>
+            <TabsContent value="queues">
+              <QueueManager houses={houses} />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </div>

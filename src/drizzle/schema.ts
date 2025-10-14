@@ -86,6 +86,7 @@ export const verification = pgTable("verification", {
 export const hauntedHouse = pgTable("haunted_house", {
   name: text("name").notNull().primaryKey(),
   duration: integer("duration").notNull(), // Duration of the play in minutes
+  breakTimePerQueue: integer("break_time_per_queue").notNull(), // Break time per queue in minutes
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),

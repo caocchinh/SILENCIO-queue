@@ -21,8 +21,11 @@ interface Props {
 }
 
 export function HauntedHouseManager({ houses }: Props) {
-  const [newHouse, setNewHouse] = useState({ name: "", duration: 15 });
-
+  const [newHouse, setNewHouse] = useState({
+    name: "",
+    duration: 15,
+    breakTimePerQueue: 5,
+  });
   const createHouseMutation = useCreateHauntedHouse();
   const deleteHouseMutation = useDeleteHauntedHouse();
 
@@ -30,7 +33,7 @@ export function HauntedHouseManager({ houses }: Props) {
     createHouseMutation.mutate(newHouse, {
       onSuccess: (data) => {
         if (data.success) {
-          setNewHouse({ name: "", duration: 15 });
+          setNewHouse({ name: "", duration: 15, breakTimePerQueue: 5 });
         }
       },
     });
@@ -52,14 +55,13 @@ export function HauntedHouseManager({ houses }: Props) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Create Haunted House</CardTitle>
-          <CardDescription>Add a new haunted house attraction</CardDescription>
+          <CardTitle>Tạo nhà ma</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
             <input
               type="text"
-              placeholder="Haunted House Name"
+              placeholder="Tên nhà ma"
               value={newHouse.name}
               onChange={(e) =>
                 setNewHouse({ ...newHouse, name: e.target.value })
@@ -68,12 +70,12 @@ export function HauntedHouseManager({ houses }: Props) {
             />
             <input
               type="number"
-              placeholder="Duration (minutes)"
+              placeholder="Thời gian (phút)"
               value={newHouse.duration}
               onChange={(e) =>
                 setNewHouse({
                   ...newHouse,
-                  duration: parseInt(e.target.value) || 15,
+                  duration: parseInt(e.target.value),
                 })
               }
               className="w-32 px-4 py-2 border rounded-md"
