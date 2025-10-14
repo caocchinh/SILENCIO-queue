@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     // Verify customer session and ticket type
     const customerSession = await verifyCustomerSession();
 
-    if (!customerSession) {
+    if (!customerSession.session && !customerSession.customer) {
       return createApiError(
         "UNAUTHORIZED",
         HTTP_STATUS.FORBIDDEN,
@@ -28,16 +28,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!customerSession.customer) {
-      return createApiError(
-        "UNAUTHORIZED",
-        HTTP_STATUS.FORBIDDEN,
-        "Customer not found"
-      );
-    }
-
     // Verify that the studentId matches the authenticated customer
-    if (studentId !== customerSession.customer.studentId) {
+    if (studentId !== customerSession.customer?.studentId) {
       return createApiError(
         "UNAUTHORIZED",
         HTTP_STATUS.FORBIDDEN,

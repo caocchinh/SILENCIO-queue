@@ -38,9 +38,9 @@ export async function customerHasQueueSpot(
   return !!existingSpot;
 }
 
-// Get customer's current queue spot
+// Get customer's current queue spot with full details
 export async function getCustomerQueueSpot(studentId: string) {
-  return await retryDatabase(
+  const spot = await retryDatabase(
     () =>
       db.query.queueSpot.findFirst({
         where: eq(queueSpot.customerId, studentId),
@@ -48,12 +48,31 @@ export async function getCustomerQueueSpot(studentId: string) {
           queue: {
             with: {
               hauntedHouse: true,
+              spots: {
+                with: {
+                  customer: true,
+                },
+                orderBy: asc(queueSpot.spotNumber),
+              },
+            },
+          },
+          reservation: {
+            with: {
+              representative: true,
+              spots: {
+                with: {
+                  customer: true,
+                },
+                orderBy: asc(queueSpot.spotNumber),
+              },
             },
           },
         },
       }),
     "get customer queue spot"
   );
+
+  return spot;
 }
 
 // Create queue spots for a queue

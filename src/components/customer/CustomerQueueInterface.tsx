@@ -10,11 +10,11 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, ArrowLeft } from "lucide-react";
 import {
   Customer,
-  HauntedHouseWithQueues,
+  HauntedHouseWithDetailedQueues,
   QueueSpotWithDetails,
 } from "@/lib/types/queue";
 
-async function fetchHauntedHouses(): Promise<HauntedHouseWithQueues[]> {
+async function fetchHauntedHouses(): Promise<HauntedHouseWithDetailedQueues[]> {
   const response = await fetch("/api/haunted-houses");
   const result = await response.json();
 

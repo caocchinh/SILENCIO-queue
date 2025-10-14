@@ -49,9 +49,12 @@ export type QueueWithDetails = Queue & {
 export type QueueSpotWithDetails = QueueSpot & {
   queue?: Queue & {
     hauntedHouse?: HauntedHouse;
+    spots?: (QueueSpot & {
+      customer?: Customer;
+    })[];
   };
   customer?: Customer;
-  reservation?: Reservation;
+  reservation?: ReservationWithDetails;
 };
 
 export type ReservationWithDetails = Reservation & {

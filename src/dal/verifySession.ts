@@ -32,10 +32,6 @@ export const verifyCustomerSession = cache(async () => {
     return { session, customer: null };
   }
 
-  if (!session || session.user.role === "admin") {
-    return { session, customer: null };
-  }
-
   const currentCustomer = await retryDatabase(
     () =>
       db.query.customer.findFirst({

@@ -96,7 +96,7 @@ export default async function DashboardPage() {
   // Redirect customers to queue interface
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="h-[calc(100vh-40px)] relative flex items-start justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover p-4 flex-col">
+      <div className="relative flex items-start justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover p-4 flex-col">
         <Navbar session={session} student={currentCustomer} />
         <CustomerQueueInterface customer={currentCustomer} />
       </div>

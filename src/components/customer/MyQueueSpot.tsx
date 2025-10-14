@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -27,6 +28,10 @@ import {
   Users,
   Ticket as TicketIcon,
   LogOut,
+  Copy,
+  CheckCircle,
+  AlertTriangle,
+  Timer,
 } from "lucide-react";
 import { QueueSpotWithDetails } from "@/lib/types/queue";
 import { leaveQueue } from "@/server/customer";
@@ -37,6 +42,10 @@ interface Props {
 
 export function MyQueueSpot({ spot }: Props) {
   const queryClient = useQueryClient();
+  const [copied, setCopied] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [isReservationExpiringSoon, setIsReservationExpiringSoon] =
+    useState(false);
 
   const leaveQueueMutation = useMutation({
     mutationFn: leaveQueue,
@@ -65,141 +74,498 @@ export function MyQueueSpot({ spot }: Props) {
     });
   };
 
+  const handleCopyCode = () => {
+    if (spot.reservation?.code) {
+      navigator.clipboard.writeText(spot.reservation.code);
+      setCopied(true);
+      toast.success("Reservation code copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const isRepresentative =
     spot.reservation?.representativeCustomerId === spot.customerId;
 
+  // Update countdown timer every second
+  useEffect(() => {
+    if (!spot.reservation?.expiresAt) return;
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(spot.reservation!.expiresAt).getTime();
+      const diff = expiry - now;
+
+      if (diff <= 0) {
+        setTimeRemaining("Expired");
+        setIsReservationExpiringSoon(false);
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      const timeStr = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+      setTimeRemaining(timeStr);
+      setIsReservationExpiringSoon(minutes < 2);
+    };
+
+    // Update immediately
+    updateTimer();
+
+    // Set up interval to update every second
+    const interval = setInterval(updateTimer, 1000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
+  }, [spot.reservation, spot.reservation?.expiresAt]);
+
+  // Calculate queue statistics
+  const allSpots = spot.queue?.spots || [];
+  const availableSpots = allSpots.filter(
+    (s) => s.status === "available"
+  ).length;
+  const occupiedSpots = allSpots.filter((s) => s.status === "occupied").length;
+  const reservedSpots = allSpots.filter((s) => s.status === "reserved").length;
+  const totalSpots = allSpots.length;
+
+  // Get list of people in queue (occupied spots only)
+  const peopleInQueue = allSpots
+    .filter((s) => s.customer && s.status === "occupied")
+    .map((s) => ({
+      spotNumber: s.spotNumber,
+      customer: s.customer!,
+      isYou: s.customerId === spot.customerId,
+    }));
+
+  // Get people in the same reservation if applicable
+  const peopleInReservation =
+    spot.reservation?.spots
+      ?.filter((s) => s.customer)
+      .map((s) => ({
+        spotNumber: s.spotNumber,
+        customer: s.customer!,
+        isYou: s.customerId === spot.customerId,
+        isRepresentative:
+          s.customerId === spot.reservation?.representativeCustomerId,
+      })) || [];
+
+  const spotsNeededForReservation = spot.reservation
+    ? spot.reservation.maxSpots - spot.reservation.currentSpots
+    : 0;
+
   return (
-    <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-500">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-2xl text-green-700">
-              ✓ You&apos;re in the Queue!
-            </CardTitle>
-            <CardDescription>Your spot has been reserved</CardDescription>
+    <div className="space-y-4">
+      <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-500">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-2xl text-green-700">
+                ✓ You&apos;re in the Queue!
+              </CardTitle>
+              <CardDescription>Your spot has been reserved</CardDescription>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={leaveQueueMutation.isPending}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Leave Queue
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Leave Queue?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {isRepresentative ? (
+                      <>
+                        You are the representative of a reservation. Leaving
+                        will <strong>cancel the entire reservation</strong> and
+                        release all spots (including those of people who already
+                        joined).
+                      </>
+                    ) : spot.reservation ? (
+                      <>
+                        You will be removed from this group reservation. The
+                        reservation will continue for other members.
+                      </>
+                    ) : (
+                      <>
+                        Are you sure you want to leave this queue? Your spot
+                        will become available for others.
+                      </>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleLeaveQueue}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {leaveQueueMutation.isPending
+                      ? "Leaving..."
+                      : "Yes, Leave Queue"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={leaveQueueMutation.isPending}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Leave Queue
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Leave Queue?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {isRepresentative ? (
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="font-semibold">
+                  {spot.queue?.hauntedHouse?.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Queue {spot.queue?.queueNumber} - Spot #{spot.spotNumber}
+                </p>
+              </div>
+            </div>
+
+            {spot.queue?.queueStartTime && spot.queue?.queueEndTime && (
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-semibold">
+                    {new Date(spot.queue.queueStartTime).toLocaleTimeString(
+                      [],
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )}{" "}
+                    -{" "}
+                    {new Date(spot.queue.queueEndTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {Math.round(
+                      (new Date(spot.queue.queueEndTime).getTime() -
+                        new Date(spot.queue.queueStartTime).getTime()) /
+                        60000
+                    )}{" "}
+                    minute experience
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {spot.occupiedAt && (
+              <div className="flex items-center gap-3">
+                <TicketIcon className="h-5 w-5 text-orange-600" />
+                <div>
+                  <p className="font-semibold">Joined At</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(spot.occupiedAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 border-t">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">
+                  Please wait for your turn and have your ticket ready!
+                </p>
+                {isRepresentative && (
+                  <p className="text-sm text-orange-600 font-medium mt-2 flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    You are the representative - leaving will cancel the entire
+                    reservation
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Queue Statistics Card */}
+      <Card className="bg-white/90 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="text-lg">Queue Statistics</CardTitle>
+          <CardDescription>
+            {spot.queue?.hauntedHouse?.name} - Queue {spot.queue?.queueNumber}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="text-2xl font-bold text-green-700">
+                {availableSpots}
+              </div>
+              <div className="text-xs text-green-600">Available</div>
+            </div>
+            <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-2xl font-bold text-blue-700">
+                {occupiedSpots}
+              </div>
+              <div className="text-xs text-blue-600">Occupied</div>
+            </div>
+            <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="text-2xl font-bold text-orange-700">
+                {reservedSpots}
+              </div>
+              <div className="text-xs text-orange-600">Reserved</div>
+            </div>
+            <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="text-2xl font-bold text-purple-700">
+                {totalSpots}
+              </div>
+              <div className="text-xs text-purple-600">Total</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Reservation Details for ALL Members */}
+      {spot.reservation && (
+        <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-400">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-600" />
+              Group Reservation Details
+              {isRepresentative && (
+                <span className="text-sm bg-purple-600 text-white px-2 py-0.5 rounded">
+                  Leader
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Reservation Code - Visible to ALL members */}
+            <div className="bg-white border-2 border-purple-300 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-purple-900">
+                  Reservation Code
+                </p>
+                {spot.reservation.status === "active" && timeRemaining && (
+                  <div
+                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
+                      isReservationExpiringSoon
+                        ? "bg-red-500 text-white"
+                        : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
+                    <Timer className="h-3 w-3" />
+                    {timeRemaining}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-3xl font-mono font-bold text-purple-900 tracking-wider">
+                  {spot.reservation.code}
+                </p>
+                <Button
+                  onClick={handleCopyCode}
+                  size="sm"
+                  variant="outline"
+                  className="border-purple-300"
+                >
+                  {copied ? (
                     <>
-                      You are the representative of a reservation. Leaving will{" "}
-                      <strong>cancel the entire reservation</strong> and release
-                      all spots (including those of people who already joined).
-                    </>
-                  ) : spot.reservation ? (
-                    <>
-                      You will be removed from this group reservation. The
-                      reservation will continue for other members.
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Copied!
                     </>
                   ) : (
                     <>
-                      Are you sure you want to leave this queue? Your spot will
-                      become available for others.
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
                     </>
                   )}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleLeaveQueue}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  {leaveQueueMutation.isPending
-                    ? "Leaving..."
-                    : "Yes, Leave Queue"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-3">
-          <div className="flex items-center gap-3">
-            <MapPin className="h-5 w-5 text-green-600" />
-            <div>
-              <p className="font-semibold">{spot.queue?.hauntedHouse?.name}</p>
-              <p className="text-sm text-muted-foreground">
-                Queue {spot.queue?.queueNumber} - Spot #{spot.spotNumber}
+                </Button>
+              </div>
+              <p className="text-xs text-purple-600 mt-2">
+                Share this code with your group members to join
               </p>
             </div>
-          </div>
 
-          {spot.queue?.queueStartTime && spot.queue?.queueEndTime && (
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="font-semibold">
-                  {Math.round(
-                    (new Date(spot.queue.queueEndTime).getTime() -
-                      new Date(spot.queue.queueStartTime).getTime()) /
-                      60000
-                  )}{" "}
-                  minutes
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Experience duration
-                </p>
-              </div>
-            </div>
-          )}
-
-          {spot.reservation && (
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-purple-600" />
-              <div>
-                <p className="font-semibold">Group Reservation</p>
-                <p className="text-sm text-muted-foreground">
+            {/* Reservation Progress */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">Group Progress</span>
+                <span className="text-sm">
                   {spot.reservation.currentSpots} / {spot.reservation.maxSpots}{" "}
                   people joined
-                </p>
+                </span>
               </div>
-            </div>
-          )}
-
-          {spot.occupiedAt && (
-            <div className="flex items-center gap-3">
-              <TicketIcon className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="font-semibold">Joined</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(spot.occupiedAt).toLocaleString()}
-                </p>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className={`h-3 rounded-full transition-all ${
+                    spot.reservation.currentSpots >= spot.reservation.maxSpots
+                      ? "bg-green-500"
+                      : isReservationExpiringSoon
+                      ? "bg-red-500"
+                      : "bg-purple-500"
+                  }`}
+                  style={{
+                    width: `${
+                      (spot.reservation.currentSpots /
+                        spot.reservation.maxSpots) *
+                      100
+                    }%`,
+                  }}
+                ></div>
               </div>
-            </div>
-          )}
-        </div>
 
-        <div className="pt-4 border-t">
-          <div className="flex items-start gap-2">
-            <div className="flex-1">
-              <p className="text-sm text-muted-foreground">
-                Please wait for your turn and have your ticket ready!
-              </p>
-              {isRepresentative && (
-                <p className="text-sm text-orange-600 font-medium mt-2">
-                  ⚠️ You are the representative - leaving will cancel the entire
-                  reservation
-                </p>
+              {spotsNeededForReservation > 0 && (
+                <div
+                  className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+                    isReservationExpiringSoon
+                      ? "bg-red-50 border border-red-200 text-red-800"
+                      : "bg-blue-50 border border-blue-200 text-blue-800"
+                  }`}
+                >
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold">
+                      {spotsNeededForReservation} more{" "}
+                      {spotsNeededForReservation === 1 ? "person" : "people"}{" "}
+                      needed
+                    </p>
+                    <p className="text-xs mt-1">
+                      If the group isn&apos;t full when the timer expires, ALL
+                      spots will be released
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {spot.reservation.currentSpots >= spot.reservation.maxSpots && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+                  <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                  <p className="font-semibold">
+                    Reservation complete! All spots filled.
+                  </p>
+                </div>
               )}
             </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+
+            {/* People in Reservation */}
+            <div>
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Group Members ({peopleInReservation.length})
+              </h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {peopleInReservation.map((person) => (
+                  <div
+                    key={person.spotNumber}
+                    className={`flex items-center justify-between p-2 rounded-lg text-sm ${
+                      person.isYou
+                        ? "bg-green-100 border border-green-300"
+                        : "bg-purple-50 border border-purple-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                          person.isYou
+                            ? "bg-green-500 text-white"
+                            : "bg-purple-500 text-white"
+                        }`}
+                      >
+                        #{person.spotNumber}
+                      </div>
+                      <div>
+                        <p className="font-semibold">
+                          {person.customer.name}
+                          {person.isYou && (
+                            <span className="ml-1 text-green-600">(You)</span>
+                          )}
+                          {person.isRepresentative && (
+                            <span className="ml-1 text-purple-600">
+                              ★ Leader
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {person.customer.studentId} •{" "}
+                          {person.customer.homeroom}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* People in Queue Card */}
+      <Card className="bg-white/90 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            People in Queue ({occupiedSpots})
+          </CardTitle>
+          <CardDescription>
+            Everyone currently waiting in this queue
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {peopleInQueue.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">
+              You&apos;re the only one in the queue right now
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {peopleInQueue.map((person) => (
+                <div
+                  key={person.spotNumber}
+                  className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                    person.isYou
+                      ? "bg-green-50 border-green-300 shadow-sm"
+                      : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                        person.isYou
+                          ? "bg-green-500 text-white"
+                          : "bg-blue-500 text-white"
+                      }`}
+                    >
+                      #{person.spotNumber}
+                    </div>
+                    <div>
+                      <p className="font-semibold">
+                        {person.customer.name}
+                        {person.isYou && (
+                          <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded">
+                            You
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {person.customer.studentId} • {person.customer.homeroom}{" "}
+                        • {person.customer.ticketType}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">
+                      Spot #{person.spotNumber}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -188,7 +188,7 @@ export async function leaveQueue(params: {
         spot.reservation.representativeCustomerId === studentId;
 
       if (isRepresentative) {
-        // If representative leaves, cancel the entire reservation
+        // If representative leaves, cancel the entire reservation and increment their attempts
         await retryDatabase(
           () =>
             db
@@ -214,6 +214,18 @@ export async function leaveQueue(params: {
               })
               .where(eq(reservation.id, spot.reservationId!)),
           "cancel reservation on representative leave"
+        );
+
+        // Increment reservation attempts for the representative since they used up one attempt
+        await retryDatabase(
+          () =>
+            db
+              .update(customerSchema)
+              .set({
+                reservationAttempts: sql`${customerSchema.reservationAttempts} + 1`,
+              })
+              .where(eq(customerSchema.studentId, studentId)),
+          "increment reservation attempts for representative"
         );
       } else {
         // Regular member leaves
@@ -321,6 +333,18 @@ export async function createReservation(
     if (customer.reservationAttempts >= 2) {
       return createActionError("MAX_RESERVATION_ATTEMPTS");
     }
+
+    // Increment reservation attempts since they're creating a reservation
+    await retryDatabase(
+      () =>
+        db
+          .update(customerSchema)
+          .set({
+            reservationAttempts: sql`${customerSchema.reservationAttempts} + 1`,
+          })
+          .where(eq(customerSchema.studentId, customer.studentId)),
+      "increment reservation attempts for creating reservation"
+    );
 
     // Check if queue has enough available spots
     const availableCount = await getAvailableSpotCount(queueData.id);
