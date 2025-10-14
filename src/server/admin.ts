@@ -416,6 +416,22 @@ export async function updateQueue(params: {
       return createActionError("NOT_FOUND", "Queue not found");
     }
 
+    // Check if there's conflicting name and haunted house name
+    const conflicting = await retryDatabase(
+      () =>
+        db.query.queue.findFirst({
+          where: and(
+            eq(queue.queueNumber, queueNumber ?? existing.queueNumber),
+            eq(queue.hauntedHouseName, existing.hauntedHouseName)
+          ),
+        }),
+      "check conflicting queue exists"
+    );
+
+    if (conflicting) {
+      return createActionError("ALREADY_EXISTS", "Queue already exists");
+    }
+
     // Update queue
     const [updated] = await retryDatabase(
       () =>

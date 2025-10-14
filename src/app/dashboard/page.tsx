@@ -42,15 +42,15 @@ export default async function DashboardPage() {
   }
 
   // Check if user is admin - redirect to admin dashboard
-  if (session.user.role === "admin") {
-    return (
-      <RedirectMessage
-        message="Redirecting to Admin Dashboard..."
-        subMessage="Please wait..."
-        redirectTo="/admin"
-      />
-    );
-  }
+  // if (session.user.role === "admin") {
+  //   return (
+  //     <RedirectMessage
+  //       message="Redirecting to Admin Dashboard..."
+  //       subMessage="Please wait..."
+  //       redirectTo="/admin"
+  //     />
+  //   );
+  // }
 
   const currentCustomer = await db.query.customer.findFirst({
     where: eq(customer.email, session.user.email),
