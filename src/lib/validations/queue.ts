@@ -27,6 +27,7 @@ export const updateHauntedHouseSchema = z.object({
 export const createQueueSchema = z.object({
   hauntedHouseName: z.string().min(1, "Haunted house name is required"),
   queueNumber: z.number().int().min(1, "Queue number must be at least 1"),
+  queueStartTime: z.date(),
   maxCustomers: z
     .number()
     .int()

@@ -104,6 +104,7 @@ export const queue = pgTable(
       .notNull()
       .references(() => hauntedHouse.name, { onDelete: "cascade" }),
     queueNumber: integer("queue_number").notNull(), // To distinguish multiple queues for same house
+    queueStartTime: timestamp("queue_start_time").notNull(), // Time when the queue starts
     maxCustomers: integer("max_customers").notNull(), // Set by admin
     createdAt: timestamp("created_at")
       .$defaultFn(() => new Date())

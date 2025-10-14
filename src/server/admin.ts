@@ -222,7 +222,7 @@ export async function createQueue(params: unknown): Promise<ActionResponse> {
       );
     }
 
-    const { hauntedHouseName, queueNumber, maxCustomers } =
+    const { hauntedHouseName, queueNumber, maxCustomers, queueStartTime } =
       validationResult.data;
 
     const queueId = generateQueueId();
@@ -237,6 +237,7 @@ export async function createQueue(params: unknown): Promise<ActionResponse> {
             hauntedHouseName,
             queueNumber,
             maxCustomers,
+            queueStartTime,
           })
           .returning(),
       "create queue"

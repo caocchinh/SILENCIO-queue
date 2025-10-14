@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +15,7 @@ import { HauntedHouseWithQueues } from "@/lib/types/queue";
 import { createHauntedHouse, deleteHauntedHouse } from "@/server/admin";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { errorToast, sucessToast } from "@/lib/utils";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
@@ -47,16 +47,24 @@ export function HauntedHouseManager({ houses }: Props) {
     mutationFn: createHauntedHouse,
     onSuccess: (data) => {
       if (data.success) {
-        toast.success("Haunted house created successfully!");
+        sucessToast({
+          message: "Nhà ma đã được tạo thành công!",
+          description:
+            "Nhà ma đã được tạo thành công. Vui lòng thêm lượt cho nhà ma này.",
+        });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         setNewHouse({ name: "", duration: 0, breakTimePerQueue: 0 });
         setValidationErrors({ duration: "", breakTimePerQueue: "" });
       } else {
-        throw new Error(data.message || "Failed to create haunted house");
+        throw new Error(
+          data.message || "Không thể tạo nhà ma. Đã có lỗi xảy ra."
+        );
       }
     },
     onError: (error) => {
-      toast.error("Failed to create haunted house");
+      errorToast({
+        message: "Không thể tạo nhà ma. Đã có lỗi xảy ra. " + error.message,
+      });
       console.error(error);
     },
   });
@@ -65,14 +73,21 @@ export function HauntedHouseManager({ houses }: Props) {
     mutationFn: deleteHauntedHouse,
     onSuccess: (data) => {
       if (data.success) {
-        toast.success("Haunted house deleted successfully!");
+        sucessToast({
+          message: "Nhà ma đã được xóa thành công!",
+          description: "Tất cả lượt của nhà ma đã bị xóa.",
+        });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
       } else {
-        throw new Error(data.message || "Failed to delete haunted house");
+        throw new Error(
+          data.message || "Không thể xóa nhà ma. Đã có lỗi xảy ra."
+        );
       }
     },
     onError: (error) => {
-      toast.error("Failed to delete haunted house");
+      errorToast({
+        message: "Không thể xóa nhà ma. Đã có lỗi xảy ra. " + error.message,
+      });
       console.error(error);
     },
   });
@@ -104,14 +119,14 @@ export function HauntedHouseManager({ houses }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap gap-4 w-full">
-      <Card className="min-w-[100%] sm:min-w-md w-">
+    <div className="flex flex-col lg:flex-row gap-4 w-full">
+      <Card className="w-full lg:w-96 lg:flex-shrink-0">
         <CardHeader>
           <CardTitle>Tạo nhà ma</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-5 items-start w-full flex-col">
-            <div className="w-full flex flex-col gap-1 w-full ">
+          <div className="space-y-4">
+            <div className="space-y-2">
               <Label htmlFor="house-name">Tên nhà ma</Label>
               <Input
                 id="house-name"
@@ -121,10 +136,9 @@ export function HauntedHouseManager({ houses }: Props) {
                 onChange={(e) =>
                   setNewHouse({ ...newHouse, name: e.target.value })
                 }
-                className="mt-1"
               />
             </div>
-            <div className="w -full flex flex-col gap-1 w-full ">
+            <div className="space-y-2">
               <Label htmlFor="house-duration">Độ dài mỗi lượt</Label>
               <Input
                 id="house-duration"
@@ -155,7 +169,7 @@ export function HauntedHouseManager({ houses }: Props) {
                 </p>
               )}
             </div>
-            <div className="w-full flex flex-col gap-1 w-full ">
+            <div className="space-y-2">
               <Label htmlFor="house-break-time">
                 Thời gian nghỉ giữa mỗi lượt
               </Label>
@@ -194,7 +208,7 @@ export function HauntedHouseManager({ houses }: Props) {
             <Button
               onClick={handleCreate}
               disabled={createHouseMutation.isPending || !isFormValid()}
-              className="mb-1 w-full cursor-pointer"
+              className="w-full cursor-pointer"
             >
               {createHouseMutation.isPending ? "Đang tạo..." : "Tạo"}
               {createHouseMutation.isPending ? (
@@ -207,7 +221,7 @@ export function HauntedHouseManager({ houses }: Props) {
         </CardContent>
       </Card>
 
-      <div className="flex-1 min-w-[100%] sm:min-w-md">
+      <div className="flex-1 w-full">
         {houses.map((house) => (
           <Card key={house.name}>
             <CardHeader>
