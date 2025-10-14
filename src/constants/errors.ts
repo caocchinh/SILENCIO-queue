@@ -12,6 +12,20 @@ export const ERROR_CODES = {
   UNKNOWN_ERROR: "unknown-error",
   DOES_NOT_HAVE_TICKET: "does-not-have-ticket",
   TICKET_TYPE_NOT_SUPPORTED: "ticket-type-not-supported",
+  // Validation errors
+  INVALID_INPUT: "invalid-input",
+  // Resource errors
+  NOT_FOUND: "not-found",
+  ALREADY_EXISTS: "already-exists",
+  // Queue and reservation errors
+  ALREADY_IN_QUEUE: "already-in-queue",
+  NO_AVAILABLE_SPOTS: "no-available-spots",
+  MAX_RESERVATION_ATTEMPTS: "max-reservation-attempts",
+  INVALID_RESERVATION_CODE: "invalid-reservation-code",
+  RESERVATION_EXPIRED: "reservation-expired",
+  RESERVATION_FULL: "reservation-full",
+  NOT_IN_QUEUE: "not-in-queue",
+  CANNOT_CANCEL_RESERVATION: "cannot-cancel-reservation",
 } as const;
 
 // User-friendly error messages
@@ -28,6 +42,18 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.DOES_NOT_HAVE_TICKET]: "Bạn chưa mua vé. Vui lòng mua vé trước.",
   [ERROR_CODES.TICKET_TYPE_NOT_SUPPORTED]:
     "Loại vé bạn mua không được chơi nhà ma.",
+  [ERROR_CODES.INVALID_INPUT]: "Dữ liệu đầu vào không hợp lệ",
+  [ERROR_CODES.NOT_FOUND]: "Không tìm thấy tài nguyên",
+  [ERROR_CODES.ALREADY_EXISTS]: "Tài nguyên đã tồn tại",
+  [ERROR_CODES.ALREADY_IN_QUEUE]: "Bạn đã có trong hàng đợi",
+  [ERROR_CODES.NO_AVAILABLE_SPOTS]: "Không còn chỗ trống trong hàng đợi này",
+  [ERROR_CODES.MAX_RESERVATION_ATTEMPTS]:
+    "Đã đạt giới hạn số lần đặt chỗ (cho phép 2 lần)",
+  [ERROR_CODES.INVALID_RESERVATION_CODE]: "Mã đặt chỗ không hợp lệ",
+  [ERROR_CODES.RESERVATION_EXPIRED]: "Đặt chỗ đã hết hạn",
+  [ERROR_CODES.RESERVATION_FULL]: "Đặt chỗ đã đầy",
+  [ERROR_CODES.NOT_IN_QUEUE]: "Bạn không có trong hàng đợi nào",
+  [ERROR_CODES.CANNOT_CANCEL_RESERVATION]: "Không thể hủy đặt chỗ này",
 } as const;
 
 // HTTP status codes for API responses

@@ -2,6 +2,7 @@ import { db } from "@/drizzle/db";
 import { queue, queueSpot, reservation, customer } from "@/drizzle/schema";
 import { eq, and, lt, sql, asc, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { retryDatabase } from "@/dal/retry";
 
 // Generate unique IDs
 export function generateQueueId() {
@@ -30,24 +31,32 @@ export function generateReservationCode() {
 export async function customerHasQueueSpot(
   studentId: string
 ): Promise<boolean> {
-  const existingSpot = await db.query.queueSpot.findFirst({
-    where: eq(queueSpot.customerId, studentId),
-  });
+  const existingSpot = await retryDatabase(
+    () =>
+      db.query.queueSpot.findFirst({
+        where: eq(queueSpot.customerId, studentId),
+      }),
+    "check customer queue spot"
+  );
   return !!existingSpot;
 }
 
 // Get customer's current queue spot
 export async function getCustomerQueueSpot(studentId: string) {
-  return await db.query.queueSpot.findFirst({
-    where: eq(queueSpot.customerId, studentId),
-    with: {
-      queue: {
+  return await retryDatabase(
+    () =>
+      db.query.queueSpot.findFirst({
+        where: eq(queueSpot.customerId, studentId),
         with: {
-          hauntedHouse: true,
+          queue: {
+            with: {
+              hauntedHouse: true,
+            },
+          },
         },
-      },
-    },
-  });
+      }),
+    "get customer queue spot"
+  );
 }
 
 // Create queue spots for a queue
@@ -59,7 +68,10 @@ export async function createQueueSpots(queueId: string, maxCustomers: number) {
     status: "available" as const,
   }));
 
-  await db.insert(queueSpot).values(spots);
+  await retryDatabase(
+    () => db.insert(queueSpot).values(spots),
+    "create queue spots"
+  );
   return spots;
 }
 
@@ -68,10 +80,14 @@ export async function adjustQueueSpots(
   queueId: string,
   newMaxCustomers: number
 ) {
-  const existingSpots = await db.query.queueSpot.findMany({
-    where: eq(queueSpot.queueId, queueId),
-    orderBy: asc(queueSpot.spotNumber),
-  });
+  const existingSpots = await retryDatabase(
+    () =>
+      db.query.queueSpot.findMany({
+        where: eq(queueSpot.queueId, queueId),
+        orderBy: asc(queueSpot.spotNumber),
+      }),
+    "fetch existing queue spots"
+  );
 
   const currentCount = existingSpots.length;
 
@@ -84,7 +100,10 @@ export async function adjustQueueSpots(
       spotNumber: currentCount + i + 1,
       status: "available" as const,
     }));
-    await db.insert(queueSpot).values(newSpots);
+    await retryDatabase(
+      () => db.insert(queueSpot).values(newSpots),
+      "add queue spots"
+    );
   } else if (newMaxCustomers < currentCount) {
     // Remove excess spots (only if they're available)
     const spotsToRemove = existingSpots
@@ -93,7 +112,10 @@ export async function adjustQueueSpots(
 
     if (spotsToRemove.length > 0) {
       for (const spot of spotsToRemove) {
-        await db.delete(queueSpot).where(eq(queueSpot.id, spot.id));
+        await retryDatabase(
+          () => db.delete(queueSpot).where(eq(queueSpot.id, spot.id)),
+          `delete spot ${spot.spotNumber}`
+        );
       }
     }
   }
@@ -101,25 +123,33 @@ export async function adjustQueueSpots(
 
 // Get available spots count for a queue
 export async function getAvailableSpotCount(queueId: string): Promise<number> {
-  const result = await db
-    .select({ count: count() })
-    .from(queueSpot)
-    .where(
-      and(eq(queueSpot.queueId, queueId), eq(queueSpot.status, "available"))
-    );
+  const result = await retryDatabase(
+    () =>
+      db
+        .select({ count: count() })
+        .from(queueSpot)
+        .where(
+          and(eq(queueSpot.queueId, queueId), eq(queueSpot.status, "available"))
+        ),
+    "get available spot count"
+  );
 
   return result[0]?.count ?? 0;
 }
 
 // Find first available spot in a queue
 export async function findFirstAvailableSpot(queueId: string) {
-  return await db.query.queueSpot.findFirst({
-    where: and(
-      eq(queueSpot.queueId, queueId),
-      eq(queueSpot.status, "available")
-    ),
-    orderBy: asc(queueSpot.spotNumber),
-  });
+  return await retryDatabase(
+    () =>
+      db.query.queueSpot.findFirst({
+        where: and(
+          eq(queueSpot.queueId, queueId),
+          eq(queueSpot.status, "available")
+        ),
+        orderBy: asc(queueSpot.spotNumber),
+      }),
+    "find first available spot"
+  );
 }
 
 // Calculate reservation expiration time
@@ -136,21 +166,29 @@ export async function getOrCreateCustomer(customerData: {
   homeroom: string;
   ticketType: string;
 }) {
-  const existingCustomer = await db.query.customer.findFirst({
-    where: eq(customer.studentId, customerData.studentId),
-  });
+  const existingCustomer = await retryDatabase(
+    () =>
+      db.query.customer.findFirst({
+        where: eq(customer.studentId, customerData.studentId),
+      }),
+    "check existing customer"
+  );
 
   if (existingCustomer) {
     return existingCustomer;
   }
 
-  const [newCustomer] = await db
-    .insert(customer)
-    .values({
-      ...customerData,
-      reservationAttempts: 0,
-    })
-    .returning();
+  const [newCustomer] = await retryDatabase(
+    () =>
+      db
+        .insert(customer)
+        .values({
+          ...customerData,
+          reservationAttempts: 0,
+        })
+        .returning(),
+    "create new customer"
+  );
 
   return newCustomer;
 }
@@ -160,38 +198,54 @@ export async function expireReservations() {
   const now = new Date();
 
   // Find expired active reservations
-  const expiredReservations = await db.query.reservation.findMany({
-    where: and(
-      eq(reservation.status, "active"),
-      lt(reservation.expiresAt, now)
-    ),
-  });
+  const expiredReservations = await retryDatabase(
+    () =>
+      db.query.reservation.findMany({
+        where: and(
+          eq(reservation.status, "active"),
+          lt(reservation.expiresAt, now)
+        ),
+      }),
+    "find expired reservations"
+  );
 
   for (const res of expiredReservations) {
     // Release all spots (including partially filled ones)
-    await db
-      .update(queueSpot)
-      .set({
-        customerId: null,
-        reservationId: null,
-        status: "available",
-        occupiedAt: null,
-      })
-      .where(eq(queueSpot.reservationId, res.id));
+    await retryDatabase(
+      () =>
+        db
+          .update(queueSpot)
+          .set({
+            customerId: null,
+            reservationId: null,
+            status: "available",
+            occupiedAt: null,
+          })
+          .where(eq(queueSpot.reservationId, res.id)),
+      `release spots for reservation ${res.code}`
+    );
 
     // Mark reservation as expired
-    await db
-      .update(reservation)
-      .set({ status: "expired" })
-      .where(eq(reservation.id, res.id));
+    await retryDatabase(
+      () =>
+        db
+          .update(reservation)
+          .set({ status: "expired" })
+          .where(eq(reservation.id, res.id)),
+      `expire reservation ${res.code}`
+    );
 
     // Increment representative's reservation attempts
-    await db
-      .update(customer)
-      .set({
-        reservationAttempts: sql`${customer.reservationAttempts} + 1`,
-      })
-      .where(eq(customer.studentId, res.representativeCustomerId));
+    await retryDatabase(
+      () =>
+        db
+          .update(customer)
+          .set({
+            reservationAttempts: sql`${customer.reservationAttempts} + 1`,
+          })
+          .where(eq(customer.studentId, res.representativeCustomerId)),
+      `increment reservation attempts for ${res.representativeCustomerId}`
+    );
   }
 
   return expiredReservations.length;
@@ -199,13 +253,17 @@ export async function expireReservations() {
 
 // Get queue with availability stats
 export async function getQueueWithAvailability(queueId: string) {
-  const queueData = await db.query.queue.findFirst({
-    where: eq(queue.id, queueId),
-    with: {
-      hauntedHouse: true,
-      spots: true,
-    },
-  });
+  const queueData = await retryDatabase(
+    () =>
+      db.query.queue.findFirst({
+        where: eq(queue.id, queueId),
+        with: {
+          hauntedHouse: true,
+          spots: true,
+        },
+      }),
+    "get queue with availability"
+  );
 
   if (!queueData) return null;
 
@@ -232,16 +290,20 @@ export async function getQueueWithAvailability(queueId: string) {
 
 // Get all queues for a haunted house with stats
 export async function getHauntedHouseQueues(hauntedHouseName: string) {
-  const queues = await db.query.queue.findMany({
-    where: eq(queue.hauntedHouseName, hauntedHouseName),
-    with: {
-      spots: true,
-      reservations: {
-        where: eq(reservation.status, "active"),
-      },
-    },
-    orderBy: asc(queue.queueNumber),
-  });
+  const queues = await retryDatabase(
+    () =>
+      db.query.queue.findMany({
+        where: eq(queue.hauntedHouseName, hauntedHouseName),
+        with: {
+          spots: true,
+          reservations: {
+            where: eq(reservation.status, "active"),
+          },
+        },
+        orderBy: asc(queue.queueNumber),
+      }),
+    "get haunted house queues"
+  );
 
   return queues.map((q) => ({
     ...q,

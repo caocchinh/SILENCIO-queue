@@ -7,7 +7,8 @@ import {
   leaveQueue,
   createReservation,
   joinReservation,
-} from "@/actions/customer";
+} from "@/server/customer";
+import { ActionResponse } from "@/constants/errors";
 
 interface CustomerData {
   studentId: string;
@@ -37,17 +38,11 @@ interface LeaveQueueParams {
   studentId: string;
 }
 
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
 export function useJoinQueue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: JoinQueueParams): Promise<ApiResponse> => {
+    mutationFn: async (params: JoinQueueParams): Promise<ActionResponse> => {
       return await joinQueue(params);
     },
     onSuccess: (data, variables) => {
@@ -58,7 +53,7 @@ export function useJoinQueue() {
           queryKey: ["customer-spot", variables.customerData.studentId],
         });
       } else {
-        toast.error(data.error || "Failed to join queue");
+        toast.error(data.message || "Failed to join queue");
       }
     },
     onError: (error) => {
@@ -74,12 +69,13 @@ export function useCreateReservation() {
   return useMutation({
     mutationFn: async (
       params: CreateReservationParams
-    ): Promise<ApiResponse> => {
+    ): Promise<ActionResponse> => {
       return await createReservation(params);
     },
     onSuccess: (data, variables) => {
       if (data.success) {
-        toast.success(`Reservation created! Your code is: ${data.data.code}`, {
+        const reservationCode = (data.data as { code?: string })?.code || "N/A";
+        toast.success(`Reservation created! Your code is: ${reservationCode}`, {
           duration: 10000,
         });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
@@ -87,7 +83,7 @@ export function useCreateReservation() {
           queryKey: ["customer-spot", variables.customerData.studentId],
         });
       } else {
-        toast.error(data.error || "Failed to create reservation");
+        toast.error(data.message || "Failed to create reservation");
       }
     },
     onError: (error) => {
@@ -101,7 +97,9 @@ export function useJoinReservation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: JoinReservationParams): Promise<ApiResponse> => {
+    mutationFn: async (
+      params: JoinReservationParams
+    ): Promise<ActionResponse> => {
       return await joinReservation(params);
     },
     onSuccess: (data, variables) => {
@@ -112,7 +110,7 @@ export function useJoinReservation() {
           queryKey: ["customer-spot", variables.customerData.studentId],
         });
       } else {
-        toast.error(data.error || "Failed to join reservation");
+        toast.error(data.message || "Failed to join reservation");
       }
     },
     onError: (error) => {
@@ -126,7 +124,7 @@ export function useLeaveQueue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: LeaveQueueParams): Promise<ApiResponse> => {
+    mutationFn: async (params: LeaveQueueParams): Promise<ActionResponse> => {
       return await leaveQueue(params);
     },
     onSuccess: (data, variables) => {
@@ -137,7 +135,7 @@ export function useLeaveQueue() {
           queryKey: ["customer-spot", variables.studentId],
         });
       } else {
-        toast.error(data.error || "Failed to leave queue");
+        toast.error(data.message || "Failed to leave queue");
       }
     },
     onError: (error) => {

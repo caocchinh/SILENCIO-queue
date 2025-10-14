@@ -52,16 +52,8 @@ export type HauntedHouseWithQueues = HauntedHouse & {
   queues?: QueueWithStats[];
 };
 
-// API Response types
-export type ApiResponse<T> =
-  | {
-      success: true;
-      data: T;
-    }
-  | {
-      success: false;
-      error: string;
-    };
+// Import standardized response types
+export type { ActionResponse } from "@/constants/errors";
 
 // Queue status types
 export type QueueSpotStatus = "available" | "occupied" | "reserved";

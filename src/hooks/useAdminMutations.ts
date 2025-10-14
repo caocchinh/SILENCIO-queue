@@ -7,7 +7,8 @@ import {
   deleteHauntedHouse,
   createQueue,
   deleteQueue,
-} from "@/actions/admin";
+} from "@/server/admin";
+import { ActionResponse } from "@/constants/errors";
 
 interface CreateHouseParams {
   name: string;
@@ -29,17 +30,11 @@ interface DeleteQueueParams {
   queueId: string;
 }
 
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
 export function useCreateHauntedHouse() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: CreateHouseParams): Promise<ApiResponse> => {
+    mutationFn: async (params: CreateHouseParams): Promise<ActionResponse> => {
       return await createHauntedHouse(params);
     },
     onSuccess: (data) => {
@@ -47,7 +42,7 @@ export function useCreateHauntedHouse() {
         toast.success("Haunted house created successfully!");
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
       } else {
-        toast.error(data.error || "Failed to create haunted house");
+        toast.error(data.message || "Failed to create haunted house");
       }
     },
     onError: (error) => {
@@ -61,7 +56,7 @@ export function useDeleteHauntedHouse() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: DeleteHouseParams): Promise<ApiResponse> => {
+    mutationFn: async (params: DeleteHouseParams): Promise<ActionResponse> => {
       return await deleteHauntedHouse(params);
     },
     onSuccess: (data) => {
@@ -69,7 +64,7 @@ export function useDeleteHauntedHouse() {
         toast.success("Haunted house deleted successfully!");
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
       } else {
-        toast.error(data.error || "Failed to delete haunted house");
+        toast.error(data.message || "Failed to delete haunted house");
       }
     },
     onError: (error) => {
@@ -83,7 +78,7 @@ export function useCreateQueue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: CreateQueueParams): Promise<ApiResponse> => {
+    mutationFn: async (params: CreateQueueParams): Promise<ActionResponse> => {
       return await createQueue(params);
     },
     onSuccess: (data) => {
@@ -91,7 +86,7 @@ export function useCreateQueue() {
         toast.success("Queue created successfully!");
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
       } else {
-        toast.error(data.error || "Failed to create queue");
+        toast.error(data.message || "Failed to create queue");
       }
     },
     onError: (error) => {
@@ -105,7 +100,7 @@ export function useDeleteQueue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: DeleteQueueParams): Promise<ApiResponse> => {
+    mutationFn: async (params: DeleteQueueParams): Promise<ActionResponse> => {
       return await deleteQueue(params);
     },
     onSuccess: (data) => {
@@ -113,7 +108,7 @@ export function useDeleteQueue() {
         toast.success("Queue deleted successfully!");
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
       } else {
-        toast.error(data.error || "Failed to delete queue");
+        toast.error(data.message || "Failed to delete queue");
       }
     },
     onError: (error) => {

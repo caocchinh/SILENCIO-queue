@@ -15,6 +15,7 @@ import {
   useCreateHauntedHouse,
   useDeleteHauntedHouse,
 } from "@/hooks/useAdminMutations";
+import { errorToast } from "@/lib/utils";
 
 interface Props {
   houses: HauntedHouseWithQueues[];
@@ -34,7 +35,14 @@ export function HauntedHouseManager({ houses }: Props) {
       onSuccess: (data) => {
         if (data.success) {
           setNewHouse({ name: "", duration: 15, breakTimePerQueue: 5 });
+        } else {
+          throw new Error(data.message || "Failed to create haunted house");
         }
+      },
+      onError: (error) => {
+        errorToast({
+          message: error.message || "Failed to create haunted house",
+        });
       },
     });
   };

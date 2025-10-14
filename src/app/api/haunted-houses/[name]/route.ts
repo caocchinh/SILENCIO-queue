@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/drizzle/db";
 import { hauntedHouse } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { createApiError, HTTP_STATUS } from "@/constants/errors";
+import { retryDatabase } from "@/dal/retry";
 
 type Params = Promise<{ name: string }>;
 
@@ -14,27 +16,30 @@ export async function GET(
     const { name } = await params;
     const decodedName = decodeURIComponent(name);
 
-    const house = await db.query.hauntedHouse.findFirst({
-      where: eq(hauntedHouse.name, decodedName),
-      with: {
-        queues: {
+    const house = await retryDatabase(
+      () =>
+        db.query.hauntedHouse.findFirst({
+          where: eq(hauntedHouse.name, decodedName),
           with: {
-            spots: true,
-            reservations: {
-              where: (reservation, { eq }) => eq(reservation.status, "active"),
+            queues: {
+              with: {
+                spots: true,
+                reservations: {
+                  where: (reservation, { eq }) =>
+                    eq(reservation.status, "active"),
+                },
+              },
             },
           },
-        },
-      },
-    });
+        }),
+      `fetch haunted house ${decodedName}`
+    );
 
     if (!house) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Haunted house not found",
-        },
-        { status: 404 }
+      return createApiError(
+        "NOT_FOUND",
+        HTTP_STATUS.NOT_FOUND,
+        "Haunted house not found"
       );
     }
 
@@ -55,18 +60,19 @@ export async function GET(
       })),
     };
 
-    return NextResponse.json({
-      success: true,
-      data: houseWithStats,
-    });
-  } catch (error) {
-    console.error("Error fetching haunted house:", error);
     return NextResponse.json(
       {
-        success: false,
-        error: "Failed to fetch haunted house",
+        success: true,
+        data: houseWithStats,
       },
-      { status: 500 }
+      { status: HTTP_STATUS.OK }
+    );
+  } catch (error) {
+    console.error("Error fetching haunted house:", error);
+    return createApiError(
+      "DATABASE_ERROR",
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      "Failed to fetch haunted house"
     );
   }
 }

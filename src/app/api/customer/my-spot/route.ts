@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustomerQueueSpot } from "@/lib/utils/queue-operations";
+import { createApiError, HTTP_STATUS } from "@/constants/errors";
 
 // GET /api/customer/my-spot?studentId=xxx - Get customer's current queue spot
 export async function GET(request: NextRequest) {
@@ -8,36 +9,38 @@ export async function GET(request: NextRequest) {
     const studentId = searchParams.get("studentId");
 
     if (!studentId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Student ID is required",
-        },
-        { status: 400 }
+      return createApiError(
+        "INVALID_INPUT",
+        HTTP_STATUS.BAD_REQUEST,
+        "Student ID is required"
       );
     }
 
     const spot = await getCustomerQueueSpot(studentId);
 
     if (!spot) {
-      return NextResponse.json({
-        success: true,
-        data: null,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          data: null,
+        },
+        { status: HTTP_STATUS.OK }
+      );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: spot,
-    });
-  } catch (error) {
-    console.error("Error fetching customer spot:", error);
     return NextResponse.json(
       {
-        success: false,
-        error: "Failed to fetch customer spot",
+        success: true,
+        data: spot,
       },
-      { status: 500 }
+      { status: HTTP_STATUS.OK }
+    );
+  } catch (error) {
+    console.error("Error fetching customer spot:", error);
+    return createApiError(
+      "DATABASE_ERROR",
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      "Failed to fetch customer spot"
     );
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getQueueWithAvailability } from "@/lib/utils/queue-operations";
+import { createApiError, HTTP_STATUS } from "@/constants/errors";
 
 type Params = Promise<{ queueId: string }>;
 
@@ -14,27 +15,26 @@ export async function GET(
     const queueData = await getQueueWithAvailability(queueId);
 
     if (!queueData) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Queue not found",
-        },
-        { status: 404 }
+      return createApiError(
+        "NOT_FOUND",
+        HTTP_STATUS.NOT_FOUND,
+        "Queue not found"
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: queueData,
-    });
-  } catch (error) {
-    console.error("Error fetching queue:", error);
     return NextResponse.json(
       {
-        success: false,
-        error: "Failed to fetch queue",
+        success: true,
+        data: queueData,
       },
-      { status: 500 }
+      { status: HTTP_STATUS.OK }
+    );
+  } catch (error) {
+    console.error("Error fetching queue:", error);
+    return createApiError(
+      "DATABASE_ERROR",
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      "Failed to fetch queue"
     );
   }
 }
