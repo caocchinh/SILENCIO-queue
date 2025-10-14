@@ -26,7 +26,7 @@ export const safeTrim = (str: string | null | undefined): string => {
   return str.trim();
 };
 
-export const sucessToast = ({
+export const successToast = ({
   message,
   description,
 }: {

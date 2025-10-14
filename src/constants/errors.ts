@@ -45,15 +45,15 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.INVALID_INPUT]: "Dữ liệu đầu vào không hợp lệ",
   [ERROR_CODES.NOT_FOUND]: "Không tìm thấy tài nguyên",
   [ERROR_CODES.ALREADY_EXISTS]: "Tài nguyên đã tồn tại",
-  [ERROR_CODES.ALREADY_IN_QUEUE]: "Bạn đã có trong hàng đợi",
-  [ERROR_CODES.NO_AVAILABLE_SPOTS]: "Không còn chỗ trống trong hàng đợi này",
+  [ERROR_CODES.ALREADY_IN_QUEUE]: "Bạn đã có lượt",
+  [ERROR_CODES.NO_AVAILABLE_SPOTS]: "Không còn chỗ trống trong lượt này",
   [ERROR_CODES.MAX_RESERVATION_ATTEMPTS]:
-    "Đã đạt giới hạn số lần đặt chỗ (cho phép 2 lần)",
-  [ERROR_CODES.INVALID_RESERVATION_CODE]: "Mã đặt chỗ không hợp lệ",
-  [ERROR_CODES.RESERVATION_EXPIRED]: "Đặt chỗ đã hết hạn",
-  [ERROR_CODES.RESERVATION_FULL]: "Đặt chỗ đã đầy",
-  [ERROR_CODES.NOT_IN_QUEUE]: "Bạn không có trong hàng đợi nào",
-  [ERROR_CODES.CANNOT_CANCEL_RESERVATION]: "Không thể hủy đặt chỗ này",
+    "Đã đạt giới hạn số lần giữ slot (cho phép 2 lần)",
+  [ERROR_CODES.INVALID_RESERVATION_CODE]: "Mã phòng không hợp lệ",
+  [ERROR_CODES.RESERVATION_EXPIRED]: "Phòng đã hết hạn",
+  [ERROR_CODES.RESERVATION_FULL]: "Phòng đã đầy",
+  [ERROR_CODES.NOT_IN_QUEUE]: "Bạn không có trong lượt nào",
+  [ERROR_CODES.CANNOT_CANCEL_RESERVATION]: "Không thể hủy phòng này",
 } as const;
 
 // HTTP status codes for API responses

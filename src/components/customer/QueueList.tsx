@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,7 +25,7 @@ import {
 } from "@/lib/types/queue";
 import { joinQueue } from "@/server/customer";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, errorToast, successToast } from "@/lib/utils";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -59,18 +58,29 @@ export function QueueList({ houses, customerData }: Props) {
     mutationFn: joinQueue,
     onSuccess: (data) => {
       if (data.success) {
-        toast.success("Thành công tham gia lượt!");
+        successToast({
+          message: "Thành công tham gia lượt!",
+        });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", customerData.studentId],
         });
         setIsConfrmDialogOpen(false);
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 0);
       } else {
-        toast.error(data.message || "Thất bại tham gia lượt");
+        errorToast({
+          message: "Thất bại tham gia lượt",
+          description: data.message,
+        });
       }
     },
     onError: (error) => {
-      toast.error("Thất bại tham gia lượt");
+      errorToast({
+        message: "Thất bại tham gia lượt",
+        description: error.message,
+      });
       console.error(error);
     },
   });
@@ -114,7 +124,7 @@ export function QueueList({ houses, customerData }: Props) {
           </Card>
         )}
 
-        <div className="flex items-center gap-2 mt-2 -mb-2 justify-center flex-wrap">
+        <div className="flex items-center gap-2 mt-2 -mb-7 justify-center flex-wrap">
           {houses.map((house) => (
             <Button
               key={house.name}
@@ -132,23 +142,31 @@ export function QueueList({ houses, customerData }: Props) {
         </div>
 
         {currentHauntedHouse && (
-          <Card className="bg-white/90 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                Nhà ma {currentHauntedHouse.name}
-              </CardTitle>
-              <CardDescription>
-                {currentHauntedHouse.queues &&
-                currentHauntedHouse.queues.length > 0
-                  ? `${currentHauntedHouse.queues.length} lượt
-                     còn slot`
-                  : "Không có lượt nào có sẵn slot"}
-              </CardDescription>
+          <Card className="bg-transparent border-0">
+            <CardHeader className="bg-gradient-to-br from-purple-50 via-white to-purple-50/80 backdrop-blur-md p-6 rounded-xl shadow-lg border-2 border-purple-200/50 relative overflow-hidden">
+              {/* Decorative background pattern */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400/5 to-pink-400/5 opacity-50"></div>
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-300/20 to-transparent rounded-full -translate-y-10 translate-x-10"></div>
+
+              <div className="relative z-10">
+                <CardTitle className="text-3xl font-bold flex items-center gap-3 text-purple-900 mb-2">
+                  Nhà ma {currentHauntedHouse.name}
+                </CardTitle>
+                <CardDescription className="text-lg text-purple-700/80 font-medium">
+                  {currentHauntedHouse.queues &&
+                  currentHauntedHouse.queues.length > 0
+                    ? `${currentHauntedHouse.queues.length} lượt còn slot`
+                    : "Không có lượt nào có còn slot"}
+                </CardDescription>
+              </div>
+
+              {/* Bottom accent line */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 via-purple-500 to-purple-400 rounded-b-xl"></div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {currentHauntedHouse.queues &&
               currentHauntedHouse.queues.length > 0 ? (
-                <div className="space-y-4">
+                <div className="w-full flex flex-col gap-4">
                   {currentHauntedHouse.queues.map((queue: QueueWithDetails) => {
                     const duration = calculateDurationInMinutes(
                       queue.queueStartTime,
@@ -235,7 +253,7 @@ export function QueueList({ houses, customerData }: Props) {
                                 {queue.stats.reservedSpots}
                               </div>
                               <div className="text-xs text-orange-600">
-                                Đã giữ slot
+                                Đang giữ slot
                               </div>
                             </div>
                             <div className="text-center p-3 bg-purple-50 rounded-lg">
@@ -332,7 +350,7 @@ export function QueueList({ houses, customerData }: Props) {
                             <div className="flex items-center gap-1 min-w-[100px]">
                               <div className="w-4 h-4 bg-orange-400 rounded"></div>
                               <span className="text-gray-600">
-                                Đang bị giữ slot
+                                Đang được giữ slot
                               </span>
                             </div>
                           </div>

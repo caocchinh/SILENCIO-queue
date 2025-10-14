@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -35,6 +34,7 @@ import {
 import { QueueSpotWithDetails } from "@/lib/types/queue";
 import { leaveQueue } from "@/server/customer";
 import { cn } from "@/lib/utils";
+import { errorToast, successToast } from "@/lib/utils";
 
 interface Props {
   spot: QueueSpotWithDetails;
@@ -52,7 +52,7 @@ export function MyQueueSpot({ spot }: Props) {
     mutationFn: leaveQueue,
     onSuccess: (data, variables) => {
       if (data.success) {
-        toast.success("Đã rời khỏi hàng đợi thành công");
+        successToast({ message: "Đã rời khỏi hàng đợi thành công" });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", variables.studentId],
@@ -63,8 +63,10 @@ export function MyQueueSpot({ spot }: Props) {
       }
     },
     onError: (error) => {
-      toast.error("Không thể rời khỏi hàng đợi");
-      console.error(error);
+      errorToast({
+        message: "Không thể rời khỏi hàng đợi.",
+        description: error.message,
+      });
     },
   });
 
@@ -80,7 +82,7 @@ export function MyQueueSpot({ spot }: Props) {
     if (spot.reservation?.code) {
       navigator.clipboard.writeText(spot.reservation.code);
       setCopied(true);
-      toast.success("Đã sao chép mã đặt chỗ vào clipboard!");
+      successToast({ message: "Đã sao chép mã đặt chỗ vào clipboard!" });
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -166,7 +168,10 @@ export function MyQueueSpot({ spot }: Props) {
               </CardTitle>
               <CardDescription>Chỗ của bạn đã được giữ</CardDescription>
             </div>
-            <AlertDialog open={isLeaveQueueDialogOpen} onOpenChange={setIsLeaveQueueDialogOpen}>
+            <AlertDialog
+              open={isLeaveQueueDialogOpen}
+              onOpenChange={setIsLeaveQueueDialogOpen}
+            >
               <AlertDialogTrigger asChild>
                 <Button
                   variant="destructive"

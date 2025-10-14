@@ -15,7 +15,7 @@ import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { createQueue, createBatchQueues, deleteQueue } from "@/server/admin";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { errorToast, sucessToast } from "@/lib/utils";
+import { errorToast, successToast } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -127,7 +127,7 @@ export function QueueManager({ houses }: Props) {
     mutationFn: createQueue,
     onSuccess: (data) => {
       if (data.success) {
-        sucessToast({
+        successToast({
           message: "Lượt đã được tạo thành công!",
           description: "Lượt mới đã được tạo và sẵn sàng nhận khách.",
         });
@@ -164,7 +164,7 @@ export function QueueManager({ houses }: Props) {
     mutationFn: createBatchQueues,
     onSuccess: (data) => {
       if (data.success) {
-        sucessToast({
+        successToast({
           message: "Các lượt đã được tạo thành công!",
           description: `${batchQueue.numberOfQueues} lượt đã được tạo và sẵn sàng nhận khách.`,
         });
@@ -205,7 +205,7 @@ export function QueueManager({ houses }: Props) {
     mutationFn: deleteQueue,
     onSuccess: (data) => {
       if (data.success) {
-        sucessToast({
+        successToast({
           message: "Lượt đã được xóa thành công!",
           description: "Lượt và tất cả các đặt chỗ liên quan đã bị xóa.",
         });

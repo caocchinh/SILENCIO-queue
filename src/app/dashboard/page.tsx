@@ -13,7 +13,6 @@ import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
 import { retryAuth } from "@/dal/retry";
-import { Suspense } from "react";
 import { CustomerQueueInterface } from "@/components/customer/CustomerQueueInterface";
 
 export default async function DashboardPage() {
@@ -94,10 +93,8 @@ export default async function DashboardPage() {
 
   // Redirect customers to queue interface
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <div className="relative flex items-center min-h-[calc(100vh-40px)] justify-start w-full bg-[url('/assets/bg.png')] overflow-hidden bg-contain p-4 flex-col">
-        <CustomerQueueInterface customer={currentCustomer} session={session} />
-      </div>
-    </Suspense>
+    <div className="relative flex items-center min-h-[calc(100vh-40px)] justify-start w-full bg-[url('/assets/bg.png')] overflow-hidden bg-contain p-4 flex-col">
+      <CustomerQueueInterface customer={currentCustomer} session={session} />
+    </div>
   );
 }

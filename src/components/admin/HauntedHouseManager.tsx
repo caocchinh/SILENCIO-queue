@@ -17,7 +17,7 @@ import {
 } from "@/server/admin";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { errorToast, sucessToast } from "@/lib/utils";
+import { errorToast, successToast } from "@/lib/utils";
 import { QueueAccordion } from "./QueueAccordion";
 import { UpdateQueueDialog } from "./UpdateQueueDialog";
 
@@ -39,7 +39,7 @@ export function HauntedHouseManager({ houses }: Props) {
     mutationFn: createHauntedHouse,
     onSuccess: (data) => {
       if (data.success) {
-        sucessToast({
+        successToast({
           message: "Nhà ma đã được tạo thành công!",
           description:
             "Nhà ma đã được tạo thành công. Vui lòng thêm lượt cho nhà ma này.",
@@ -64,7 +64,7 @@ export function HauntedHouseManager({ houses }: Props) {
     mutationFn: deleteHauntedHouse,
     onSuccess: (data) => {
       if (data.success) {
-        sucessToast({
+        successToast({
           message: "Nhà ma đã được xóa thành công!",
           description: "Tất cả lượt của nhà ma đã bị xóa.",
         });
@@ -87,7 +87,7 @@ export function HauntedHouseManager({ houses }: Props) {
     mutationFn: deleteQueue,
     onSuccess: (data) => {
       if (data.success) {
-        sucessToast({
+        successToast({
           message: "Lượt đã được xóa thành công!",
           description: "Lượt và tất cả các chỗ đã bị xóa.",
         });
@@ -110,7 +110,7 @@ export function HauntedHouseManager({ houses }: Props) {
     mutationFn: updateQueue,
     onSuccess: (data) => {
       if (data.success) {
-        sucessToast({
+        successToast({
           message: "Lượt đã được cập nhật thành công!",
           description: "Thông tin lượt đã được cập nhật.",
         });

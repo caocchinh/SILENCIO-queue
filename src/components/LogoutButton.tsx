@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 import { errorToast } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 export function LogoutButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -82,8 +83,8 @@ export function LogoutButton() {
           >
             {isLoading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Đang đăng xuất...
+                <Loader2 className="animate-spin" />
               </>
             ) : (
               "Đăng xuất"

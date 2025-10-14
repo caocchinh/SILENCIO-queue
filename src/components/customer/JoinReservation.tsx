@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,8 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Ticket } from "lucide-react";
+import { Loader2, Ticket } from "lucide-react";
 import { joinReservation } from "@/server/customer";
+import { errorToast, successToast } from "@/lib/utils";
 
 interface Props {
   customerData: {
@@ -32,18 +32,21 @@ export function JoinReservation({ customerData }: Props) {
     mutationFn: joinReservation,
     onSuccess: (data) => {
       if (data.success) {
-        toast.success("Successfully joined the reservation!");
+        successToast({ message: "Đã tham gia phòng thành công!" });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", customerData.studentId],
         });
         setCode("");
       } else {
-        toast.error(data.message || "Failed to join reservation");
+        throw new Error(data.message || "Không thể tham gia phòng");
       }
     },
     onError: (error) => {
-      toast.error("Failed to join reservation");
+      errorToast({
+        message: "Không thể tham gia phòng",
+        description: error.message,
+      });
       console.error(error);
     },
   });
@@ -58,24 +61,21 @@ export function JoinReservation({ customerData }: Props) {
   return (
     <Card className="bg-white/90 backdrop-blur">
       <CardHeader>
-        <CardTitle>Join Reservation</CardTitle>
+        <CardTitle>Tham gia phòng</CardTitle>
         <CardDescription>
-          Have a reservation code from a friend? Enter it here to join their
-          group
+          Có mã phòng từ bạn bè? Nhập mã vào đây để tham gia nhóm của họ
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Reservation Code
-            </label>
+            <label className="block text-sm font-medium mb-2">Mã phòng</label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Enter code (e.g., ABC123)"
+                  placeholder="Nhập mã (ví dụ: ABC123)"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   className="w-full pl-10 pr-4 py-2 border rounded-md uppercase"
@@ -84,9 +84,17 @@ export function JoinReservation({ customerData }: Props) {
               </div>
               <Button
                 onClick={handleJoinReservation}
+                className="flex items-center gap-2 cursor-pointer"
                 disabled={joinReservationMutation.isPending || code.length < 6}
               >
-                {joinReservationMutation.isPending ? "Joining..." : "Join"}
+                {joinReservationMutation.isPending ? (
+                  <>
+                    Đang tham gia...
+                    <Loader2 className="animate-spin" />
+                  </>
+                ) : (
+                  "Tham gia"
+                )}
               </Button>
             </div>
           </div>
