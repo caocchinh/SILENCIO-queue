@@ -92,12 +92,12 @@ export function CustomerQueueInterface({ customer, session }: Props) {
         handleRefresh={handleRefresh}
       />
 
-      <div className="p-4 md:p-6 flex flex-col gap-4 items-center justify-center max-w-6xl mx-auto">
+      <div className="p-4 md:p-6 flex flex-col min-w-[300px] md:w-[700px] gap-4 items-center justify-center w-full mx-auto">
         {mySpot ? (
           <MyQueueSpot spot={mySpot} />
         ) : (
-          <Tabs defaultValue="join" className="mb-6">
-            <TabsList className="bg-white/10 border border-white/20 w-full mb-2">
+          <Tabs defaultValue="join" className="mb-6 w-full">
+            <TabsList className="bg-white/10 border border-white/20 w-full mb-2 flex flex-wrap !h-max">
               <TabsTrigger
                 value="join"
                 className="data-[state=active]:bg-white data-[state=active]:text-black text-white cursor-pointer"

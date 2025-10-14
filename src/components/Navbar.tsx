@@ -57,11 +57,14 @@ const Navbar = ({
           </CardDescription>
         </div>
       </div>
-      <div className="flex gap-3">
-        <Button onClick={handleRefresh} disabled={loading} variant="outline">
-          <RefreshCw
-            className={cn("mr-2 h-4 w-4", loading && "animate-spin")}
-          />
+      <div className="flex gap-3 items-center justify-center flex-wrap flex-col sm:flex-row w-full sm:w-max">
+        <Button
+          onClick={handleRefresh}
+          className="w-full sm:w-max cursor-pointer"
+          disabled={loading}
+          variant="outline"
+        >
+          <RefreshCw className={cn("mr-2 h-4", loading && "animate-spin")} />
           Làm mới
         </Button>
         <LogoutButton />

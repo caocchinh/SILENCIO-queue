@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -26,12 +25,12 @@ import {
   MapPin,
   Clock,
   Users,
-  Ticket as TicketIcon,
   LogOut,
   Copy,
   CheckCircle,
   AlertTriangle,
   Timer,
+  Loader2,
 } from "lucide-react";
 import { QueueSpotWithDetails } from "@/lib/types/queue";
 import { leaveQueue } from "@/server/customer";
@@ -47,6 +46,7 @@ export function MyQueueSpot({ spot }: Props) {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [isReservationExpiringSoon, setIsReservationExpiringSoon] =
     useState(false);
+  const [isLeaveQueueDialogOpen, setIsLeaveQueueDialogOpen] = useState(false);
 
   const leaveQueueMutation = useMutation({
     mutationFn: leaveQueue,
@@ -57,8 +57,9 @@ export function MyQueueSpot({ spot }: Props) {
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", variables.studentId],
         });
+        setIsLeaveQueueDialogOpen(false);
       } else {
-        toast.error(data.message || "Không thể rời khỏi hàng đợi");
+        throw new Error(data.message || "Không thể rời khỏi hàng đợi");
       }
     },
     onError: (error) => {
@@ -165,11 +166,12 @@ export function MyQueueSpot({ spot }: Props) {
               </CardTitle>
               <CardDescription>Chỗ của bạn đã được giữ</CardDescription>
             </div>
-            <AlertDialog>
+            <AlertDialog open={isLeaveQueueDialogOpen} onOpenChange={setIsLeaveQueueDialogOpen}>
               <AlertDialogTrigger asChild>
                 <Button
                   variant="destructive"
                   size="sm"
+                  className="cursor-pointer"
                   disabled={leaveQueueMutation.isPending}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
@@ -193,22 +195,33 @@ export function MyQueueSpot({ spot }: Props) {
                       </>
                     ) : (
                       <>
-                        Bạn có chắc chắn muốn rời khỏi hàng đợi này? Chỗ của bạn
-                        sẽ trở nên khả dụng cho người khác.
+                        Bạn có chắc chắn muốn rời khỏi lượt này? Chỗ của bạn sẽ
+                        trở nên khả dụng cho người khác.
                       </>
                     )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Hủy</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleLeaveQueue}
-                    className="bg-red-600 hover:bg-red-700"
+                  <AlertDialogCancel
+                    className="cursor-pointer"
+                    disabled={leaveQueueMutation.isPending}
                   >
-                    {leaveQueueMutation.isPending
-                      ? "Đang rời..."
-                      : "Có, Rời khỏi hàng đợi"}
-                  </AlertDialogAction>
+                    Hủy
+                  </AlertDialogCancel>
+                  <Button
+                    onClick={handleLeaveQueue}
+                    className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
+                    disabled={leaveQueueMutation.isPending}
+                  >
+                    {leaveQueueMutation.isPending ? (
+                      <>
+                        Đang rời khỏi lượt...
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </>
+                    ) : (
+                      "Có, rời khỏi lượt"
+                    )}
+                  </Button>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -220,10 +233,10 @@ export function MyQueueSpot({ spot }: Props) {
               <MapPin className="h-5 w-5 text-green-600" />
               <div>
                 <p className="font-semibold">
-                  {spot.queue?.hauntedHouse?.name}
+                  Nhà ma {spot.queue?.hauntedHouse?.name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Queue {spot.queue?.queueNumber} - Spot #{spot.spotNumber}
+                  Lượt {spot.queue?.queueNumber}
                 </p>
               </div>
             </div>
@@ -233,6 +246,9 @@ export function MyQueueSpot({ spot }: Props) {
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="font-semibold">
+                    Thời gian tham gia nhà ma của bạn
+                  </p>
+                  <p className="text-sm text-muted-foreground">
                     {new Date(spot.queue.queueStartTime).toLocaleTimeString(
                       [],
                       {
@@ -244,27 +260,14 @@ export function MyQueueSpot({ spot }: Props) {
                     {new Date(spot.queue.queueEndTime).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
-                    })}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
+                    })}{" "}
+                    ( Lượt chơi dài{" "}
                     {Math.round(
                       (new Date(spot.queue.queueEndTime).getTime() -
                         new Date(spot.queue.queueStartTime).getTime()) /
                         60000
                     )}{" "}
-                    minute experience
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {spot.occupiedAt && (
-              <div className="flex items-center gap-3">
-                <TicketIcon className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="font-semibold">Joined At</p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(spot.occupiedAt).toLocaleString()}
+                    phút )
                   </p>
                 </div>
               </div>
@@ -275,7 +278,8 @@ export function MyQueueSpot({ spot }: Props) {
             <div className="flex items-start gap-2">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">
-                  Please wait for your turn and have your ticket ready!
+                  Vui lòng vào hôm sự kiện, bạn hãy đến sớm trước 15 phút để chờ
+                  đến lượt mình chơi nhà ma.
                 </p>
                 {isRepresentative && (
                   <p className="text-sm text-orange-600 font-medium mt-2 flex items-center gap-1">
@@ -293,9 +297,10 @@ export function MyQueueSpot({ spot }: Props) {
       {/* Queue Statistics Card */}
       <Card className="bg-white/90 backdrop-blur">
         <CardHeader>
-          <CardTitle className="text-lg">Thống kê hàng đợi</CardTitle>
+          <CardTitle className="text-lg">Thống kê lượt của bạn</CardTitle>
           <CardDescription>
-            {spot.queue?.hauntedHouse?.name} - Queue {spot.queue?.queueNumber}
+            Nhà ma {spot.queue?.hauntedHouse?.name} - Lượt{" "}
+            {spot.queue?.queueNumber}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -316,7 +321,7 @@ export function MyQueueSpot({ spot }: Props) {
               <div className="text-2xl font-bold text-orange-700">
                 {reservedSpots}
               </div>
-              <div className="text-xs text-orange-600">Đã đặt</div>
+              <div className="text-xs text-orange-600">Đang giữ slot</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-2xl font-bold text-purple-700">
@@ -557,11 +562,6 @@ export function MyQueueSpot({ spot }: Props) {
                         • Vé {person.customer.ticketType}
                       </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">
-                      Spot #{person.spotNumber}
-                    </p>
                   </div>
                 </div>
               ))}
