@@ -455,9 +455,9 @@ export function QueueManager({ houses }: Props) {
                       queueNumber: validateQueueNumber(numValue),
                     }));
                   }}
-                  className={`${
+                  className={cn(
                     validationErrors.queueNumber ? "border-red-500" : ""
-                  }`}
+                  )}
                   min="1"
                   max="100"
                 />
@@ -483,9 +483,9 @@ export function QueueManager({ houses }: Props) {
                       queueStartTime: "",
                     }));
                   }}
-                  className={`${
+                  className={cn(
                     validationErrors.queueStartTime ? "border-red-500" : ""
-                  }`}
+                  )}
                 />
                 {validationErrors.queueStartTime && (
                   <p className="text-sm text-red-500 mt-1">
@@ -509,9 +509,9 @@ export function QueueManager({ houses }: Props) {
                       queueEndTime: "",
                     }));
                   }}
-                  className={`${
+                  className={cn(
                     validationErrors.queueEndTime ? "border-red-500" : ""
-                  }`}
+                  )}
                 />
                 {validationErrors.queueEndTime && (
                   <p className="text-sm text-red-500 mt-1">
@@ -538,9 +538,9 @@ export function QueueManager({ houses }: Props) {
                       maxCustomers: validateMaxCustomers(numValue),
                     }));
                   }}
-                  className={`${
+                  className={cn(
                     validationErrors.maxCustomers ? "border-red-500" : ""
-                  }`}
+                  )}
                   min="1"
                   max="100"
                 />
@@ -655,11 +655,11 @@ export function QueueManager({ houses }: Props) {
                         startingQueueNumber: validateQueueNumber(numValue),
                       }));
                     }}
-                    className={`${
+                    className={cn(
                       batchValidationErrors.startingQueueNumber
                         ? "border-red-500"
                         : ""
-                    }`}
+                    )}
                     min="1"
                     max="100"
                   />
@@ -688,11 +688,11 @@ export function QueueManager({ houses }: Props) {
                         numberOfQueues: validateNumberOfQueues(numValue),
                       }));
                     }}
-                    className={`${
+                    className={cn(
                       batchValidationErrors.numberOfQueues
                         ? "border-red-500"
                         : ""
-                    }`}
+                    )}
                     min="1"
                     max="20"
                   />
@@ -725,11 +725,11 @@ export function QueueManager({ houses }: Props) {
                         durationPerQueue: validateDuration(numValue),
                       }));
                     }}
-                    className={`${
+                    className={cn(
                       batchValidationErrors.durationPerQueue
                         ? "border-red-500"
                         : ""
-                    }`}
+                    )}
                     min="1"
                     max="120"
                   />
@@ -758,11 +758,11 @@ export function QueueManager({ houses }: Props) {
                         breakTimePerQueue: validateBreakTime(numValue),
                       }));
                     }}
-                    className={`${
+                    className={cn(
                       batchValidationErrors.breakTimePerQueue
                         ? "border-red-500"
                         : ""
-                    }`}
+                    )}
                     min="0"
                     max="60"
                   />
@@ -794,9 +794,9 @@ export function QueueManager({ houses }: Props) {
                       maxCustomers: validateMaxCustomers(numValue),
                     }));
                   }}
-                  className={`${
+                  className={cn(
                     batchValidationErrors.maxCustomers ? "border-red-500" : ""
-                  }`}
+                  )}
                   min="1"
                   max="100"
                 />
@@ -824,11 +824,11 @@ export function QueueManager({ houses }: Props) {
                       firstQueueStartTime: "",
                     }));
                   }}
-                  className={`${
+                  className={cn(
                     batchValidationErrors.firstQueueStartTime
                       ? "border-red-500"
                       : ""
-                  }`}
+                  )}
                 />
                 {batchValidationErrors.firstQueueStartTime && (
                   <p className="text-sm text-red-500 mt-1">

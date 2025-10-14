@@ -14,6 +14,7 @@ import {
 import { Users, Clock, AlertTriangle, Info } from "lucide-react";
 import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { createReservation } from "@/server/customer";
+import { cn } from "@/lib/utils";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -46,11 +47,11 @@ export function ReservationForm({
         const reservationCode = (data.data as { code?: string })?.code || "N/A";
         toast.success(
           <div className="flex flex-col gap-2">
-            <p className="font-bold">Reservation created successfully!</p>
+            <p className="font-bold">Đặt chỗ thành công!</p>
             <p className="text-2xl font-mono bg-white px-3 py-2 rounded text-black">
               {reservationCode}
             </p>
-            <p className="text-xs">Share this code with your group members</p>
+            <p className="text-xs">Chia sẻ mã này với các thành viên nhóm</p>
           </div>,
           {
             duration: 15000,
@@ -65,11 +66,11 @@ export function ReservationForm({
         setSelectedQueueNumber("");
         setMaxSpots(2);
       } else {
-        toast.error(data.message || "Failed to create reservation");
+        toast.error(data.message || "Giữ slot thất bại");
       }
     },
     onError: (error) => {
-      toast.error("Failed to create reservation");
+      toast.error("Giữ slot thất bại");
       console.error(error);
     },
   });
@@ -106,10 +107,10 @@ export function ReservationForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Tạo phòng
+          Tạo phòng/giữ slot
         </CardTitle>
         <CardDescription>
-          Giữ chỗ cho bạn và bạn bè. Bạn sẽ nhận được mã để họ có thể tham gia.
+          Giữ slot cho bạn và bạn bè. Bạn sẽ nhận được mã để họ có thể tham gia.
           Mỗi người thêm 5 phút vào thời gian hết hạn.
         </CardDescription>
       </CardHeader>
@@ -228,16 +229,18 @@ export function ReservationForm({
 
           {/* Important Information */}
           <div
-            className={`p-4 rounded-md text-sm ${
+            className={cn(
+              "p-4 rounded-md text-sm",
               reservationAttempts >= 2
                 ? "bg-red-50 border border-red-200"
                 : "bg-blue-50 border border-blue-200"
-            }`}
+            )}
           >
             <p
-              className={`font-medium mb-2 flex items-center gap-2 ${
+              className={cn(
+                "font-medium mb-2 flex items-center gap-2",
                 reservationAttempts >= 2 ? "text-red-900" : "text-blue-900"
-              }`}
+              )}
             >
               {reservationAttempts >= 2 ? (
                 <>

@@ -16,6 +16,8 @@ import {
   QueueWithDetails,
 } from "@/lib/types/queue";
 import { joinQueue } from "@/server/customer";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -65,6 +67,17 @@ export function QueueList({ houses, customerData }: Props) {
     });
   };
 
+  const [currentHauntedHouseName, setCurrentHauntedHouseName] =
+    useState<string>(houses[0]?.name || "");
+
+  const currentHauntedHouse = houses.find(
+    (house) => house.name === currentHauntedHouseName
+  );
+
+  const handleSelectHauntedHouse = (hauntedHouseName: string) => {
+    setCurrentHauntedHouseName(hauntedHouseName);
+  };
+
   return (
     <div className="space-y-6">
       {houses.length === 0 && (
@@ -77,24 +90,42 @@ export function QueueList({ houses, customerData }: Props) {
         </Card>
       )}
 
-      {houses.map((house) => (
-        <Card key={house.name} className="bg-white/90 backdrop-blur">
+      <div className="flex items-center gap-2">
+        {houses.map((house) => (
+          <Button
+            key={house.name}
+            onClick={() => handleSelectHauntedHouse(house.name)}
+            className={cn(
+              currentHauntedHouseName === house.name
+                ? "bg-purple-600 text-white"
+                : "bg-gray-200 text-gray-600"
+            )}
+          >
+            {house.name}
+          </Button>
+        ))}
+      </div>
+
+      {currentHauntedHouse && (
+        <Card className="bg-white/90 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
-              {house.name}
+              {currentHauntedHouse.name}
             </CardTitle>
             <CardDescription>
-              {house.queues && house.queues.length > 0
-                ? `${house.queues.length} lượt${
-                    house.queues.length !== 1 ? "s" : ""
+              {currentHauntedHouse.queues &&
+              currentHauntedHouse.queues.length > 0
+                ? `${currentHauntedHouse.queues.length} lượt${
+                    currentHauntedHouse.queues.length !== 1 ? "s" : ""
                   } có sẵn`
                 : "Không có lượt nào có sẵn slot"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {house.queues && house.queues.length > 0 ? (
+            {currentHauntedHouse.queues &&
+            currentHauntedHouse.queues.length > 0 ? (
               <div className="space-y-4">
-                {house.queues.map((queue: QueueWithDetails) => {
+                {currentHauntedHouse.queues.map((queue: QueueWithDetails) => {
                   const duration = Math.round(
                     (new Date(queue.queueEndTime).getTime() -
                       new Date(queue.queueStartTime).getTime()) /
@@ -142,11 +173,11 @@ export function QueueList({ houses, customerData }: Props) {
                               joinQueueMutation.isPending || !hasAvailableSpots
                             }
                             size="lg"
-                            className={
+                            className={cn(
                               hasAvailableSpots
                                 ? "bg-green-600 hover:bg-green-700"
                                 : ""
-                            }
+                            )}
                           >
                             {joinQueueMutation.isPending
                               ? "Đang tham gia..."
@@ -196,43 +227,36 @@ export function QueueList({ houses, customerData }: Props) {
                             Chỗ trống lượt:
                           </div>
                           <div className="flex flex-wrap gap-1">
-                            {queue.spots?.slice(0, 30).map((spot) => {
-                              const isAvailable = spot.status === "available";
-                              const isOccupied = spot.status === "occupied";
-                              const isReserved = spot.status === "reserved";
+                            {queue.spots
+                              ?.sort((a, b) => a.spotNumber - b.spotNumber)
+                              .slice(0, 30)
+                              .map((spot) => {
+                                const isAvailable = spot.status === "available";
+                                const isOccupied = spot.status === "occupied";
+                                const isReserved = spot.status === "reserved";
 
-                              return (
-                                <div
-                                  key={spot.id}
-                                  className={`
-                                    w-8 h-8 rounded flex items-center justify-center text-xs font-bold
-                                    transition-all duration-200
-                                    ${
-                                      isAvailable
-                                        ? "bg-green-500 text-white hover:bg-green-600"
+                                return (
+                                  <div
+                                    key={spot.id}
+                                    className={cn(
+                                      "w-8 h-8 rounded flex items-center justify-center text-xs font-bold transition-all duration-200",
+                                      isAvailable &&
+                                        "bg-green-500 text-white hover:bg-green-600",
+                                      isOccupied && "bg-blue-500 text-white",
+                                      isReserved && "bg-orange-400 text-white"
+                                    )}
+                                    title={`Spot #${spot.spotNumber} - ${
+                                      spot.status
+                                    }${
+                                      spot.customer
+                                        ? ` (${spot.customer.name})`
                                         : ""
-                                    }
-                                    ${
-                                      isOccupied ? "bg-blue-500 text-white" : ""
-                                    }
-                                    ${
-                                      isReserved
-                                        ? "bg-orange-400 text-white"
-                                        : ""
-                                    }
-                                  `}
-                                  title={`Spot #${spot.spotNumber} - ${
-                                    spot.status
-                                  }${
-                                    spot.customer
-                                      ? ` (${spot.customer.name})`
-                                      : ""
-                                  }`}
-                                >
-                                  {spot.spotNumber}
-                                </div>
-                              );
-                            })}
+                                    }`}
+                                  >
+                                    {spot.spotNumber}
+                                  </div>
+                                );
+                              })}
                             {queue.spots && queue.spots.length > 30 && (
                               <div className="w-8 h-8 rounded flex items-center justify-center text-xs bg-gray-200 text-gray-600">
                                 +{queue.spots.length - 30}
@@ -242,7 +266,7 @@ export function QueueList({ houses, customerData }: Props) {
                         </div>
 
                         {/* Reservation Warning */}
-                        {hasReservations && (
+                        {!!hasReservations && (
                           <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
                             <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                             <div className="text-orange-800">
@@ -273,7 +297,9 @@ export function QueueList({ houses, customerData }: Props) {
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-4 h-4 bg-orange-400 rounded"></div>
-                            <span className="text-gray-600">Đã bị đặt chỗ</span>
+                            <span className="text-gray-600">
+                              Đã bị giữ slot
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -288,7 +314,7 @@ export function QueueList({ houses, customerData }: Props) {
             )}
           </CardContent>
         </Card>
-      ))}
+      )}
     </div>
   );
 }

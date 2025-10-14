@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { QueueSpotWithDetails } from "@/lib/types/queue";
 import { leaveQueue } from "@/server/customer";
+import { cn } from "@/lib/utils";
 
 interface Props {
   spot: QueueSpotWithDetails;
@@ -51,17 +52,17 @@ export function MyQueueSpot({ spot }: Props) {
     mutationFn: leaveQueue,
     onSuccess: (data, variables) => {
       if (data.success) {
-        toast.success("Successfully left the queue");
+        toast.success("Đã rời khỏi hàng đợi thành công");
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", variables.studentId],
         });
       } else {
-        toast.error(data.message || "Failed to leave queue");
+        toast.error(data.message || "Không thể rời khỏi hàng đợi");
       }
     },
     onError: (error) => {
-      toast.error("Failed to leave queue");
+      toast.error("Không thể rời khỏi hàng đợi");
       console.error(error);
     },
   });
@@ -78,7 +79,7 @@ export function MyQueueSpot({ spot }: Props) {
     if (spot.reservation?.code) {
       navigator.clipboard.writeText(spot.reservation.code);
       setCopied(true);
-      toast.success("Reservation code copied to clipboard!");
+      toast.success("Đã sao chép mã đặt chỗ vào clipboard!");
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -160,9 +161,9 @@ export function MyQueueSpot({ spot }: Props) {
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-2xl text-green-700">
-                ✓ You&apos;re in the Queue!
+                ✓ Bạn đang trong lượt!
               </CardTitle>
-              <CardDescription>Your spot has been reserved</CardDescription>
+              <CardDescription>Chỗ của bạn đã được giữ</CardDescription>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -172,42 +173,41 @@ export function MyQueueSpot({ spot }: Props) {
                   disabled={leaveQueueMutation.isPending}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Leave Queue
+                  Rời lượt
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Leave Queue?</AlertDialogTitle>
+                  <AlertDialogTitle>Rời lượt?</AlertDialogTitle>
                   <AlertDialogDescription>
                     {isRepresentative ? (
                       <>
-                        You are the representative of a reservation. Leaving
-                        will <strong>cancel the entire reservation</strong> and
-                        release all spots (including those of people who already
-                        joined).
+                        Bạn là người đại diện của nhóm đặt chỗ. Rời khỏi sẽ
+                        <strong>hủy toàn bộ đặt chỗ</strong> và giải phóng tất
+                        cả các chỗ (bao gồm cả những người đã tham gia).
                       </>
                     ) : spot.reservation ? (
                       <>
-                        You will be removed from this group reservation. The
-                        reservation will continue for other members.
+                        Bạn sẽ được xóa khỏi nhóm đặt chỗ này. Đặt chỗ sẽ tiếp
+                        tục cho các thành viên khác.
                       </>
                     ) : (
                       <>
-                        Are you sure you want to leave this queue? Your spot
-                        will become available for others.
+                        Bạn có chắc chắn muốn rời khỏi hàng đợi này? Chỗ của bạn
+                        sẽ trở nên khả dụng cho người khác.
                       </>
                     )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleLeaveQueue}
                     className="bg-red-600 hover:bg-red-700"
                   >
                     {leaveQueueMutation.isPending
-                      ? "Leaving..."
-                      : "Yes, Leave Queue"}
+                      ? "Đang rời..."
+                      : "Có, Rời khỏi hàng đợi"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -293,7 +293,7 @@ export function MyQueueSpot({ spot }: Props) {
       {/* Queue Statistics Card */}
       <Card className="bg-white/90 backdrop-blur">
         <CardHeader>
-          <CardTitle className="text-lg">Queue Statistics</CardTitle>
+          <CardTitle className="text-lg">Thống kê hàng đợi</CardTitle>
           <CardDescription>
             {spot.queue?.hauntedHouse?.name} - Queue {spot.queue?.queueNumber}
           </CardDescription>
@@ -304,25 +304,25 @@ export function MyQueueSpot({ spot }: Props) {
               <div className="text-2xl font-bold text-green-700">
                 {availableSpots}
               </div>
-              <div className="text-xs text-green-600">Available</div>
+              <div className="text-xs text-green-600">Khả dụng</div>
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-2xl font-bold text-blue-700">
                 {occupiedSpots}
               </div>
-              <div className="text-xs text-blue-600">Occupied</div>
+              <div className="text-xs text-blue-600">Đã chiếm</div>
             </div>
             <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
               <div className="text-2xl font-bold text-orange-700">
                 {reservedSpots}
               </div>
-              <div className="text-xs text-orange-600">Reserved</div>
+              <div className="text-xs text-orange-600">Đã đặt</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-2xl font-bold text-purple-700">
                 {totalSpots}
               </div>
-              <div className="text-xs text-purple-600">Total</div>
+              <div className="text-xs text-purple-600">Tổng cộng</div>
             </div>
           </div>
         </CardContent>
@@ -334,10 +334,10 @@ export function MyQueueSpot({ spot }: Props) {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-purple-600" />
-              Group Reservation Details
+              Chi tiết đặt chỗ nhóm
               {isRepresentative && (
                 <span className="text-sm bg-purple-600 text-white px-2 py-0.5 rounded">
-                  Leader
+                  Trưởng nhóm
                 </span>
               )}
             </CardTitle>
@@ -347,15 +347,16 @@ export function MyQueueSpot({ spot }: Props) {
             <div className="bg-white border-2 border-purple-300 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold text-purple-900">
-                  Reservation Code
+                  Mã đặt chỗ
                 </p>
                 {spot.reservation.status === "active" && timeRemaining && (
                   <div
-                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold",
                       isReservationExpiringSoon
                         ? "bg-red-500 text-white"
                         : "bg-purple-100 text-purple-700"
-                    }`}
+                    )}
                   >
                     <Timer className="h-3 w-3" />
                     {timeRemaining}
@@ -380,34 +381,35 @@ export function MyQueueSpot({ spot }: Props) {
                   ) : (
                     <>
                       <Copy className="h-4 w-4 mr-1" />
-                      Copy
+                      Sao chép
                     </>
                   )}
                 </Button>
               </div>
               <p className="text-xs text-purple-600 mt-2">
-                Share this code with your group members to join
+                Chia sẻ mã này với các thành viên nhóm để tham gia
               </p>
             </div>
 
             {/* Reservation Progress */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">Group Progress</span>
+                <span className="text-sm font-semibold">Tiến độ nhóm</span>
                 <span className="text-sm">
                   {spot.reservation.currentSpots} / {spot.reservation.maxSpots}{" "}
-                  people joined
+                  người đã tham gia
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
-                  className={`h-3 rounded-full transition-all ${
+                  className={cn(
+                    "h-3 rounded-full transition-all",
                     spot.reservation.currentSpots >= spot.reservation.maxSpots
                       ? "bg-green-500"
                       : isReservationExpiringSoon
                       ? "bg-red-500"
                       : "bg-purple-500"
-                  }`}
+                  )}
                   style={{
                     width: `${
                       (spot.reservation.currentSpots /
@@ -420,22 +422,22 @@ export function MyQueueSpot({ spot }: Props) {
 
               {spotsNeededForReservation > 0 && (
                 <div
-                  className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+                  className={cn(
+                    "flex items-center gap-2 p-3 rounded-lg text-sm",
                     isReservationExpiringSoon
                       ? "bg-red-50 border border-red-200 text-red-800"
                       : "bg-blue-50 border border-blue-200 text-blue-800"
-                  }`}
+                  )}
                 >
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                   <div>
                     <p className="font-semibold">
-                      {spotsNeededForReservation} more{" "}
-                      {spotsNeededForReservation === 1 ? "person" : "people"}{" "}
-                      needed
+                      Cần thêm {spotsNeededForReservation}{" "}
+                      {spotsNeededForReservation === 1 ? "người" : "người"} nữa
                     </p>
                     <p className="text-xs mt-1">
-                      If the group isn&apos;t full when the timer expires, ALL
-                      spots will be released
+                      Nếu nhóm không đủ đầy đủ khi hết thời gian, TẤT CẢ các chỗ
+                      sẽ được giải phóng
                     </p>
                   </div>
                 </div>
@@ -445,7 +447,7 @@ export function MyQueueSpot({ spot }: Props) {
                 <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
                   <p className="font-semibold">
-                    Reservation complete! All spots filled.
+                    Đặt chỗ hoàn tất! Tất cả chỗ đã đầy đủ.
                   </p>
                 </div>
               )}
@@ -455,25 +457,27 @@ export function MyQueueSpot({ spot }: Props) {
             <div>
               <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Group Members ({peopleInReservation.length})
+                Thành viên nhóm ({peopleInReservation.length})
               </h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {peopleInReservation.map((person) => (
                   <div
                     key={person.spotNumber}
-                    className={`flex items-center justify-between p-2 rounded-lg text-sm ${
+                    className={cn(
+                      "flex items-center justify-between p-2 rounded-lg text-sm",
                       person.isYou
                         ? "bg-green-100 border border-green-300"
                         : "bg-purple-50 border border-purple-200"
-                    }`}
+                    )}
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
                           person.isYou
                             ? "bg-green-500 text-white"
                             : "bg-purple-500 text-white"
-                        }`}
+                        )}
                       >
                         #{person.spotNumber}
                       </div>
@@ -481,11 +485,11 @@ export function MyQueueSpot({ spot }: Props) {
                         <p className="font-semibold">
                           {person.customer.name}
                           {person.isYou && (
-                            <span className="ml-1 text-green-600">(You)</span>
+                            <span className="ml-1 text-green-600">(Bạn)</span>
                           )}
                           {person.isRepresentative && (
                             <span className="ml-1 text-purple-600">
-                              ★ Leader
+                              ★ Trưởng nhóm
                             </span>
                           )}
                         </p>
@@ -508,35 +512,34 @@ export function MyQueueSpot({ spot }: Props) {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5" />
-            People in Queue ({occupiedSpots})
+            Người trong lượt ({occupiedSpots})
           </CardTitle>
-          <CardDescription>
-            Everyone currently waiting in this queue
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {peopleInQueue.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
-              You&apos;re the only one in the queue right now
+              Bạn là người duy nhất trong hàng đợi lúc này
             </p>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {peopleInQueue.map((person) => (
                 <div
                   key={person.spotNumber}
-                  className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border transition-all",
                     person.isYou
                       ? "bg-green-50 border-green-300 shadow-sm"
                       : "bg-gray-50 border-gray-200 hover:border-gray-300"
-                  }`}
+                  )}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
                         person.isYou
                           ? "bg-green-500 text-white"
                           : "bg-blue-500 text-white"
-                      }`}
+                      )}
                     >
                       #{person.spotNumber}
                     </div>
@@ -545,13 +548,13 @@ export function MyQueueSpot({ spot }: Props) {
                         {person.customer.name}
                         {person.isYou && (
                           <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded">
-                            You
+                            Bạn
                           </span>
                         )}
                       </p>
                       <p className="text-xs text-gray-600">
-                        {person.customer.studentId} • {person.customer.homeroom}{" "}
-                        • {person.customer.ticketType}
+                        {" "}
+                        • Vé {person.customer.ticketType}
                       </p>
                     </div>
                   </div>

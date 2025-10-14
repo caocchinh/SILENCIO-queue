@@ -142,7 +142,7 @@ export function HauntedHouseManager({ houses }: Props) {
   const handleDelete = (name: string) => {
     if (
       !confirm(
-        `Are you sure you want to delete "${name}"? This will delete all associated queues and spots.`
+        `Bạn có chắc chắn muốn xóa "${name}"? Điều này sẽ xóa tất cả các lượt và chỗ liên quan.`
       )
     ) {
       return;
