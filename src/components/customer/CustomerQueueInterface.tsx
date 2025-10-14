@@ -1,18 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { QueueList } from "./QueueList";
 import { ReservationForm } from "./ReservationForm";
 import { JoinReservation } from "./JoinReservation";
 import { MyQueueSpot } from "./MyQueueSpot";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, ArrowLeft } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Customer,
   HauntedHouseWithDetailedQueues,
   QueueSpotWithDetails,
 } from "@/lib/types/queue";
+import Navbar from "../Navbar";
+import { Loader2 } from "lucide-react";
 
 async function fetchHauntedHouses(): Promise<HauntedHouseWithDetailedQueues[]> {
   const response = await fetch("/api/haunted-houses");
@@ -40,13 +41,10 @@ async function fetchCustomerSpot(
 
 interface Props {
   customer: Customer;
+  session: any;
 }
 
-export function CustomerQueueInterface({ customer }: Props) {
-  const [activeTab, setActiveTab] = useState<"join" | "reserve" | "code">(
-    "join"
-  );
-
+export function CustomerQueueInterface({ customer, session }: Props) {
   const customerData = {
     studentId: customer.studentId,
     name: customer.name,
@@ -58,6 +56,7 @@ export function CustomerQueueInterface({ customer }: Props) {
   const {
     data: houses = [],
     isLoading: housesLoading,
+    isRefetching: housesRefetching,
     refetch: refetchHouses,
   } = useQuery({
     queryKey: ["haunted-houses"],
@@ -68,6 +67,7 @@ export function CustomerQueueInterface({ customer }: Props) {
   const {
     data: mySpot = null,
     isLoading: spotLoading,
+    isRefetching: spotRefetching,
     refetch: refetchSpot,
   } = useQuery({
     queryKey: ["customer-spot", customer.studentId],
@@ -84,135 +84,70 @@ export function CustomerQueueInterface({ customer }: Props) {
   };
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Queue System</h1>
-            <p className="text-white/70 mt-1">
-              Welcome, {customer.name} ({customer.studentId})
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={handleRefresh}
-              disabled={loading}
-              variant="secondary"
-            >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
-            <Button
-              onClick={() => (window.location.href = "/")}
-              variant="outline"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Home
-            </Button>
-          </div>
-        </div>
+    <>
+      <Navbar
+        session={session}
+        student={customer}
+        loading={housesRefetching || spotRefetching}
+        handleRefresh={handleRefresh}
+      />
 
-        {/* Customer Info Card */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-6 text-white">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-white/60 text-sm">Student ID</p>
-              <p className="font-semibold">{customer.studentId}</p>
-            </div>
-            <div>
-              <p className="text-white/60 text-sm">Homeroom</p>
-              <p className="font-semibold">{customer.homeroom}</p>
-            </div>
-            <div>
-              <p className="text-white/60 text-sm">Ticket Type</p>
-              <p className="font-semibold">{customer.ticketType}</p>
-            </div>
-            <div>
-              <p className="text-white/60 text-sm">Reservation Attempts</p>
-              <p className="font-semibold">
-                {customer.reservationAttempts} / 2 used
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
+      <div className="p-4 md:p-6 flex flex-col gap-4 items-center justify-center max-w-6xl mx-auto">
         {mySpot ? (
-          <div className="mb-8">
-            <MyQueueSpot spot={mySpot} />
-          </div>
+          <MyQueueSpot spot={mySpot} />
         ) : (
-          <>
-            {/* Tabs */}
-            <div className="mb-6">
-              <div className="flex gap-2 border-b border-white/20">
-                <button
-                  onClick={() => setActiveTab("join")}
-                  className={`px-4 py-2 font-medium transition-colors ${
-                    activeTab === "join"
-                      ? "border-b-2 border-white text-white"
-                      : "text-white/60 hover:text-white/90"
-                  }`}
-                >
-                  Join Queue
-                </button>
-                <button
-                  onClick={() => setActiveTab("reserve")}
-                  className={`px-4 py-2 font-medium transition-colors ${
-                    activeTab === "reserve"
-                      ? "border-b-2 border-white text-white"
-                      : "text-white/60 hover:text-white/90"
-                  }`}
-                  disabled={customer.reservationAttempts >= 2}
-                >
-                  Create Reservation
-                  {customer.reservationAttempts >= 2 && (
-                    <span className="ml-2 text-xs text-red-400">
-                      (Max reached)
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("code")}
-                  className={`px-4 py-2 font-medium transition-colors ${
-                    activeTab === "code"
-                      ? "border-b-2 border-white text-white"
-                      : "text-white/60 hover:text-white/90"
-                  }`}
-                >
-                  Join with Code
-                </button>
-              </div>
-            </div>
+          <Tabs defaultValue="join" className="mb-6">
+            <TabsList className="bg-white/10 border border-white/20 w-full mb-2">
+              <TabsTrigger
+                value="join"
+                className="data-[state=active]:bg-white data-[state=active]:text-black text-white cursor-pointer"
+              >
+                Chọn lượt
+              </TabsTrigger>
+              <TabsTrigger
+                value="reserve"
+                className="data-[state=active]:bg-white data-[state=active]:text-black text-white cursor-pointer"
+              >
+                Tạo phòng
+                {customer.reservationAttempts >= 2 && (
+                  <span className="ml-2 text-xs text-red-400">
+                    (Đã đạt giới hạn)
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="code"
+                className="data-[state=active]:bg-white data-[state=active]:text-black text-white cursor-pointer"
+              >
+                Tham gia với mã
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Tab Content */}
             {loading ? (
-              <div className="text-center py-12">
-                <p className="text-white/60">Loading...</p>
+              <div className="text-center py-12 text-white/60 flex flex-row items-center justify-center gap-2">
+                <p>Đang tải...</p>
+                <Loader2 className="h-4 w-4 animate-spin" />
               </div>
             ) : (
               <>
-                {activeTab === "join" && (
+                <TabsContent value="join" className="mt-0">
                   <QueueList houses={houses} customerData={customerData} />
-                )}
-                {activeTab === "reserve" && (
+                </TabsContent>
+                <TabsContent value="reserve" className="mt-0">
                   <ReservationForm
                     houses={houses}
                     customerData={customerData}
                     reservationAttempts={customer.reservationAttempts}
                   />
-                )}
-                {activeTab === "code" && (
+                </TabsContent>
+                <TabsContent value="code" className="mt-0">
                   <JoinReservation customerData={customerData} />
-                )}
+                </TabsContent>
               </>
             )}
-          </>
+          </Tabs>
         )}
       </div>
-    </div>
+    </>
   );
 }

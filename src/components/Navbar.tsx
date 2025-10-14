@@ -4,15 +4,21 @@ import { CardDescription, CardTitle } from "./ui/card";
 import { LogoutButton } from "./LogoutButton";
 import { cn } from "@/lib/utils";
 import { Student } from "@/constants/types";
+import { Button } from "./ui/button";
+import { RefreshCw } from "lucide-react";
 
 const Navbar = ({
   session,
   student,
   className,
+  handleRefresh,
+  loading,
 }: {
   session: any;
   student: Student;
   className?: string;
+  handleRefresh: () => void;
+  loading: boolean;
 }) => {
   return (
     <div
@@ -51,7 +57,15 @@ const Navbar = ({
           </CardDescription>
         </div>
       </div>
-      <LogoutButton />
+      <div className="flex gap-3">
+        <Button onClick={handleRefresh} disabled={loading} variant="outline">
+          <RefreshCw
+            className={cn("mr-2 h-4 w-4", loading && "animate-spin")}
+          />
+          Refresh
+        </Button>
+        <LogoutButton />
+      </div>
     </div>
   );
 };

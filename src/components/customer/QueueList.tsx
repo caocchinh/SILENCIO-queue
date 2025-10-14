@@ -35,17 +35,17 @@ export function QueueList({ houses, customerData }: Props) {
     mutationFn: joinQueue,
     onSuccess: (data) => {
       if (data.success) {
-        toast.success("Successfully joined the queue!");
+        toast.success("Thành công tham gia lượt!");
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", customerData.studentId],
         });
       } else {
-        toast.error(data.message || "Failed to join queue");
+        toast.error(data.message || "Thất bại tham gia lượt");
       }
     },
     onError: (error) => {
-      toast.error("Failed to join queue");
+      toast.error("Thất bại tham gia lượt");
       console.error(error);
     },
   });
@@ -71,7 +71,7 @@ export function QueueList({ houses, customerData }: Props) {
         <Card className="bg-white/90 backdrop-blur">
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
-              No haunted houses available yet. Check back later!
+              Không có nhà ma nào có sẵn. Vui lòng kiểm tra lại sau!
             </p>
           </CardContent>
         </Card>
@@ -85,10 +85,10 @@ export function QueueList({ houses, customerData }: Props) {
             </CardTitle>
             <CardDescription>
               {house.queues && house.queues.length > 0
-                ? `${house.queues.length} queue${
+                ? `${house.queues.length} lượt${
                     house.queues.length !== 1 ? "s" : ""
-                  } available`
-                : "No queues available"}
+                  } có sẵn`
+                : "Không có lượt nào có sẵn slot"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -116,7 +116,7 @@ export function QueueList({ houses, customerData }: Props) {
                         <div className="flex items-center justify-between">
                           <div>
                             <h3 className="text-lg font-bold text-purple-900">
-                              Queue {queue.queueNumber}
+                              Lượt {queue.queueNumber}
                             </h3>
                             <div className="flex items-center gap-4 mt-1 text-sm text-purple-700">
                               <span className="flex items-center gap-1">
@@ -124,9 +124,10 @@ export function QueueList({ houses, customerData }: Props) {
                                 {formatTime(queue.queueStartTime)} -{" "}
                                 {formatTime(queue.queueEndTime)}
                               </span>
+                              -
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                {duration} min
+                                {duration} phút
                               </span>
                             </div>
                           </div>
@@ -148,10 +149,10 @@ export function QueueList({ houses, customerData }: Props) {
                             }
                           >
                             {joinQueueMutation.isPending
-                              ? "Joining..."
+                              ? "Đang tham gia..."
                               : !hasAvailableSpots
-                              ? "Queue Full"
-                              : "Join Queue"}
+                              ? "Lượt đầy"
+                              : "Tham gia lượt"}
                           </Button>
                         </div>
                       </div>
@@ -163,16 +164,14 @@ export function QueueList({ houses, customerData }: Props) {
                             <div className="text-2xl font-bold text-green-700">
                               {queue.stats.availableSpots}
                             </div>
-                            <div className="text-xs text-green-600">
-                              Available
-                            </div>
+                            <div className="text-xs text-green-600">Có sẵn</div>
                           </div>
                           <div className="text-center p-3 bg-blue-50 rounded-lg">
                             <div className="text-2xl font-bold text-blue-700">
                               {queue.stats.occupiedSpots}
                             </div>
                             <div className="text-xs text-blue-600">
-                              Occupied
+                              Đã có người
                             </div>
                           </div>
                           <div className="text-center p-3 bg-orange-50 rounded-lg">
@@ -180,21 +179,21 @@ export function QueueList({ houses, customerData }: Props) {
                               {queue.stats.reservedSpots}
                             </div>
                             <div className="text-xs text-orange-600">
-                              Reserved
+                              Đã đặt chỗ
                             </div>
                           </div>
                           <div className="text-center p-3 bg-purple-50 rounded-lg">
                             <div className="text-2xl font-bold text-purple-700">
                               {queue.stats.totalSpots}
                             </div>
-                            <div className="text-xs text-purple-600">Total</div>
+                            <div className="text-xs text-purple-600">Tổng</div>
                           </div>
                         </div>
 
                         {/* Visual Spot Representation */}
                         <div className="mb-4">
                           <div className="text-xs font-semibold text-gray-600 mb-2">
-                            Queue Spots:
+                            Chỗ trống lượt:
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {queue.spots?.slice(0, 30).map((spot) => {
@@ -248,16 +247,15 @@ export function QueueList({ houses, customerData }: Props) {
                             <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                             <div className="text-orange-800">
                               <span className="font-semibold">
-                                {queue.stats.activeReservations} active
-                                reservation
+                                {queue.stats.activeReservations} slot đặt chỗ
                                 {queue.stats.activeReservations !== 1
                                   ? "s"
                                   : ""}
                               </span>
                               <p className="text-xs mt-1">
-                                Some spots are temporarily reserved. You can
-                                join with a reservation code or wait for them to
-                                become available.
+                                Một số chỗ đã được đặt chỗ tạm thời. Bạn có thể
+                                tham gia với mã đặt chỗ hoặc chờ chúng trở lại
+                                có sẵn. trở thành có sẵn.
                               </p>
                             </div>
                           </div>
@@ -267,15 +265,15 @@ export function QueueList({ houses, customerData }: Props) {
                         <div className="flex items-center gap-4 mt-3 text-xs">
                           <div className="flex items-center gap-1">
                             <div className="w-4 h-4 bg-green-500 rounded"></div>
-                            <span className="text-gray-600">Available</span>
+                            <span className="text-gray-600">Có sẵn</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                            <span className="text-gray-600">Occupied</span>
+                            <span className="text-gray-600">Đã có người</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-4 h-4 bg-orange-400 rounded"></div>
-                            <span className="text-gray-600">Reserved</span>
+                            <span className="text-gray-600">Đã bị đặt chỗ</span>
                           </div>
                         </div>
                       </div>
@@ -285,7 +283,7 @@ export function QueueList({ houses, customerData }: Props) {
               </div>
             ) : (
               <p className="text-muted-foreground text-center py-4">
-                No queues available yet for this haunted house
+                Không có lượt nào có sẵn cho nhà ma này
               </p>
             )}
           </CardContent>

@@ -12,10 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Users, Clock, AlertTriangle, Info } from "lucide-react";
-import {
-  HauntedHouseWithDetailedQueues,
-  QueueWithDetails,
-} from "@/lib/types/queue";
+import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { createReservation } from "@/server/customer";
 
 interface Props {
@@ -109,12 +106,11 @@ export function ReservationForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Create Group Reservation
+          Tạo phòng
         </CardTitle>
         <CardDescription>
-          Reserve multiple spots for you and your friends. You&apos;ll get a
-          code they can use to join. Each person adds 5 minutes to the
-          expiration time.
+          Giữ chỗ cho bạn và bạn bè. Bạn sẽ nhận được mã để họ có thể tham gia.
+          Mỗi người thêm 5 phút vào thời gian hết hạn.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -122,7 +118,7 @@ export function ReservationForm({
           {/* Haunted House Selection */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Select Haunted House
+              Chọn nhà ma
             </label>
             <select
               value={selectedHouse}
@@ -133,7 +129,7 @@ export function ReservationForm({
               className="w-full px-4 py-2 border rounded-md bg-white"
               disabled={reservationAttempts >= 2}
             >
-              <option value="">Choose a haunted house...</option>
+              <option value="">Chọn nhà ma...</option>
               {houses.map((house) => (
                 <option key={house.name} value={house.name}>
                   {house.name}
@@ -145,7 +141,7 @@ export function ReservationForm({
           {/* Number of People */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Number of People (including you)
+              Số người (bao gồm bạn)
             </label>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
@@ -163,7 +159,7 @@ export function ReservationForm({
               />
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                Expires in {maxSpots * 5} minutes
+                Hết hạn sau {maxSpots * 5} phút
               </span>
             </div>
           </div>
@@ -172,7 +168,7 @@ export function ReservationForm({
           {selectedHouse && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                Select Queue
+                Chọn lượt
               </label>
               {availableQueues.length > 0 ? (
                 <select
@@ -183,7 +179,7 @@ export function ReservationForm({
                   className="w-full px-4 py-2 border rounded-md bg-white"
                   disabled={reservationAttempts >= 2}
                 >
-                  <option value="">Choose a queue...</option>
+                  <option value="">Chọn lượt...</option>
                   {availableQueues.map((queue) => {
                     const formatTime = (date: Date) => {
                       return new Date(date).toLocaleTimeString([], {
@@ -196,7 +192,7 @@ export function ReservationForm({
                       <option key={queue.queueNumber} value={queue.queueNumber}>
                         Queue {queue.queueNumber} -{" "}
                         {formatTime(queue.queueStartTime)}(
-                        {queue.stats.availableSpots} spots available)
+                        {queue.stats.availableSpots} chỗ trống)
                       </option>
                     );
                   })}
@@ -205,8 +201,8 @@ export function ReservationForm({
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
                   <p className="flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
-                    No queues have {maxSpots} or more available spots. Try
-                    reducing the group size.
+                    Không có lượt nào có {maxSpots} hoặc nhiều hơn chỗ trống.
+                    Thử giảm số người.
                   </p>
                 </div>
               )}
@@ -217,13 +213,13 @@ export function ReservationForm({
           {selectedQueue && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm">
               <p className="font-semibold text-green-900 mb-1">
-                Selected Queue Details:
+                Chi tiết lượt:
               </p>
               <ul className="text-green-800 space-y-1 text-xs">
-                <li>• Available spots: {selectedQueue.stats.availableSpots}</li>
-                <li>• Reserved spots for your group: {maxSpots}</li>
+                <li>• Chỗ trống: {selectedQueue.stats.availableSpots}</li>
+                <li>• Chỗ trống cho nhóm bạn: {maxSpots}</li>
                 <li>
-                  • Remaining after reservation:{" "}
+                  • Chỗ trống còn lại sau khi đặt chỗ:{" "}
                   {selectedQueue.stats.availableSpots - maxSpots}
                 </li>
               </ul>
@@ -246,36 +242,34 @@ export function ReservationForm({
               {reservationAttempts >= 2 ? (
                 <>
                   <AlertTriangle className="h-4 w-4" />
-                  Reservation Limit Reached
+                  Đã đạt giới hạn đặt chỗ
                 </>
               ) : (
                 <>
                   <Info className="h-4 w-4" />
-                  Important Information
+                  Thông tin quan trọng
                 </>
               )}
             </p>
             {reservationAttempts >= 2 ? (
               <p className="text-red-800">
-                You have used all 2 reservation attempts. You can still join
-                queues directly or join existing reservations with a code.
+                Bạn đã sử dụng tất cả 2 lần đặt chỗ. Bạn vẫn có thể tham gia
+                lượt trực tiếp hoặc tham gia phòng đã đặt với mã.
               </p>
             ) : (
               <ul className="list-disc list-inside space-y-1 text-blue-800">
                 <li>
                   <strong>
-                    Attempts remaining: {2 - reservationAttempts} / 2
+                    Lần giữ chỗ còn lại: {2 - reservationAttempts} / 2
                   </strong>
                 </li>
                 <li>
-                  If not all {maxSpots} people join before the {maxSpots * 5}
-                  -minute timer expires, ALL spots (including yours) will be
-                  released
+                  Nếu không phải tất cả {maxSpots} người tham gia trước khi hết
+                  thời gian {maxSpots * 5} phút, TẤT CẢ chỗ trống (bao gồm chỗ
+                  của bạn) sẽ được giải phóng cho người khác.
                 </li>
-                <li>
-                  Share the reservation code with your group members immediately
-                </li>
-                <li>Each member needs a valid ticket to join</li>
+                <li>Chia sẻ mã đặt chỗ với các thành viên nhóm ngay lập tức</li>
+                <li>Mỗi thành viên cần có vé hợp lệ để tham gia</li>
               </ul>
             )}
           </div>
@@ -289,12 +283,12 @@ export function ReservationForm({
             size="lg"
           >
             {createReservationMutation.isPending
-              ? "Creating Reservation..."
+              ? "Đang tạo phòng..."
               : reservationAttempts >= 2
-              ? "Maximum Attempts Reached"
+              ? "Đã đạt giới hạn đặt chỗ"
               : cannotCreateReservation
-              ? "Select a Queue to Continue"
-              : `Create Reservation for ${maxSpots} People`}
+              ? "Chọn lượt để tiếp tục"
+              : `Tạo phòng cho ${maxSpots} người`}
           </Button>
         </div>
       </CardContent>

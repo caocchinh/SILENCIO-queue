@@ -15,7 +15,6 @@ import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
 import { retryAuth } from "@/dal/retry";
 import { Suspense } from "react";
 import { CustomerQueueInterface } from "@/components/customer/CustomerQueueInterface";
-import Navbar from "@/components/Navbar";
 
 export default async function DashboardPage() {
   let session;
@@ -96,9 +95,8 @@ export default async function DashboardPage() {
   // Redirect customers to queue interface
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="relative flex items-start justify-center w-full bg-[url('/assets/bg.png')] overflow-hidden bg-no-repeat bg-cover p-4 flex-col">
-        <Navbar session={session} student={currentCustomer} />
-        <CustomerQueueInterface customer={currentCustomer} />
+      <div className="relative flex items-center min-h-[calc(100vh-40px)] justify-start w-full bg-[url('/assets/bg.png')] overflow-hidden bg-contain p-4 flex-col">
+        <CustomerQueueInterface customer={currentCustomer} session={session} />
       </div>
     </Suspense>
   );
