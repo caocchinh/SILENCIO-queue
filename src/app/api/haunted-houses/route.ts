@@ -4,6 +4,7 @@ import { createApiError, HTTP_STATUS } from "@/constants/errors";
 import { verifyCustomerSession } from "@/dal/verifySession";
 import { retryDatabase } from "@/dal/retry";
 import { updateReservationsStatus } from "@/server/queue-operations";
+import { spotStatusUtils } from "@/lib/utils";
 
 // GET /api/haunted-houses - Get all haunted houses
 export async function GET() {
@@ -60,17 +61,7 @@ export async function GET() {
       queues: house.queues.map((queue) => ({
         ...queue,
         stats: {
-          availableSpots: queue.spots.filter((s) => s.status === "available")
-            .length,
-          occupiedSpots: queue.spots.filter(
-            (s) => s.status === "occupied" && !s.reservationId
-          ).length,
-          reservedSpots: queue.spots.filter(
-            (s) =>
-              (s.status === "reserved" && s.reservationId) ||
-              (s.status === "occupied" && s.reservationId)
-          ).length,
-          totalSpots: queue.spots.length,
+          ...spotStatusUtils.calculateStats(queue.spots),
           activeReservations: queue.reservations.length,
         },
       })),

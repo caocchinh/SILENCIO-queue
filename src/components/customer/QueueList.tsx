@@ -25,7 +25,7 @@ import {
 } from "@/lib/types/queue";
 import { joinQueue } from "@/server/customer";
 import { useState } from "react";
-import { cn, errorToast, successToast } from "@/lib/utils";
+import { cn, errorToast, successToast, spotStatusUtils } from "@/lib/utils";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -276,16 +276,11 @@ export function QueueList({ houses, customerData }: Props) {
                                 ?.sort((a, b) => a.spotNumber - b.spotNumber)
                                 .slice(0, 30)
                                 .map((spot) => {
-                                  const isAvailable =
-                                    spot.status === "available";
-                                  const isOccupied =
-                                    spot.status === "occupied" &&
-                                    !spot.reservationId;
-                                  const isReserved =
-                                    (spot.status === "reserved" &&
-                                      spot.reservationId) ||
-                                    (spot.status === "occupied" &&
-                                      spot.reservationId);
+                                  const {
+                                    isAvailable,
+                                    isOccupied,
+                                    isReserved,
+                                  } = spotStatusUtils.getDisplayStatus(spot);
 
                                   const status = isAvailable
                                     ? "Có sẵn"

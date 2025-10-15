@@ -4,6 +4,7 @@ import { queue, queueSpot, reservation } from "@/drizzle/schema";
 import { eq, and, lt, asc, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { retryDatabase } from "@/dal/retry";
+import { spotStatusUtils } from "@/lib/utils";
 
 // Generate unique IDs
 export function generateSpotId() {
@@ -287,60 +288,9 @@ export async function getQueueWithAvailability(
 
   if (!queueData) return null;
 
-  const availableSpots = queueData.spots.filter(
-    (spot) => spot.status === "available"
-  ).length;
-  const occupiedSpots = queueData.spots.filter(
-    (spot) => spot.status === "occupied" && !spot.reservationId
-  ).length;
-  const reservedSpots = queueData.spots.filter(
-    (spot) =>
-      (spot.status === "reserved" && spot.reservationId) ||
-      (spot.status === "occupied" && spot.reservationId)
-  ).length;
-
   return {
     ...queueData,
-    stats: {
-      availableSpots,
-      occupiedSpots,
-      reservedSpots,
-      totalSpots: queueData.spots.length,
-    },
+    stats: spotStatusUtils.calculateStats(queueData.spots),
   };
 }
 
-// Get all queues for a haunted house with stats
-export async function getHauntedHouseQueues(hauntedHouseName: string) {
-  const queues = await retryDatabase(
-    () =>
-      db.query.queue.findMany({
-        where: eq(queue.hauntedHouseName, hauntedHouseName),
-        with: {
-          spots: true,
-          reservations: {
-            where: eq(reservation.status, "active"),
-          },
-        },
-        orderBy: asc(queue.queueNumber),
-      }),
-    "get haunted house queues"
-  );
-
-  return queues.map((q) => ({
-    ...q,
-    stats: {
-      availableSpots: q.spots.filter((s) => s.status === "available").length,
-      occupiedSpots: q.spots.filter(
-        (s) => s.status === "occupied" && !s.reservationId
-      ).length,
-      reservedSpots: q.spots.filter(
-        (s) =>
-          (s.status === "reserved" && s.reservationId) ||
-          (s.status === "occupied" && s.reservationId)
-      ).length,
-      totalSpots: q.spots.length,
-      activeReservations: q.reservations.length,
-    },
-  }));
-}
