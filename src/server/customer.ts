@@ -197,18 +197,6 @@ export async function leaveQueue(params: {
               .where(eq(reservation.id, spot.reservationId!)),
           "cancel reservation on representative leave"
         );
-
-        // Increment reservation attempts for the representative since they used up one attempt
-        await retryDatabase(
-          () =>
-            db
-              .update(customerSchema)
-              .set({
-                reservationAttempts: sql`${customerSchema.reservationAttempts} + 1`,
-              })
-              .where(eq(customerSchema.studentId, studentId)),
-          "increment reservation attempts for representative"
-        );
       } else {
         // Regular member leaves
         await retryDatabase(
@@ -253,6 +241,8 @@ export async function leaveQueue(params: {
         "clear queue spot"
       );
     }
+
+    await updateReservationsStatus();
 
     return createActionSuccess({
       message: "Successfully left the queue",
@@ -555,6 +545,8 @@ export async function joinReservation(
           .where(eq(reservation.id, reservationData.id)),
       "update reservation status"
     );
+
+    await updateReservationsStatus();
 
     return createActionSuccess({
       message: "Successfully joined reservation",

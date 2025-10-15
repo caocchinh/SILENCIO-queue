@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/drizzle/db";
-import { queue, queueSpot, reservation, customer } from "@/drizzle/schema";
-import { eq, and, lt, sql, asc, count } from "drizzle-orm";
+import { queue, queueSpot, reservation } from "@/drizzle/schema";
+import { eq, and, lt, asc, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { retryDatabase } from "@/dal/retry";
 
@@ -218,36 +218,20 @@ export async function updateReservationsStatus() {
             .where(eq(reservation.id, res.id)),
         `expire reservation ${res.code}`
       );
-
-      // Increment representative's reservation attempts
-      await retryDatabase(
-        () =>
-          db
-            .update(customer)
-            .set({
-              reservationAttempts: sql`${customer.reservationAttempts} + 1`,
-            })
-            .where(eq(customer.studentId, res.representativeCustomerId)),
-        `increment reservation attempts for ${res.representativeCustomerId}`
-      );
     }
   );
 
-  const expiredFilledReservations = await retryDatabase(
+  const updateFilledReservations = await retryDatabase(
     () =>
       db.query.reservation.findMany({
-        where: and(
-          eq(reservation.status, "active"),
-          lt(reservation.expiresAt, now),
-          eq(reservation.currentSpots, reservation.maxSpots)
-        ),
+        where: and(eq(reservation.currentSpots, reservation.maxSpots)),
       }),
     "find expired and filled reservations"
   );
 
-  const expiredFilledReservationsPromises = expiredFilledReservations.map(
+  const updateFilledReservationsPromises = updateFilledReservations.map(
     async (res) => {
-      // Since reservation is completed, we need to remove the reservation id from all spots, as they are no longer reserved, but is occupied
+      // Since reservation is completed, we need to remove the reservation id from all spots, as they are no longer reserved, but is in occupied state now. We are not reserving spot for anyone.
       await retryDatabase(
         () =>
           db
@@ -268,25 +252,13 @@ export async function updateReservationsStatus() {
             .where(eq(reservation.id, res.id)),
         `complete reservation ${res.code}`
       );
-
-      // Increment representative's reservation attempts
-      await retryDatabase(
-        () =>
-          db
-            .update(customer)
-            .set({
-              reservationAttempts: sql`${customer.reservationAttempts} + 1`,
-            })
-            .where(eq(customer.studentId, res.representativeCustomerId)),
-        `increment reservation attempts for ${res.representativeCustomerId}`
-      );
     }
   );
 
   await Promise.allSettled(expiredUnfilledReservationsPromises);
-  await Promise.allSettled(expiredFilledReservationsPromises);
+  await Promise.allSettled(updateFilledReservationsPromises);
 
-  return expiredUnfilledReservations.length + expiredFilledReservations.length;
+  return expiredUnfilledReservations.length + updateFilledReservations.length;
 }
 
 // Get queue with availability stats (accepts either queueId or composite key)

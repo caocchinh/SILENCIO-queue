@@ -3,6 +3,7 @@ import { db } from "@/drizzle/db";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
 import { verifyCustomerSession } from "@/dal/verifySession";
 import { retryDatabase } from "@/dal/retry";
+import { updateReservationsStatus } from "@/server/queue-operations";
 
 // GET /api/haunted-houses - Get all haunted houses
 export async function GET() {
@@ -27,6 +28,8 @@ export async function GET() {
         "Valid customer session required"
       );
     }
+
+    await updateReservationsStatus();
 
     const houses = await retryDatabase(
       () =>

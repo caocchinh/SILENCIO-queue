@@ -14,6 +14,7 @@ import { headers } from "next/headers";
 import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
 import { retryAuth } from "@/dal/retry";
 import { CustomerQueueInterface } from "@/components/customer/CustomerQueueInterface";
+import { updateReservationsStatus } from "@/server/queue-operations";
 
 export default async function DashboardPage() {
   let session;
@@ -90,6 +91,8 @@ export default async function DashboardPage() {
       />
     );
   }
+
+  await updateReservationsStatus();
 
   // Redirect customers to queue interface
   return (

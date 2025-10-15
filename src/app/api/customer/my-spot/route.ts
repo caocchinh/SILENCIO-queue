@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustomerQueueSpot } from "@/server/queue-operations";
+import {
+  getCustomerQueueSpot,
+  updateReservationsStatus,
+} from "@/server/queue-operations";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
 import { verifyCustomerSession } from "@/dal/verifySession";
 
@@ -44,6 +47,8 @@ export async function GET(request: NextRequest) {
         "You can only view your own queue spot"
       );
     }
+
+    await updateReservationsStatus();
 
     const spot = await getCustomerQueueSpot(studentId);
 

@@ -35,6 +35,7 @@ import { QueueSpotWithDetails } from "@/lib/types/queue";
 import { leaveQueue } from "@/server/customer";
 import { cn } from "@/lib/utils";
 import { errorToast, successToast } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface Props {
   spot: QueueSpotWithDetails;
@@ -42,6 +43,7 @@ interface Props {
 
 export function MyQueueSpot({ spot }: Props) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [isReservationExpiringSoon, setIsReservationExpiringSoon] =
@@ -100,7 +102,8 @@ export function MyQueueSpot({ spot }: Props) {
       const diff = expiry - now;
 
       if (diff <= 0) {
-        setTimeRemaining("Expired");
+        router.refresh();
+        setTimeRemaining("Hết hạn");
         setIsReservationExpiringSoon(false);
         return;
       }
@@ -121,7 +124,7 @@ export function MyQueueSpot({ spot }: Props) {
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);
-  }, [spot.reservation, spot.reservation?.expiresAt]);
+  }, [router, spot.reservation, spot.reservation?.expiresAt]);
 
   // Calculate queue statistics
   const allSpots = spot.queue?.spots || [];
