@@ -16,10 +16,10 @@ import { eq, and, isNull, sql, asc } from "drizzle-orm";
 import {
   customerHasQueueSpot,
   findFirstAvailableSpot,
-  getAvailableSpotCount,
   generateReservationId,
   generateReservationCode,
   calculateReservationExpiry,
+  updateReservationsStatus,
 } from "@/server/queue-operations";
 import {
   ActionResponse,
@@ -277,8 +277,12 @@ export async function createReservation(
       );
     }
 
-    const { hauntedHouseName, queueNumber, maxSpots, customerData } =
-      validationResult.data;
+    const {
+      hauntedHouseName,
+      queueNumber,
+      numberOfSpotsForReservation,
+      customerData,
+    } = validationResult.data;
 
     const customerSession = await verifyCustomerSession();
     if (!customerSession.session) {
@@ -316,9 +320,32 @@ export async function createReservation(
       return createActionError("ALREADY_IN_QUEUE");
     }
 
+    await updateReservationsStatus();
+
     // Check reservation attempts
     if (customer.reservationAttempts >= 2) {
       return createActionError("MAX_RESERVATION_ATTEMPTS");
+    }
+
+    // Find and reserve spots
+    const availableSpots = await retryDatabase(
+      () =>
+        db.query.queueSpot.findMany({
+          where: and(
+            eq(queueSpot.queueId, queueData.id),
+            eq(queueSpot.status, "available")
+          ),
+          orderBy: asc(queueSpot.spotNumber),
+          limit: numberOfSpotsForReservation,
+        }),
+      "find available spots for reservation"
+    );
+
+    if (availableSpots.length < numberOfSpotsForReservation) {
+      return createActionError(
+        "NO_AVAILABLE_SPOTS",
+        `Not enough available spots. Only ${availableSpots.length} spots available.`
+      );
     }
 
     // Increment reservation attempts since they're creating a reservation
@@ -332,15 +359,6 @@ export async function createReservation(
           .where(eq(customerSchema.studentId, customer.studentId)),
       "increment reservation attempts for creating reservation"
     );
-
-    // Check if queue has enough available spots
-    const availableCount = await getAvailableSpotCount(queueData.id);
-    if (availableCount < maxSpots) {
-      return createActionError(
-        "NO_AVAILABLE_SPOTS",
-        `Not enough available spots. Only ${availableCount} spots available.`
-      );
-    }
 
     // Generate unique reservation code
     let code = generateReservationCode();
@@ -359,7 +377,7 @@ export async function createReservation(
     }
 
     const reservationId = generateReservationId();
-    const expiresAt = calculateReservationExpiry(maxSpots);
+    const expiresAt = calculateReservationExpiry(numberOfSpotsForReservation);
 
     // Create reservation
     await retryDatabase(
@@ -369,7 +387,7 @@ export async function createReservation(
           queueId: queueData.id,
           representativeCustomerId: customer.studentId,
           code,
-          maxSpots,
+          maxSpots: numberOfSpotsForReservation,
           currentSpots: 1,
           expiresAt,
           status: "active",
@@ -377,23 +395,9 @@ export async function createReservation(
       "create reservation"
     );
 
-    // Find and reserve spots
-    const availableSpots = await retryDatabase(
-      () =>
-        db.query.queueSpot.findMany({
-          where: and(
-            eq(queueSpot.queueId, queueData.id),
-            eq(queueSpot.status, "available")
-          ),
-          orderBy: asc(queueSpot.spotNumber),
-          limit: maxSpots,
-        }),
-      "find available spots for reservation"
-    );
-
     // Mark spots as reserved
-    for (const spot of availableSpots) {
-      await retryDatabase(
+    const spotUpdatePromises = availableSpots.map((spot) =>
+      retryDatabase(
         () =>
           db
             .update(queueSpot)
@@ -404,6 +408,20 @@ export async function createReservation(
             })
             .where(eq(queueSpot.id, spot.id)),
         `reserve spot ${spot.spotNumber}`
+      )
+    );
+
+    const spotUpdateResults = await Promise.allSettled(spotUpdatePromises);
+
+    // Check for any failures
+    const failures = spotUpdateResults.filter(
+      (result) => result.status === "rejected"
+    );
+    if (failures.length > 0) {
+      console.error("Some spot reservations failed:", failures);
+      return createActionError(
+        "DATABASE_ERROR",
+        "Failed to reserve some spots"
       );
     }
 
@@ -414,6 +432,7 @@ export async function createReservation(
           .update(queueSpot)
           .set({
             customerId: customer.studentId,
+            status: "occupied",
             occupiedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -421,25 +440,9 @@ export async function createReservation(
       "assign representative to first spot"
     );
 
-    // Fetch complete reservation with relations
-    const completeReservation = await retryDatabase(
-      () =>
-        db.query.reservation.findFirst({
-          where: eq(reservation.id, reservationId),
-          with: {
-            queue: {
-              with: {
-                hauntedHouse: true,
-              },
-            },
-            representative: true,
-            spots: true,
-          },
-        }),
-      "fetch complete reservation"
-    );
-
-    return createActionSuccess(completeReservation);
+    return createActionSuccess({
+      message: "Successfully created reservation",
+    });
   } catch (error) {
     console.error("Error creating reservation:", error);
     return createActionError("DATABASE_ERROR", "Failed to create reservation");
@@ -462,7 +465,6 @@ export async function joinReservation(
 
     const { code, customerData } = validationResult.data;
 
-    // Get or create customer
     const customerSession = await verifyCustomerSession();
     if (!customerSession.session) {
       return createActionError("UNAUTHORIZED");
@@ -482,6 +484,8 @@ export async function joinReservation(
       return createActionError("ALREADY_IN_QUEUE");
     }
 
+    await updateReservationsStatus();
+
     // Find reservation by code
     const reservationData = await retryDatabase(
       () =>
@@ -495,22 +499,8 @@ export async function joinReservation(
       return createActionError("INVALID_RESERVATION_CODE");
     }
 
-    // Check if reservation is active
-    if (reservationData.status !== "active") {
-      return createActionError(
-        "CANNOT_CANCEL_RESERVATION",
-        `Reservation is ${reservationData.status}`
-      );
-    }
-
-    // Check if reservation has expired
-    if (new Date() > reservationData.expiresAt) {
+    if (reservationData.status === "expired") {
       return createActionError("RESERVATION_EXPIRED");
-    }
-
-    // Check if reservation is full
-    if (reservationData.currentSpots >= reservationData.maxSpots) {
-      return createActionError("RESERVATION_FULL");
     }
 
     // Find a reserved spot for this reservation that's not occupied
@@ -526,6 +516,7 @@ export async function joinReservation(
     );
 
     if (!spot) {
+      await updateReservationsStatus();
       return createActionError(
         "NO_AVAILABLE_SPOTS",
         "No available spots in this reservation"
@@ -539,6 +530,7 @@ export async function joinReservation(
           .update(queueSpot)
           .set({
             customerId: customer.studentId,
+            status: "occupied",
             occupiedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -564,28 +556,9 @@ export async function joinReservation(
       "update reservation status"
     );
 
-    // Fetch complete spot with relations
-    const completeSpot = await retryDatabase(
-      () =>
-        db.query.queueSpot.findFirst({
-          where: eq(queueSpot.id, spot.id),
-          with: {
-            queue: {
-              with: {
-                hauntedHouse: true,
-              },
-            },
-            reservation: {
-              with: {
-                representative: true,
-              },
-            },
-          },
-        }),
-      "fetch complete spot with reservation"
-    );
-
-    return createActionSuccess(completeSpot);
+    return createActionSuccess({
+      message: "Successfully joined reservation",
+    });
   } catch (error) {
     console.error("Error joining reservation:", error);
     return createActionError("DATABASE_ERROR", "Failed to join reservation");

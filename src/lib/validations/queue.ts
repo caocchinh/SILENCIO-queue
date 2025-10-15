@@ -98,7 +98,7 @@ export const joinQueueSchema = z.object({
 export const createReservationSchema = z.object({
   hauntedHouseName: z.string().min(1, "Haunted house name is required"),
   queueNumber: z.number().int().min(1, "Queue number is required"),
-  maxSpots: z
+  numberOfSpotsForReservation: z
     .number()
     .int()
     .min(2, "Reservation must be for at least 2 people")

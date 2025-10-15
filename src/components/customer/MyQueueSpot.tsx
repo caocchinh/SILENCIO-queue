@@ -128,13 +128,18 @@ export function MyQueueSpot({ spot }: Props) {
   const availableSpots = allSpots.filter(
     (s) => s.status === "available"
   ).length;
-  const occupiedSpots = allSpots.filter((s) => s.status === "occupied").length;
-  const reservedSpots = allSpots.filter((s) => s.status === "reserved").length;
+  const occupiedSpots = allSpots.filter(
+    (s) => s.status === "occupied" && !s.reservationId
+  ).length;
+  const reservedSpots = allSpots.filter(
+    (s) =>
+      s.status === "reserved" || (s.status === "occupied" && s.reservationId)
+  ).length;
   const totalSpots = allSpots.length;
 
   // Get list of people in queue (occupied spots only)
   const peopleInQueue = allSpots
-    .filter((s) => s.customer && s.status === "occupied")
+    .filter((s) => s.customer && s.status === "occupied" && !s.reservationId)
     .map((s) => ({
       spotNumber: s.spotNumber,
       customer: s.customer!,
@@ -344,7 +349,7 @@ export function MyQueueSpot({ spot }: Props) {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-purple-600" />
-              Chi tiết đặt chỗ nhóm
+              Chi tiết phòng/giữ slot
               {isRepresentative && (
                 <span className="text-sm bg-purple-600 text-white px-2 py-0.5 rounded">
                   Trưởng nhóm
@@ -357,7 +362,7 @@ export function MyQueueSpot({ spot }: Props) {
             <div className="bg-white border-2 border-purple-300 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold text-purple-900">
-                  Mã đặt chỗ
+                  Mã phòng
                 </p>
                 {spot.reservation.status === "active" && timeRemaining && (
                   <div
@@ -397,7 +402,7 @@ export function MyQueueSpot({ spot }: Props) {
                 </Button>
               </div>
               <p className="text-xs text-purple-600 mt-2">
-                Chia sẻ mã này với các thành viên nhóm để tham gia
+                Chia sẻ mã này với các thành viên để tham gia phòng
               </p>
             </div>
 
@@ -528,7 +533,7 @@ export function MyQueueSpot({ spot }: Props) {
         <CardContent>
           {peopleInQueue.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
-              Bạn là người duy nhất trong hàng đợi lúc này
+              Chưa có ai trong lượt này
             </p>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">

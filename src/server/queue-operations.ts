@@ -175,61 +175,118 @@ export function calculateReservationExpiry(maxSpots: number): Date {
 }
 
 // Expire reservations (background job function)
-export async function expireReservations() {
+export async function updateReservationsStatus() {
   const now = new Date();
 
   // Find expired active reservations
-  const expiredReservations = await retryDatabase(
+  const expiredUnfilledReservations = await retryDatabase(
     () =>
       db.query.reservation.findMany({
         where: and(
           eq(reservation.status, "active"),
-          lt(reservation.expiresAt, now)
+          lt(reservation.expiresAt, now),
+          lt(reservation.currentSpots, reservation.maxSpots)
         ),
       }),
     "find expired reservations"
   );
 
-  for (const res of expiredReservations) {
-    // Release all spots (including partially filled ones)
-    await retryDatabase(
-      () =>
-        db
-          .update(queueSpot)
-          .set({
-            customerId: null,
-            reservationId: null,
-            status: "available",
-            occupiedAt: null,
-          })
-          .where(eq(queueSpot.reservationId, res.id)),
-      `release spots for reservation ${res.code}`
-    );
+  // Process all expired reservations in parallel using Promise.allSettled
+  const expiredUnfilledReservationsPromises = expiredUnfilledReservations.map(
+    async (res) => {
+      // Release all spots (including partially filled ones)
+      await retryDatabase(
+        () =>
+          db
+            .update(queueSpot)
+            .set({
+              customerId: null,
+              reservationId: null,
+              status: "available",
+              occupiedAt: null,
+            })
+            .where(eq(queueSpot.reservationId, res.id)),
+        `release spots for reservation ${res.code}`
+      );
 
-    // Mark reservation as expired
-    await retryDatabase(
-      () =>
-        db
-          .update(reservation)
-          .set({ status: "expired" })
-          .where(eq(reservation.id, res.id)),
-      `expire reservation ${res.code}`
-    );
+      // Mark reservation as expired
+      await retryDatabase(
+        () =>
+          db
+            .update(reservation)
+            .set({ status: "expired" })
+            .where(eq(reservation.id, res.id)),
+        `expire reservation ${res.code}`
+      );
 
-    // Increment representative's reservation attempts
-    await retryDatabase(
-      () =>
-        db
-          .update(customer)
-          .set({
-            reservationAttempts: sql`${customer.reservationAttempts} + 1`,
-          })
-          .where(eq(customer.studentId, res.representativeCustomerId)),
-      `increment reservation attempts for ${res.representativeCustomerId}`
-    );
-  }
+      // Increment representative's reservation attempts
+      await retryDatabase(
+        () =>
+          db
+            .update(customer)
+            .set({
+              reservationAttempts: sql`${customer.reservationAttempts} + 1`,
+            })
+            .where(eq(customer.studentId, res.representativeCustomerId)),
+        `increment reservation attempts for ${res.representativeCustomerId}`
+      );
+    }
+  );
 
-  return expiredReservations.length;
+  const expiredFilledReservations = await retryDatabase(
+    () =>
+      db.query.reservation.findMany({
+        where: and(
+          eq(reservation.status, "active"),
+          lt(reservation.expiresAt, now),
+          eq(reservation.currentSpots, reservation.maxSpots)
+        ),
+      }),
+    "find expired and filled reservations"
+  );
+
+  const expiredFilledReservationsPromises = expiredFilledReservations.map(
+    async (res) => {
+      // Since reservation is completed, we need to remove the reservation id from all spots, as they are no longer reserved, but is occupied
+      await retryDatabase(
+        () =>
+          db
+            .update(queueSpot)
+            .set({
+              reservationId: null,
+            })
+            .where(eq(queueSpot.reservationId, res.id)),
+        `release spots for reservation ${res.code}`
+      );
+
+      // Mark reservation as completed
+      await retryDatabase(
+        () =>
+          db
+            .update(reservation)
+            .set({ status: "completed" })
+            .where(eq(reservation.id, res.id)),
+        `complete reservation ${res.code}`
+      );
+
+      // Increment representative's reservation attempts
+      await retryDatabase(
+        () =>
+          db
+            .update(customer)
+            .set({
+              reservationAttempts: sql`${customer.reservationAttempts} + 1`,
+            })
+            .where(eq(customer.studentId, res.representativeCustomerId)),
+        `increment reservation attempts for ${res.representativeCustomerId}`
+      );
+    }
+  );
+
+  await Promise.allSettled(expiredUnfilledReservationsPromises);
+  await Promise.allSettled(expiredFilledReservationsPromises);
+
+  return expiredUnfilledReservations.length + expiredFilledReservations.length;
 }
 
 // Get queue with availability stats (accepts either queueId or composite key)
