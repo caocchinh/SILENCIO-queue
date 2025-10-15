@@ -92,7 +92,7 @@ export function CustomerQueueInterface({ customer, session }: Props) {
         handleRefresh={handleRefresh}
       />
 
-      <div className="p-4 md:p-6 flex flex-col min-w-[300px] md:w-[700px] gap-4 items-center justify-center w-full mx-auto">
+      <div className="p-4 hi md:p-6 flex flex-col min-w-[300px] md:w-[700px] gap-4 items-center justify-center w-full mx-auto">
         {mySpot ? (
           <MyQueueSpot spot={mySpot} />
         ) : (
