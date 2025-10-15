@@ -92,7 +92,11 @@ export default async function DashboardPage() {
     );
   }
 
-  await updateReservationsStatus();
+  try {
+    await updateReservationsStatus();
+  } catch {
+    <ErrorCard message={getErrorMessage(ERROR_CODES.INTERNAL_SERVER_ERROR)} />;
+  }
 
   // Redirect customers to queue interface
   return (

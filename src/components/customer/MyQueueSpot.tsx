@@ -142,13 +142,15 @@ export function MyQueueSpot({ spot }: Props) {
 
   // Get people in the same reservation if applicable
   const peopleInReservation =
-    spot.reservation?.spots?.map((s) => ({
-      spotNumber: s.spotNumber,
-      customer: s.customer!,
-      isYou: s.customerId === spot.customerId,
-      isRepresentative:
-        s.customerId === spot.reservation?.representativeCustomerId,
-    })) || [];
+    spot.reservation?.spots
+      ?.filter((s) => s.customer)
+      .map((s) => ({
+        spotNumber: s.spotNumber,
+        customer: s.customer!,
+        isYou: s.customerId === spot.customerId,
+        isRepresentative:
+          s.customerId === spot.reservation?.representativeCustomerId,
+      })) || [];
 
   const spotsNeededForReservation = spot.reservation
     ? spot.reservation.maxSpots - spot.reservation.currentSpots
