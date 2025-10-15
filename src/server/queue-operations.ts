@@ -1,10 +1,9 @@
 import "server-only";
 import { db } from "@/drizzle/db";
-import { queue, queueSpot, reservation } from "@/drizzle/schema";
+import { queueSpot, reservation } from "@/drizzle/schema";
 import { eq, and, lt, asc, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { retryDatabase } from "@/dal/retry";
-import { spotStatusUtils } from "@/lib/utils";
 
 // Generate unique IDs
 export function generateSpotId() {
@@ -37,43 +36,6 @@ export async function customerHasQueueSpot(
     "check customer queue spot"
   );
   return !!existingSpot;
-}
-
-// Get customer's current queue spot with full details
-export async function getCustomerQueueSpot(studentId: string) {
-  const spot = await retryDatabase(
-    () =>
-      db.query.queueSpot.findFirst({
-        where: eq(queueSpot.customerId, studentId),
-        with: {
-          queue: {
-            with: {
-              hauntedHouse: true,
-              spots: {
-                with: {
-                  customer: true,
-                },
-                orderBy: asc(queueSpot.spotNumber),
-              },
-            },
-          },
-          reservation: {
-            with: {
-              representative: true,
-              spots: {
-                with: {
-                  customer: true,
-                },
-                orderBy: asc(queueSpot.spotNumber),
-              },
-            },
-          },
-        },
-      }),
-    "get customer queue spot"
-  );
-
-  return spot;
 }
 
 // Create queue spots for a queue
@@ -175,7 +137,7 @@ export function calculateReservationExpiry(maxSpots: number): Date {
   return new Date(Date.now() + minutesToAdd * 60 * 1000);
 }
 
-// Expire reservations (background job function)
+// Update reservations status
 export async function updateReservationsStatus() {
   const now = new Date();
 
@@ -261,36 +223,3 @@ export async function updateReservationsStatus() {
 
   return expiredUnfilledReservations.length + updateFilledReservations.length;
 }
-
-// Get queue with availability stats (accepts either queueId or composite key)
-export async function getQueueWithAvailability(
-  queueIdOrHouseName: string,
-  queueNumber?: number
-) {
-  const queueData = await retryDatabase(() => {
-    // If queueNumber is provided, use composite key; otherwise use queueId
-    const whereClause =
-      queueNumber !== undefined
-        ? and(
-            eq(queue.hauntedHouseName, queueIdOrHouseName),
-            eq(queue.queueNumber, queueNumber)
-          )
-        : eq(queue.id, queueIdOrHouseName);
-
-    return db.query.queue.findFirst({
-      where: whereClause,
-      with: {
-        hauntedHouse: true,
-        spots: true,
-      },
-    });
-  }, "get queue with availability");
-
-  if (!queueData) return null;
-
-  return {
-    ...queueData,
-    stats: spotStatusUtils.calculateStats(queueData.spots),
-  };
-}
-

@@ -20,18 +20,6 @@ export type NewQueueSpot = typeof queueSpot.$inferInsert;
 export type NewReservation = typeof reservation.$inferInsert;
 export type NewCustomer = typeof customer.$inferInsert;
 
-// Extended types with relations
-export type QueueWithStats = Queue & {
-  stats: {
-    availableSpots: number;
-    occupiedSpots: number;
-    reservedSpots: number;
-    totalSpots: number;
-    activeReservations?: number;
-  };
-  hauntedHouse?: HauntedHouse;
-};
-
 export type QueueWithDetails = Queue & {
   stats: {
     availableSpots: number;
@@ -65,16 +53,12 @@ export type ReservationWithDetails = Reservation & {
   spots?: QueueSpotWithDetails[];
 };
 
-export type HauntedHouseWithQueues = HauntedHouse & {
-  queues?: QueueWithStats[];
-};
-
 export type HauntedHouseWithDetailedQueues = HauntedHouse & {
   queues?: QueueWithDetails[];
 };
 
 // Import standardized response types
-export type { ActionResponse } from "@/constants/errors";
+// export type { ActionResponse } from "@/constants/errors";
 
 // Queue status types
 export type QueueSpotStatus = "available" | "occupied" | "reserved";

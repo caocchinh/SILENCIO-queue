@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getCustomerQueueSpot,
-  updateReservationsStatus,
-} from "@/server/queue-operations";
+import { updateReservationsStatus } from "@/server/queue-operations";
 import { createApiError, HTTP_STATUS } from "@/constants/errors";
 import { verifyCustomerSession } from "@/dal/verifySession";
+import { asc, eq } from "drizzle-orm";
+import { retryDatabase } from "@/dal/retry";
+import { db } from "@/drizzle/db";
+import { queueSpot } from "@/drizzle/schema";
 
 // GET /api/customer/my-spot?studentId=xxx - Get customer's current queue spot
 export async function GET(request: NextRequest) {
@@ -50,7 +51,37 @@ export async function GET(request: NextRequest) {
 
     await updateReservationsStatus();
 
-    const spot = await getCustomerQueueSpot(studentId);
+    const spot = await retryDatabase(
+      () =>
+        db.query.queueSpot.findFirst({
+          where: eq(queueSpot.customerId, studentId),
+          with: {
+            queue: {
+              with: {
+                hauntedHouse: true,
+                spots: {
+                  with: {
+                    customer: true,
+                  },
+                  orderBy: asc(queueSpot.spotNumber),
+                },
+              },
+            },
+            reservation: {
+              with: {
+                representative: true,
+                spots: {
+                  with: {
+                    customer: true,
+                  },
+                  orderBy: asc(queueSpot.spotNumber),
+                },
+              },
+            },
+          },
+        }),
+      "get customer queue spot"
+    );
 
     if (!spot) {
       return NextResponse.json(

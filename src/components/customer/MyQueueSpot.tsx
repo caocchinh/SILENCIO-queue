@@ -34,7 +34,7 @@ import {
 import { QueueSpotWithDetails } from "@/lib/types/queue";
 import { leaveQueue } from "@/server/customer";
 import { cn } from "@/lib/utils";
-import { errorToast, successToast } from "@/lib/utils";
+import { errorToast, successToast, spotStatusUtils } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -128,21 +128,12 @@ export function MyQueueSpot({ spot }: Props) {
 
   // Calculate queue statistics
   const allSpots = spot.queue?.spots || [];
-  const availableSpots = allSpots.filter(
-    (s) => s.status === "available"
-  ).length;
-  const occupiedSpots = allSpots.filter(
-    (s) => s.status === "occupied" && !s.reservationId
-  ).length;
-  const reservedSpots = allSpots.filter(
-    (s) =>
-      s.status === "reserved" || (s.status === "occupied" && s.reservationId)
-  ).length;
-  const totalSpots = allSpots.length;
+  const { availableSpots, occupiedSpots, reservedSpots, totalSpots } =
+    spotStatusUtils.calculateStats(allSpots);
 
-  // Get list of people in queue (occupied spots only)
+  // Get list of people in queue (occupied spots only, since we are not showing reserved spots)
   const peopleInQueue = allSpots
-    .filter((s) => s.customer && s.status === "occupied" && !s.reservationId)
+    .filter((s) => spotStatusUtils.isOccupied(s))
     .map((s) => ({
       spotNumber: s.spotNumber,
       customer: s.customer!,
@@ -151,15 +142,13 @@ export function MyQueueSpot({ spot }: Props) {
 
   // Get people in the same reservation if applicable
   const peopleInReservation =
-    spot.reservation?.spots
-      ?.filter((s) => s.customer)
-      .map((s) => ({
-        spotNumber: s.spotNumber,
-        customer: s.customer!,
-        isYou: s.customerId === spot.customerId,
-        isRepresentative:
-          s.customerId === spot.reservation?.representativeCustomerId,
-      })) || [];
+    spot.reservation?.spots?.map((s) => ({
+      spotNumber: s.spotNumber,
+      customer: s.customer!,
+      isYou: s.customerId === spot.customerId,
+      isRepresentative:
+        s.customerId === spot.reservation?.representativeCustomerId,
+    })) || [];
 
   const spotsNeededForReservation = spot.reservation
     ? spot.reservation.maxSpots - spot.reservation.currentSpots
