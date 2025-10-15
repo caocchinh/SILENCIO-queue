@@ -291,10 +291,12 @@ export async function getQueueWithAvailability(
     (spot) => spot.status === "available"
   ).length;
   const occupiedSpots = queueData.spots.filter(
-    (spot) => spot.status === "occupied"
+    (spot) => spot.status === "occupied" && !spot.reservationId
   ).length;
   const reservedSpots = queueData.spots.filter(
-    (spot) => spot.status === "reserved"
+    (spot) =>
+      (spot.status === "reserved" && spot.reservationId) ||
+      (spot.status === "occupied" && spot.reservationId)
   ).length;
 
   return {
@@ -329,8 +331,14 @@ export async function getHauntedHouseQueues(hauntedHouseName: string) {
     ...q,
     stats: {
       availableSpots: q.spots.filter((s) => s.status === "available").length,
-      occupiedSpots: q.spots.filter((s) => s.status === "occupied").length,
-      reservedSpots: q.spots.filter((s) => s.status === "reserved").length,
+      occupiedSpots: q.spots.filter(
+        (s) => s.status === "occupied" && !s.reservationId
+      ).length,
+      reservedSpots: q.spots.filter(
+        (s) =>
+          (s.status === "reserved" && s.reservationId) ||
+          (s.status === "occupied" && s.reservationId)
+      ).length,
       totalSpots: q.spots.length,
       activeReservations: q.reservations.length,
     },

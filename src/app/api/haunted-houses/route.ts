@@ -62,10 +62,14 @@ export async function GET() {
         stats: {
           availableSpots: queue.spots.filter((s) => s.status === "available")
             .length,
-          occupiedSpots: queue.spots.filter((s) => s.status === "occupied")
-            .length,
-          reservedSpots: queue.spots.filter((s) => s.status === "reserved")
-            .length,
+          occupiedSpots: queue.spots.filter(
+            (s) => s.status === "occupied" && !s.reservationId
+          ).length,
+          reservedSpots: queue.spots.filter(
+            (s) =>
+              (s.status === "reserved" && s.reservationId) ||
+              (s.status === "occupied" && s.reservationId)
+          ).length,
           totalSpots: queue.spots.length,
           activeReservations: queue.reservations.length,
         },

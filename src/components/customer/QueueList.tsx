@@ -278,8 +278,14 @@ export function QueueList({ houses, customerData }: Props) {
                                 .map((spot) => {
                                   const isAvailable =
                                     spot.status === "available";
-                                  const isOccupied = spot.status === "occupied";
-                                  const isReserved = spot.status === "reserved";
+                                  const isOccupied =
+                                    spot.status === "occupied" &&
+                                    !spot.reservationId;
+                                  const isReserved =
+                                    (spot.status === "reserved" &&
+                                      spot.reservationId) ||
+                                    (spot.status === "occupied" &&
+                                      spot.reservationId);
 
                                   const status = isAvailable
                                     ? "Có sẵn"
