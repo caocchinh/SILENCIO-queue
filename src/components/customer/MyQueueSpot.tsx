@@ -188,7 +188,7 @@ export function MyQueueSpot({ spot }: Props) {
                   <AlertDialogDescription>
                     {isRepresentative ? (
                       <>
-                        Bạn là người đại diện của nhóm đặt chỗ. Rời khỏi sẽ
+                        Bạn là người đại diện của nhóm đặt chỗ. Rời khỏi sẽ{" "}
                         <strong>hủy toàn bộ đặt chỗ</strong> và giải phóng tất
                         cả các chỗ (bao gồm cả những người đã tham gia).
                       </>

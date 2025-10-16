@@ -15,6 +15,7 @@ import { Users, Clock, AlertTriangle, Info } from "lucide-react";
 import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { createReservation } from "@/server/customer";
 import { cn } from "@/lib/utils";
+import { Input } from "../ui/input";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -38,7 +39,14 @@ export function ReservationForm({
   const [selectedQueueNumber, setSelectedQueueNumber] = useState<number | "">(
     ""
   );
-  const [numberOfSpotsForReservation, setNumberOfSpotsForReservation] = useState(2);
+  const [numberOfSpotsForReservation, setNumberOfSpotsForReservation] =
+    useState(2);
+
+  // Guard against NaN and 0 values
+  const safeNumberOfSpots =
+    isNaN(numberOfSpotsForReservation) || numberOfSpotsForReservation <= 0
+      ? 2
+      : numberOfSpotsForReservation;
 
   const createReservationMutation = useMutation({
     mutationFn: createReservation,
@@ -61,17 +69,18 @@ export function ReservationForm({
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", customerData.studentId],
         });
+        queryClient.invalidateQueries({ queryKey: ["reservation-code"] });
         // Reset form
         setSelectedHouse("");
         setSelectedQueueNumber("");
         setNumberOfSpotsForReservation(2);
       } else {
-        toast.error(data.message || "Giữ slot thất bại");
+        throw new Error(data.message || "Giữ slot thất bại");
       }
     },
     onError: (error) => {
-      toast.error("Giữ slot thất bại");
-      console.error(error);
+      toast.error(error.message || "Giữ slot thất bại");
+      console.error(error.message);
     },
   });
 
@@ -89,7 +98,7 @@ export function ReservationForm({
   const selectedHouseData = houses.find((h) => h.name === selectedHouse);
   const availableQueues =
     selectedHouseData?.queues?.filter(
-      (q) => q.stats.availableSpots >= numberOfSpotsForReservation
+      (q) => q.stats.availableSpots >= safeNumberOfSpots
     ) || [];
 
   const selectedQueue = selectedHouseData?.queues?.find(
@@ -100,7 +109,9 @@ export function ReservationForm({
     reservationAttempts >= 2 ||
     !selectedHouse ||
     selectedQueueNumber === "" ||
-    (selectedQueue && selectedQueue.stats.availableSpots < numberOfSpotsForReservation);
+    numberOfSpotsForReservation <= 0 ||
+    isNaN(numberOfSpotsForReservation) ||
+    (selectedQueue && selectedQueue.stats.availableSpots < safeNumberOfSpots);
 
   return (
     <Card className="bg-white/90 backdrop-blur">
@@ -146,21 +157,22 @@ export function ReservationForm({
             </label>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
-              <input
+              <Input
+                id="queue-number"
                 type="number"
-                min="2"
-                max="10"
+                placeholder="Số lượt"
+                className="w-40"
                 value={numberOfSpotsForReservation}
                 onChange={(e) => {
-                  setNumberOfSpotsForReservation(parseInt(e.target.value) || 2);
+                  setNumberOfSpotsForReservation(parseInt(e.target.value));
                   setSelectedQueueNumber("");
                 }}
-                className="w-24 px-4 py-2 border rounded-md"
                 disabled={reservationAttempts >= 2}
               />
+
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                Hết hạn sau {numberOfSpotsForReservation * 5} phút
+                Hết hạn sau {safeNumberOfSpots * 5} phút
               </span>
             </div>
           </div>
@@ -191,8 +203,9 @@ export function ReservationForm({
 
                     return (
                       <option key={queue.queueNumber} value={queue.queueNumber}>
-                        Queue {queue.queueNumber} -{" "}
-                        {formatTime(queue.queueStartTime)}(
+                        Lượt {queue.queueNumber} -{" "}
+                        {formatTime(queue.queueStartTime)} -{" "}
+                        {formatTime(queue.queueEndTime)} (
                         {queue.stats.availableSpots} chỗ trống)
                       </option>
                     );
@@ -202,8 +215,8 @@ export function ReservationForm({
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
                   <p className="flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
-                    Không có lượt nào có {numberOfSpotsForReservation} hoặc nhiều hơn chỗ trống.
-                    Thử giảm số người.
+                    Không có lượt nào có {numberOfSpotsForReservation} hoặc
+                    nhiều hơn chỗ trống. Thử giảm số người.
                   </p>
                 </div>
               )}
@@ -218,10 +231,13 @@ export function ReservationForm({
               </p>
               <ul className="text-green-800 space-y-1 text-xs">
                 <li>• Chỗ trống: {selectedQueue.stats.availableSpots}</li>
-                <li>• Chỗ trống cho nhóm bạn: {numberOfSpotsForReservation}</li>
+                <li>• Chỗ trống cho nhóm bạn: {safeNumberOfSpots}</li>
                 <li>
                   • Chỗ trống còn lại sau khi đặt chỗ:{" "}
-                  {selectedQueue.stats.availableSpots - numberOfSpotsForReservation}
+                  {Math.max(
+                    0,
+                    selectedQueue.stats.availableSpots - safeNumberOfSpots
+                  )}
                 </li>
               </ul>
             </div>
@@ -267,9 +283,9 @@ export function ReservationForm({
                   </strong>
                 </li>
                 <li>
-                  Nếu không phải tất cả {numberOfSpotsForReservation} người tham gia trước khi hết
-                  thời gian {numberOfSpotsForReservation * 5} phút, TẤT CẢ chỗ trống (bao gồm chỗ
-                  của bạn) sẽ được giải phóng cho người khác.
+                  Nếu không phải tất cả {safeNumberOfSpots} người tham gia trước
+                  khi hết thời gian {safeNumberOfSpots * 5} phút, TẤT CẢ chỗ
+                  trống (bao gồm chỗ của bạn) sẽ được giải phóng cho người khác.
                 </li>
                 <li>Chia sẻ mã đặt chỗ với các thành viên nhóm ngay lập tức</li>
                 <li>Mỗi thành viên cần có vé hợp lệ để tham gia</li>
@@ -290,8 +306,8 @@ export function ReservationForm({
               : reservationAttempts >= 2
               ? "Đã đạt giới hạn đặt chỗ"
               : cannotCreateReservation
-              ? "Chọn lượt để tiếp tục"
-              : `Tạo phòng cho ${numberOfSpotsForReservation} người`}
+              ? "Vui lòng điền đủ số người tham gia và chọn lượt"
+              : `Tạo phòng cho ${safeNumberOfSpots} người`}
           </Button>
         </div>
       </CardContent>

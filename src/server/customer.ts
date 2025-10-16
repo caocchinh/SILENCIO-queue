@@ -28,6 +28,7 @@ import {
 } from "@/constants/errors";
 import { retryDatabase } from "@/dal/retry";
 import { verifyCustomerSession } from "@/dal/verifySession";
+import { revalidatePath } from "next/cache";
 
 // Join a queue
 export async function joinQueue(params: unknown): Promise<ActionResponse> {
@@ -430,8 +431,11 @@ export async function createReservation(
       "assign representative to first spot"
     );
 
+    revalidatePath("/dashboard");
+
     return createActionSuccess({
       message: "Successfully created reservation",
+      code,
     });
   } catch (error) {
     console.error("Error creating reservation:", error);
