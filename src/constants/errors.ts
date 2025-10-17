@@ -12,6 +12,7 @@ export const ERROR_CODES = {
   UNKNOWN_ERROR: "unknown-error",
   DOES_NOT_HAVE_TICKET: "does-not-have-ticket",
   TICKET_TYPE_NOT_SUPPORTED: "ticket-type-not-supported",
+  SELECTION_DEADLINE_EXPIRED: "selection-deadline-expired",
   // Validation errors
   INVALID_INPUT: "invalid-input",
   // Resource errors
@@ -40,6 +41,7 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.UNKNOWN_ERROR]:
     "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
   [ERROR_CODES.DOES_NOT_HAVE_TICKET]: "Bạn chưa mua vé. Vui lòng mua vé trước.",
+  [ERROR_CODES.SELECTION_DEADLINE_EXPIRED]: "Hạn chót đã qua.",
   [ERROR_CODES.TICKET_TYPE_NOT_SUPPORTED]:
     "Loại vé bạn mua không được chơi nhà ma.",
   [ERROR_CODES.INVALID_INPUT]: "Dữ liệu đầu vào không hợp lệ",

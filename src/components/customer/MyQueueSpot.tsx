@@ -36,6 +36,8 @@ import { leaveQueue } from "@/server/customer";
 import { cn } from "@/lib/utils";
 import { errorToast, successToast, spotStatusUtils } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { SelectionDeadlineCountdown } from "./SelectionDeadlineCountdown";
+import { useCallback } from "react";
 
 interface Props {
   spot: QueueSpotWithDetails;
@@ -49,6 +51,11 @@ export function MyQueueSpot({ spot }: Props) {
   const [isReservationExpiringSoon, setIsReservationExpiringSoon] =
     useState(false);
   const [isLeaveQueueDialogOpen, setIsLeaveQueueDialogOpen] = useState(false);
+  const [isDeadlineExpired, setIsDeadlineExpired] = useState(false);
+
+  const handleDeadlineExpiredChange = useCallback((expired: boolean) => {
+    setIsDeadlineExpired(expired);
+  }, []);
 
   const leaveQueueMutation = useMutation({
     mutationFn: leaveQueue,
@@ -158,14 +165,30 @@ export function MyQueueSpot({ spot }: Props) {
 
   return (
     <div className="space-y-4">
+      <SelectionDeadlineCountdown
+        onExpiredChange={handleDeadlineExpiredChange}
+        title="Thời gian còn lại để quản lý chỗ"
+        description="Bạn không thể rời lượt của mình nữa."
+      />
       <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-500">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-2xl text-green-700">
-                ✓ Bạn đang trong lượt!
+              <CardTitle
+                className={cn(
+                  "text-2xl",
+                  isDeadlineExpired ? "text-gray-500" : "text-green-700"
+                )}
+              >
+                {isDeadlineExpired
+                  ? "⚠ Hạn chót đã qua"
+                  : "✓ Bạn đang trong lượt!"}
               </CardTitle>
-              <CardDescription>Chỗ của bạn đã được giữ</CardDescription>
+              <CardDescription>
+                {isDeadlineExpired
+                  ? "Bạn không thể rời lượt của mình"
+                  : "Chỗ của bạn đã được giữ"}
+              </CardDescription>
             </div>
             <AlertDialog
               open={isLeaveQueueDialogOpen}
@@ -175,11 +198,14 @@ export function MyQueueSpot({ spot }: Props) {
                 <Button
                   variant="destructive"
                   size="sm"
-                  className="cursor-pointer"
-                  disabled={leaveQueueMutation.isPending}
+                  className={cn(
+                    "cursor-pointer",
+                    isDeadlineExpired && "opacity-50 cursor-not-allowed"
+                  )}
+                  disabled={leaveQueueMutation.isPending || isDeadlineExpired}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Rời lượt
+                  {isDeadlineExpired ? "Hạn chót đã qua" : "Rời lượt"}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -380,13 +406,19 @@ export function MyQueueSpot({ spot }: Props) {
                   onClick={handleCopyCode}
                   size="sm"
                   variant="outline"
-                  className="border-purple-300"
+                  className={cn(
+                    "border-purple-300",
+                    isDeadlineExpired && "opacity-50 cursor-not-allowed"
+                  )}
+                  disabled={isDeadlineExpired}
                 >
                   {copied ? (
                     <>
                       <CheckCircle className="h-4 w-4 mr-1" />
                       Copied!
                     </>
+                  ) : isDeadlineExpired ? (
+                    "Hạn chót đã qua"
                   ) : (
                     <>
                       <Copy className="h-4 w-4 mr-1" />
@@ -396,7 +428,9 @@ export function MyQueueSpot({ spot }: Props) {
                 </Button>
               </div>
               <p className="text-xs text-purple-600 mt-2">
-                Chia sẻ mã này với các thành viên để tham gia phòng
+                {isDeadlineExpired
+                  ? "Hạn chót đã qua - không thể thực hiện hành động nào nữa"
+                  : "Chia sẻ mã này với các thành viên để tham gia phòng"}
               </p>
             </div>
 

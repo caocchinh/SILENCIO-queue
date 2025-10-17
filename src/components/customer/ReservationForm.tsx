@@ -16,6 +16,8 @@ import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { createReservation } from "@/server/customer";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
+import { SelectionDeadlineCountdown } from "./SelectionDeadlineCountdown";
+import { useCallback } from "react";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -41,6 +43,11 @@ export function ReservationForm({
   );
   const [numberOfSpotsForReservation, setNumberOfSpotsForReservation] =
     useState(2);
+  const [isDeadlineExpired, setIsDeadlineExpired] = useState(false);
+
+  const handleDeadlineExpiredChange = useCallback((expired: boolean) => {
+    setIsDeadlineExpired(expired);
+  }, []);
 
   // Guard against NaN and 0 values
   const safeNumberOfSpots =
@@ -107,6 +114,7 @@ export function ReservationForm({
 
   const cannotCreateReservation =
     reservationAttempts >= 2 ||
+    isDeadlineExpired ||
     !selectedHouse ||
     selectedQueueNumber === "" ||
     numberOfSpotsForReservation <= 0 ||
@@ -127,6 +135,10 @@ export function ReservationForm({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <SelectionDeadlineCountdown
+            onExpiredChange={handleDeadlineExpiredChange}
+            title="Thời gian còn lại để tạo phòng"
+          />
           {/* Haunted House Selection */}
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -139,7 +151,7 @@ export function ReservationForm({
                 setSelectedQueueNumber("");
               }}
               className="w-full px-4 py-2 border rounded-md bg-white"
-              disabled={reservationAttempts >= 2}
+              disabled={reservationAttempts >= 2 || isDeadlineExpired}
             >
               <option value="">Chọn nhà ma...</option>
               {houses.map((house) => (
@@ -157,18 +169,67 @@ export function ReservationForm({
             </label>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
-              <Input
-                id="queue-number"
-                type="number"
-                placeholder="Số lượt"
-                className="w-40"
-                value={numberOfSpotsForReservation}
-                onChange={(e) => {
-                  setNumberOfSpotsForReservation(parseInt(e.target.value));
-                  setSelectedQueueNumber("");
-                }}
-                disabled={reservationAttempts >= 2}
-              />
+              <div className="flex items-center border rounded-md bg-white">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-l-md rounded-r-none border-r"
+                  onClick={() => {
+                    const newValue = Math.max(
+                      2,
+                      numberOfSpotsForReservation - 1
+                    );
+                    setNumberOfSpotsForReservation(newValue);
+                    setSelectedQueueNumber("");
+                  }}
+                  disabled={
+                    reservationAttempts >= 2 ||
+                    isDeadlineExpired ||
+                    numberOfSpotsForReservation <= 2
+                  }
+                >
+                  −
+                </Button>
+                <Input
+                  id="queue-number"
+                  type="number"
+                  placeholder="Số lượt"
+                  className="w-20 border-0 focus-visible:ring-0 text-center"
+                  value={numberOfSpotsForReservation}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 2) {
+                      setNumberOfSpotsForReservation(value);
+                      setSelectedQueueNumber("");
+                    }
+                  }}
+                  disabled={reservationAttempts >= 2 || isDeadlineExpired}
+                  min={2}
+                  max={10}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-r-md rounded-l-none border-l"
+                  onClick={() => {
+                    const newValue = Math.min(
+                      10,
+                      numberOfSpotsForReservation + 1
+                    );
+                    setNumberOfSpotsForReservation(newValue);
+                    setSelectedQueueNumber("");
+                  }}
+                  disabled={
+                    reservationAttempts >= 2 ||
+                    isDeadlineExpired ||
+                    numberOfSpotsForReservation >= 10
+                  }
+                >
+                  +
+                </Button>
+              </div>
 
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="h-4 w-4" />
@@ -190,7 +251,7 @@ export function ReservationForm({
                     setSelectedQueueNumber(parseInt(e.target.value))
                   }
                   className="w-full px-4 py-2 border rounded-md bg-white"
-                  disabled={reservationAttempts >= 2}
+                  disabled={reservationAttempts >= 2 || isDeadlineExpired}
                 >
                   <option value="">Chọn lượt...</option>
                   {availableQueues.map((queue) => {
@@ -298,11 +359,16 @@ export function ReservationForm({
             disabled={
               createReservationMutation.isPending || cannotCreateReservation
             }
-            className="w-full"
+            className={cn(
+              "w-full",
+              isDeadlineExpired && "opacity-50 cursor-not-allowed"
+            )}
             size="lg"
           >
             {createReservationMutation.isPending
               ? "Đang tạo phòng..."
+              : isDeadlineExpired
+              ? "Hạn chót đã qua"
               : reservationAttempts >= 2
               ? "Đã đạt giới hạn đặt chỗ"
               : cannotCreateReservation

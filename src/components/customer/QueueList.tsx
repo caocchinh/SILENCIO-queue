@@ -26,6 +26,8 @@ import {
 import { joinQueue } from "@/server/customer";
 import { useState } from "react";
 import { cn, errorToast, successToast, spotStatusUtils } from "@/lib/utils";
+import { useCallback } from "react";
+import { SelectionDeadlineCountdown } from "./SelectionDeadlineCountdown";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -53,6 +55,11 @@ export function QueueList({ houses, customerData }: Props) {
   const [isConfrmDialogOpen, setIsConfrmDialogOpen] = useState(false);
   const [dialogDisplayQueue, setDialogDisplayQueue] =
     useState<QueueWithDetails | null>(null);
+  const [isDeadlineExpired, setIsDeadlineExpired] = useState(false);
+
+  const handleDeadlineExpiredChange = useCallback((expired: boolean) => {
+    setIsDeadlineExpired(expired);
+  }, []);
 
   const joinQueueMutation = useMutation({
     mutationFn: joinQueue,
@@ -114,6 +121,9 @@ export function QueueList({ houses, customerData }: Props) {
   return (
     <>
       <div className="flex flex-col gap-6">
+        <SelectionDeadlineCountdown
+          onExpiredChange={handleDeadlineExpiredChange}
+        />
         {houses.length === 0 && (
           <Card className="bg-white/90 backdrop-blur">
             <CardContent className="pt-6">
@@ -129,11 +139,13 @@ export function QueueList({ houses, customerData }: Props) {
             <Button
               key={house.name}
               onClick={() => handleSelectHauntedHouse(house.name)}
+              disabled={isDeadlineExpired}
               className={cn(
                 currentHauntedHouseName === house.name
                   ? "bg-purple-600 text-white hover:bg-purple-700"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300",
-                "cursor-pointer"
+                "cursor-pointer",
+                isDeadlineExpired && "opacity-50 cursor-not-allowed"
               )}
             >
               {house.name}
@@ -155,7 +167,11 @@ export function QueueList({ houses, customerData }: Props) {
                 <CardDescription className="text-lg text-purple-700/80 font-medium">
                   {currentHauntedHouse.queues &&
                   currentHauntedHouse.queues.length > 0
-                    ? `${currentHauntedHouse.queues.length} lượt còn slot`
+                    ? `${
+                        currentHauntedHouse.queues.filter(
+                          (queue) => queue.stats.availableSpots > 0
+                        ).length
+                      } lượt còn slot`
                     : "Không có lượt nào có còn slot"}
                 </CardDescription>
               </div>
@@ -165,7 +181,9 @@ export function QueueList({ houses, customerData }: Props) {
             </CardHeader>
             <CardContent className="p-0">
               {currentHauntedHouse.queues &&
-              currentHauntedHouse.queues.length > 0 ? (
+              currentHauntedHouse.queues.filter(
+                (queue) => queue.stats.availableSpots > 0
+              ).length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
                   {currentHauntedHouse.queues.map((queue: QueueWithDetails) => {
                     const duration = calculateDurationInMinutes(
@@ -206,7 +224,8 @@ export function QueueList({ houses, customerData }: Props) {
                             <Button
                               disabled={
                                 joinQueueMutation.isPending ||
-                                !hasAvailableSpots
+                                !hasAvailableSpots ||
+                                isDeadlineExpired
                               }
                               onClick={() => {
                                 setDialogDisplayQueue(queue);
@@ -215,15 +234,19 @@ export function QueueList({ houses, customerData }: Props) {
                               size="lg"
                               className={cn(
                                 "cursor-pointer sm:w-max w-full",
-                                hasAvailableSpots
+                                hasAvailableSpots && !isDeadlineExpired
                                   ? "bg-green-600 hover:bg-green-700"
-                                  : ""
+                                  : "",
+                                isDeadlineExpired &&
+                                  "opacity-50 cursor-not-allowed"
                               )}
                             >
                               {joinQueueMutation.isPending
                                 ? "Đang tham gia..."
                                 : !hasAvailableSpots
                                 ? "Lượt đầy"
+                                : isDeadlineExpired
+                                ? "Hạn chót đã qua"
                                 : "Tham gia lượt"}
                             </Button>
                           </div>
@@ -404,8 +427,11 @@ export function QueueList({ houses, customerData }: Props) {
               </strong>
               <br />
               <br />
-              Hãy đảm bảo rằng bạn đã sẵn sàng và sẽ có mặt đúng giờ. Bạn vẫn có
-              thể đổi lượt và nhà ma trước khi countdown kết thúc.
+              Hãy đảm bảo rằng bạn đã sẵn sàng và sẽ có mặt đúng giờ.
+              {!isDeadlineExpired &&
+                " Bạn vẫn có thể đổi lượt và nhà ma trước khi countdown kết thúc."}
+              {isDeadlineExpired &&
+                " Hạn chót đã qua nên bạn không thể thay đổi lựa chọn nữa."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -416,17 +442,24 @@ export function QueueList({ houses, customerData }: Props) {
               Hủy
             </AlertDialogCancel>
             <Button
-              disabled={joinQueueMutation.isPending}
+              disabled={joinQueueMutation.isPending || isDeadlineExpired}
               onClick={() => {
                 handleJoinQueue(
                   dialogDisplayQueue?.hauntedHouseName || "",
                   dialogDisplayQueue?.queueNumber || 0
                 );
               }}
-              className="cursor-pointer flex items-center gap-2"
+              className={cn(
+                "cursor-pointer flex items-center gap-2",
+                isDeadlineExpired && "opacity-50 cursor-not-allowed"
+              )}
             >
               {!joinQueueMutation.isPending ? (
-                "Xác nhận tham gia"
+                isDeadlineExpired ? (
+                  "Hạn chót đã qua"
+                ) : (
+                  "Xác nhận tham gia"
+                )
               ) : (
                 <>
                   Đang tham gia...

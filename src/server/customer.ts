@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/drizzle/db";
+
 import {
   queue,
   queueSpot,
@@ -29,9 +30,14 @@ import {
 import { retryDatabase } from "@/dal/retry";
 import { verifyCustomerSession } from "@/dal/verifySession";
 import { revalidatePath } from "next/cache";
+import { SELECTION_DEADLINE } from "@/constants/constants";
 
 // Join a queue
 export async function joinQueue(params: unknown): Promise<ActionResponse> {
+  if (new Date() > SELECTION_DEADLINE) {
+    return createActionError("SELECTION_DEADLINE_EXPIRED");
+  }
+
   try {
     const validationResult = joinQueueSchema.safeParse(params);
 
@@ -130,6 +136,10 @@ export async function leaveQueue(params: {
 }): Promise<ActionResponse> {
   try {
     const { studentId } = params;
+
+    if (new Date() > SELECTION_DEADLINE) {
+      return createActionError("SELECTION_DEADLINE_EXPIRED");
+    }
 
     if (!studentId) {
       return createActionError("INVALID_INPUT", "Student ID is required");
@@ -259,6 +269,10 @@ export async function createReservation(
   params: unknown
 ): Promise<ActionResponse> {
   try {
+    if (new Date() > SELECTION_DEADLINE) {
+      return createActionError("SELECTION_DEADLINE_EXPIRED");
+    }
+
     const validationResult = createReservationSchema.safeParse(params);
 
     if (!validationResult.success) {
