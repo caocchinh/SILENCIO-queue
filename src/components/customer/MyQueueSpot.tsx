@@ -31,7 +31,12 @@ import {
   Timer,
   Loader2,
 } from "lucide-react";
-import { QueueSpotWithDetails } from "@/lib/types/queue";
+import {
+  QueueSpotWithDetails,
+  HauntedHouseWithDetailedQueues,
+  Customer,
+  QueueWithDetails,
+} from "@/lib/types/queue";
 import { leaveQueue } from "@/server/customer";
 import { cn } from "@/lib/utils";
 import { errorToast, successToast, spotStatusUtils } from "@/lib/utils";
@@ -62,10 +67,69 @@ export function MyQueueSpot({ spot }: Props) {
     onSuccess: (data, variables) => {
       if (data.success) {
         successToast({ message: "Đã rời khỏi hàng đợi thành công" });
+
+        // Update the cache immediately - remove the user's spot
+        // Update haunted-houses query
+        queryClient.setQueryData<HauntedHouseWithDetailedQueues[]>(
+          ["haunted-houses"],
+          (old) => {
+            if (!old) return old;
+
+            return old.map((house) => {
+              if (house.name !== spot.queue?.hauntedHouse?.name) return house;
+
+              return {
+                ...house,
+                queues: house.queues?.map((queue) => {
+                  if (queue.queueNumber !== spot.queue?.queueNumber)
+                    return queue;
+
+                  return {
+                    ...queue,
+                    hauntedHouse: queue.hauntedHouse,
+                    spots: queue.spots?.map((queueSpot) => {
+                      if (queueSpot.id === spot.id) {
+                        const newStatus = spot.reservationId
+                          ? "reserved"
+                          : "available";
+                        return {
+                          ...queueSpot,
+                          customerId: null,
+                          status: newStatus,
+                          reservationId: null,
+                          occupiedAt: null,
+                          customer: undefined,
+                        } as QueueSpotWithDetails & { customer?: Customer };
+                      }
+                      return queueSpot;
+                    }),
+                    stats: {
+                      ...queue.stats,
+                      availableSpots: Math.max(
+                        0,
+                        queue.stats.availableSpots + 1
+                      ),
+                      occupiedSpots: Math.max(0, queue.stats.occupiedSpots - 1),
+                      reservedSpots: spot.reservationId
+                        ? Math.max(0, queue.stats.reservedSpots + 1)
+                        : queue.stats.reservedSpots,
+                    },
+                  } as QueueWithDetails;
+                }),
+              };
+            });
+          }
+        );
+
+        // Update customer-spot query (remove the spot)
+        queryClient.setQueryData(["customer-spot", variables.studentId], null);
+
+        // Invalidate queries for consistency
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", variables.studentId],
         });
+
         setIsLeaveQueueDialogOpen(false);
       } else {
         throw new Error(data.message || "Không thể rời khỏi hàng đợi");

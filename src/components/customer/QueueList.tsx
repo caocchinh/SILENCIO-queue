@@ -22,6 +22,8 @@ import { Clock, Calendar, AlertCircle, Loader2 } from "lucide-react";
 import {
   HauntedHouseWithDetailedQueues,
   QueueWithDetails,
+  QueueSpotWithDetails,
+  Customer,
 } from "@/lib/types/queue";
 import { joinQueue } from "@/server/customer";
 import { useState } from "react";
@@ -68,10 +70,144 @@ export function QueueList({ houses, customerData }: Props) {
         successToast({
           message: "Thành công tham gia lượt!",
         });
+
+        // Update the cache immediately by modifying existing data
+        // Get current haunted-houses data
+        const currentHauntedHouses = queryClient.getQueryData<
+          HauntedHouseWithDetailedQueues[]
+        >(["haunted-houses"]);
+
+        if (currentHauntedHouses) {
+          // Find the target queue and available spot
+          const targetHouse = currentHauntedHouses.find(
+            (house) => house.name === dialogDisplayQueue?.hauntedHouseName
+          );
+
+          const targetQueue = targetHouse?.queues?.find(
+            (queue) => queue.queueNumber === dialogDisplayQueue?.queueNumber
+          );
+
+          const availableSpot = targetQueue?.spots?.find(
+            (spot) => spot.status === "available"
+          );
+
+          if (targetQueue && availableSpot && targetHouse) {
+            // Update haunted-houses query
+            queryClient.setQueryData<HauntedHouseWithDetailedQueues[]>(
+              ["haunted-houses"],
+              (old) => {
+                if (!old) return old;
+
+                return old.map((house) => {
+                  if (house.name !== targetHouse.name) return house;
+
+                  return {
+                    ...house,
+                    queues: house.queues?.map((queue) => {
+                      if (queue.queueNumber !== targetQueue.queueNumber)
+                        return queue;
+
+                      return {
+                        ...queue,
+                        hauntedHouse: targetQueue.hauntedHouse,
+                        spots: queue.spots?.map((spot) => {
+                          if (spot.id === availableSpot.id) {
+                            return {
+                              ...spot,
+                              customerId: customerData.studentId,
+                              status: "occupied" as const,
+                              occupiedAt: new Date(),
+                              customer: {
+                                studentId: customerData.studentId,
+                                name: customerData.name,
+                                email: customerData.email,
+                                homeroom: customerData.homeroom,
+                                ticketType: customerData.ticketType,
+                              } as Customer,
+                            } as QueueSpotWithDetails & { customer?: Customer };
+                          }
+                          return spot;
+                        }),
+                        stats: {
+                          ...queue.stats,
+                          availableSpots: Math.max(
+                            0,
+                            queue.stats.availableSpots - 1
+                          ),
+                          occupiedSpots: queue.stats.occupiedSpots + 1,
+                        },
+                      } as QueueWithDetails;
+                    }),
+                  };
+                });
+              }
+            );
+
+            // Create the customer spot data
+            const customerSpot: QueueSpotWithDetails = {
+              id: availableSpot.id,
+              queueId: targetQueue.id,
+              spotNumber: availableSpot.spotNumber,
+              status: "occupied",
+              customerId: customerData.studentId,
+              reservationId: null,
+              occupiedAt: new Date(),
+              createdAt: availableSpot.createdAt || new Date(),
+              updatedAt: new Date(),
+              queue: {
+                ...targetQueue,
+                hauntedHouse: targetHouse,
+                spots: targetQueue.spots?.map((spot) => {
+                  if (spot.id === availableSpot.id) {
+                    return {
+                      ...spot,
+                      status: "occupied" as const,
+                      reservationId: null,
+                      customerId: customerData.studentId,
+                      occupiedAt: new Date(),
+                      customer: {
+                        studentId: customerData.studentId,
+                        name: customerData.name,
+                        email: customerData.email,
+                        homeroom: customerData.homeroom,
+                        ticketType: customerData.ticketType,
+                      } as Customer,
+                    };
+                  }
+                  return spot;
+                }),
+                stats: {
+                  ...targetQueue.stats,
+                  availableSpots: Math.max(
+                    0,
+                    targetQueue.stats.availableSpots - 1
+                  ),
+                  occupiedSpots: targetQueue.stats.occupiedSpots + 1,
+                },
+              } as QueueWithDetails,
+              customer: {
+                studentId: customerData.studentId,
+                name: customerData.name,
+                email: customerData.email,
+                homeroom: customerData.homeroom,
+                ticketType: customerData.ticketType,
+              } as Customer,
+            };
+
+            // Update customer-spot query
+            queryClient.setQueryData(
+              ["customer-spot", customerData.studentId],
+              customerSpot
+            );
+          }
+        }
+
+        // Invalidate queries for consistency
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
           queryKey: ["customer-spot", customerData.studentId],
         });
+
         setIsConfrmDialogOpen(false);
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -79,7 +215,7 @@ export function QueueList({ houses, customerData }: Props) {
       } else {
         errorToast({
           message: "Thất bại tham gia lượt",
-          description: data.message,
+          description: "message" in data ? data.message : "Unknown error",
         });
       }
     },
