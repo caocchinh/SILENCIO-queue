@@ -333,8 +333,8 @@ export function ReservationForm({
             </p>
             {reservationAttempts >= 2 ? (
               <p className="text-red-800">
-                Bạn đã sử dụng tất cả 2 lần đặt chỗ. Bạn vẫn có thể tham gia
-                lượt trực tiếp hoặc tham gia phòng đã đặt với mã.
+                Bạn đã sử dụng tất cả 2 lần tạo phòng. Bạn vẫn có thể tham gia
+                lượt trực tiếp hoặc tham gia phòng đã tạo với mã.
               </p>
             ) : (
               <ul className="list-disc list-inside space-y-1 text-blue-800">

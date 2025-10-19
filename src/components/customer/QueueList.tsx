@@ -182,7 +182,7 @@ export function QueueList({ houses, customerData }: Props) {
             <CardContent className="p-0">
               {currentHauntedHouse.queues &&
               currentHauntedHouse.queues.filter(
-                (queue) => queue.stats.availableSpots > 0
+                (queue) => queue.stats.totalSpots > 0
               ).length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
                   {currentHauntedHouse.queues.map((queue: QueueWithDetails) => {

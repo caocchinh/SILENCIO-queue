@@ -110,7 +110,7 @@ export function CustomerQueueInterface({ customer, session }: Props) {
               >
                 Tạo phòng
                 {customer.reservationAttempts >= 2 && (
-                  <span className="ml-2 text-xs text-red-400">
+                  <span className="text-xs text-red-400">
                     (Đã đạt giới hạn)
                   </span>
                 )}
