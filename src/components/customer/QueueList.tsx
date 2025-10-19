@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Clock, Calendar, AlertCircle, Loader2 } from "lucide-react";
+import { Clock, Calendar, Loader2, AlertCircle } from "lucide-react";
 import {
   HauntedHouseWithDetailedQueues,
   QueueWithDetails,
@@ -30,6 +30,8 @@ import { useState } from "react";
 import { cn, errorToast, successToast, spotStatusUtils } from "@/lib/utils";
 import { useCallback } from "react";
 import { SelectionDeadlineCountdown } from "./SelectionDeadlineCountdown";
+import { ReservationDetails } from "./ReservationDetails";
+import { RefreshButton } from "@/components/RefreshButton";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -40,6 +42,8 @@ interface Props {
     homeroom: string;
     ticketType: string;
   };
+  onRefresh?: () => void;
+  isRefetching?: boolean;
 }
 
 // Utility function to calculate duration in minutes between two dates
@@ -52,7 +56,12 @@ const calculateDurationInMinutes = (
   return Math.round((end - start) / 60000);
 };
 
-export function QueueList({ houses, customerData }: Props) {
+export function QueueList({
+  houses,
+  customerData,
+  onRefresh,
+  isRefetching = false,
+}: Props) {
   const queryClient = useQueryClient();
   const [isConfrmDialogOpen, setIsConfrmDialogOpen] = useState(false);
   const [dialogDisplayQueue, setDialogDisplayQueue] =
@@ -92,58 +101,7 @@ export function QueueList({ houses, customerData }: Props) {
           );
 
           if (targetQueue && availableSpot && targetHouse) {
-            // Update haunted-houses query
-            queryClient.setQueryData<HauntedHouseWithDetailedQueues[]>(
-              ["haunted-houses"],
-              (old) => {
-                if (!old) return old;
-
-                return old.map((house) => {
-                  if (house.name !== targetHouse.name) return house;
-
-                  return {
-                    ...house,
-                    queues: house.queues?.map((queue) => {
-                      if (queue.queueNumber !== targetQueue.queueNumber)
-                        return queue;
-
-                      return {
-                        ...queue,
-                        hauntedHouse: targetQueue.hauntedHouse,
-                        spots: queue.spots?.map((spot) => {
-                          if (spot.id === availableSpot.id) {
-                            return {
-                              ...spot,
-                              customerId: customerData.studentId,
-                              status: "occupied" as const,
-                              occupiedAt: new Date(),
-                              customer: {
-                                studentId: customerData.studentId,
-                                name: customerData.name,
-                                email: customerData.email,
-                                homeroom: customerData.homeroom,
-                                ticketType: customerData.ticketType,
-                              } as Customer,
-                            } as QueueSpotWithDetails & { customer?: Customer };
-                          }
-                          return spot;
-                        }),
-                        stats: {
-                          ...queue.stats,
-                          availableSpots: Math.max(
-                            0,
-                            queue.stats.availableSpots - 1
-                          ),
-                          occupiedSpots: queue.stats.occupiedSpots + 1,
-                        },
-                      } as QueueWithDetails;
-                    }),
-                  };
-                });
-              }
-            );
-
-            // Create the customer spot data
+            // Create the customer spot data only, no need to update the haunted-houses, it will be handled in MyQueueSpot.tsx. Avoid unnecessary complexity.
             const customerSpot: QueueSpotWithDetails = {
               id: availableSpot.id,
               queueId: targetQueue.id,
@@ -357,34 +315,41 @@ export function QueueList({ houses, customerData }: Props) {
                                 </span>
                               </div>
                             </div>
-                            <Button
-                              disabled={
-                                joinQueueMutation.isPending ||
-                                !hasAvailableSpots ||
-                                isDeadlineExpired
-                              }
-                              onClick={() => {
-                                setDialogDisplayQueue(queue);
-                                setIsConfrmDialogOpen(true);
-                              }}
-                              size="lg"
-                              className={cn(
-                                "cursor-pointer sm:w-max w-full",
-                                hasAvailableSpots && !isDeadlineExpired
-                                  ? "bg-green-600 hover:bg-green-700"
-                                  : "",
-                                isDeadlineExpired &&
-                                  "opacity-50 cursor-not-allowed"
-                              )}
-                            >
-                              {joinQueueMutation.isPending
-                                ? "Đang tham gia..."
-                                : !hasAvailableSpots
-                                ? "Lượt đầy"
-                                : isDeadlineExpired
-                                ? "Hạn chót đã qua"
-                                : "Tham gia lượt"}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <RefreshButton
+                                onClick={onRefresh}
+                                isLoading={isRefetching}
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                              />
+                              <Button
+                                disabled={
+                                  joinQueueMutation.isPending ||
+                                  !hasAvailableSpots ||
+                                  isDeadlineExpired
+                                }
+                                onClick={() => {
+                                  setDialogDisplayQueue(queue);
+                                  setIsConfrmDialogOpen(true);
+                                }}
+                                size="lg"
+                                className={cn(
+                                  "cursor-pointer sm:w-max w-full",
+                                  hasAvailableSpots && !isDeadlineExpired
+                                    ? "bg-green-600 hover:bg-green-700"
+                                    : "",
+                                  isDeadlineExpired &&
+                                    "opacity-50 cursor-not-allowed"
+                                )}
+                              >
+                                {joinQueueMutation.isPending
+                                  ? "Đang tham gia..."
+                                  : !hasAvailableSpots
+                                  ? "Lượt đầy"
+                                  : isDeadlineExpired
+                                  ? "Hạn chót đã qua"
+                                  : "Tham gia lượt"}
+                              </Button>
+                            </div>
                           </div>
                         </div>
 
@@ -477,23 +442,35 @@ export function QueueList({ houses, customerData }: Props) {
                             </div>
                           </div>
 
-                          {/* Reservation Warning */}
-                          {!!hasReservations && (
-                            <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
-                              <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                              <div className="text-orange-800">
-                                <span className="font-semibold">
-                                  {queue.stats.activeReservations} slot đặt chỗ
-                                  {queue.stats.activeReservations !== 1
-                                    ? "s"
-                                    : ""}
-                                </span>
-                                <p className="text-xs mt-1">
-                                  Một số chỗ đã được đặt chỗ tạm thời. Bạn có
-                                  thể tham gia với mã đặt chỗ hoặc chờ chúng trở
-                                  lại có sẵn. trở thành có sẵn.
-                                </p>
+                          {/* Reservation Details */}
+                          {!!hasReservations && queue.reservations && (
+                            <div className="space-y-3">
+                              <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
+                                <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                                <div className="text-orange-800">
+                                  <span className="font-semibold">
+                                    {queue.stats.activeReservations} phòng đang
+                                    giữ chỗ
+                                    {queue.stats.activeReservations !== 1
+                                      ? "s"
+                                      : ""}
+                                  </span>
+                                  <p className="text-xs mt-1">
+                                    Một số slot đã được giữ tạm thời. Bạn có thể
+                                    tham gia với mã phòng chỗ hoặc chờ chúng trở
+                                    lại có sẵn.
+                                  </p>
+                                </div>
                               </div>
+                              {queue.reservations.map((reservation) => (
+                                <ReservationDetails
+                                  key={reservation.id}
+                                  reservation={reservation}
+                                  className="w-full"
+                                  onRefresh={onRefresh}
+                                  isRefetching={isRefetching}
+                                />
+                              ))}
                             </div>
                           )}
 

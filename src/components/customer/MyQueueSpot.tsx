@@ -42,13 +42,16 @@ import { cn } from "@/lib/utils";
 import { errorToast, successToast, spotStatusUtils } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { SelectionDeadlineCountdown } from "./SelectionDeadlineCountdown";
+import { RefreshButton } from "@/components/RefreshButton";
 import { useCallback } from "react";
 
 interface Props {
   spot: QueueSpotWithDetails;
+  isRefetching?: boolean;
+  onRefresh?: () => void;
 }
 
-export function MyQueueSpot({ spot }: Props) {
+export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -155,7 +158,7 @@ export function MyQueueSpot({ spot }: Props) {
     if (spot.reservation?.code) {
       navigator.clipboard.writeText(spot.reservation.code);
       setCopied(true);
-      successToast({ message: "Đã sao chép mã đặt chỗ vào clipboard!" });
+      successToast({ message: "Đã sao chép mã phòng vào clipboard!" });
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -227,6 +230,12 @@ export function MyQueueSpot({ spot }: Props) {
     ? spot.reservation.maxSpots - spot.reservation.currentSpots
     : 0;
 
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <SelectionDeadlineCountdown
@@ -236,7 +245,7 @@ export function MyQueueSpot({ spot }: Props) {
       />
       <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-500">
         <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-2 flex-wrap">
             <div>
               <CardTitle
                 className={cn(
@@ -246,7 +255,7 @@ export function MyQueueSpot({ spot }: Props) {
               >
                 {isDeadlineExpired
                   ? "⚠ Hạn chót đã qua"
-                  : "✓ Bạn đang trong lượt!"}
+                  : `✓ Bạn đang trong ${spot.reservation ? "phòng" : "lượt"}!`}
               </CardTitle>
               <CardDescription>
                 {isDeadlineExpired
@@ -254,71 +263,86 @@ export function MyQueueSpot({ spot }: Props) {
                   : "Chỗ của bạn đã được giữ"}
               </CardDescription>
             </div>
-            <AlertDialog
-              open={isLeaveQueueDialogOpen}
-              onOpenChange={setIsLeaveQueueDialogOpen}
-            >
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className={cn(
-                    "cursor-pointer",
-                    isDeadlineExpired && "opacity-50 cursor-not-allowed"
-                  )}
-                  disabled={leaveQueueMutation.isPending || isDeadlineExpired}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {isDeadlineExpired ? "Hạn chót đã qua" : "Rời lượt"}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Rời lượt?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {isRepresentative ? (
-                      <>
-                        Bạn là người đại diện của nhóm đặt chỗ. Rời khỏi sẽ{" "}
-                        <strong>hủy toàn bộ đặt chỗ</strong> và giải phóng tất
-                        cả các chỗ (bao gồm cả những người đã tham gia).
-                      </>
-                    ) : spot.reservation ? (
-                      <>
-                        Bạn sẽ được xóa khỏi nhóm đặt chỗ này. Đặt chỗ sẽ tiếp
-                        tục cho các thành viên khác.
-                      </>
-                    ) : (
-                      <>
-                        Bạn có chắc chắn muốn rời khỏi lượt này? Chỗ của bạn sẽ
-                        trở nên khả dụng cho người khác.
-                      </>
-                    )}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel
-                    className="cursor-pointer"
-                    disabled={leaveQueueMutation.isPending}
-                  >
-                    Hủy
-                  </AlertDialogCancel>
+            <div className="flex items-center gap-2">
+              <RefreshButton
+                onClick={handleRefresh}
+                isLoading={isRefetching}
+                className="text-green-600 !bg-transparent border-1 hover:text-green-700 border-green-200 hover:border-green-300"
+              >
+                Làm mới
+              </RefreshButton>
+              <AlertDialog
+                open={isLeaveQueueDialogOpen}
+                onOpenChange={setIsLeaveQueueDialogOpen}
+              >
+                <AlertDialogTrigger asChild>
                   <Button
-                    onClick={handleLeaveQueue}
-                    className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
-                    disabled={leaveQueueMutation.isPending}
-                  >
-                    {leaveQueueMutation.isPending ? (
-                      <>
-                        Đang rời khỏi lượt...
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </>
-                    ) : (
-                      "Có, rời khỏi lượt"
+                    variant="destructive"
+                    size="sm"
+                    className={cn(
+                      "cursor-pointer",
+                      isDeadlineExpired && "opacity-50 cursor-not-allowed"
                     )}
+                    disabled={leaveQueueMutation.isPending || isDeadlineExpired}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {isDeadlineExpired
+                      ? "Hạn chót đã qua"
+                      : `Rời ${spot.reservation ? "phòng" : "lượt"}`}
                   </Button>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Rời khỏi {spot.reservation ? "phòng" : "lượt"}
+                      {}?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {isRepresentative ? (
+                        <>
+                          Bạn là trưởng nhóm? Rời khỏi sẽ{" "}
+                          <strong>hủy toàn bộ phòng</strong> và giải phóng tất
+                          cả các slot (bao gồm cả những người người khác trong
+                          phòng của bạn).
+                        </>
+                      ) : spot.reservation ? (
+                        <>
+                          Bạn sẽ được rời khỏi phòng này. Phòng này sẽ tiếp tục
+                          cho các thành viên khác tham gia.
+                        </>
+                      ) : (
+                        <>
+                          Bạn có chắc chắn muốn rời khỏi lượt này? Chỗ của bạn
+                          sẽ trở nên khả dụng cho người khác.
+                        </>
+                      )}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel
+                      className="cursor-pointer"
+                      disabled={leaveQueueMutation.isPending}
+                    >
+                      Hủy
+                    </AlertDialogCancel>
+                    <Button
+                      onClick={handleLeaveQueue}
+                      className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
+                      disabled={leaveQueueMutation.isPending}
+                    >
+                      {leaveQueueMutation.isPending ? (
+                        <>
+                          Đang rời khỏi lượt...
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </>
+                      ) : (
+                        "Có, rời khỏi lượt"
+                      )}
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -378,50 +402,11 @@ export function MyQueueSpot({ spot }: Props) {
                 {isRepresentative && (
                   <p className="text-sm text-orange-600 font-medium mt-2 flex items-center gap-1">
                     <AlertTriangle className="h-4 w-4" />
-                    You are the representative - leaving will cancel the entire
-                    reservation
+                    Bạn là trưởng nhóm, nếu bạn rời phòng, toàn bộ nhóm và phòng
+                    hiện tại sẽ bị hủy.
                   </p>
                 )}
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Queue Statistics Card */}
-      <Card className="bg-white/90 backdrop-blur">
-        <CardHeader>
-          <CardTitle className="text-lg">Thống kê lượt của bạn</CardTitle>
-          <CardDescription>
-            Nhà ma {spot.queue?.hauntedHouse?.name} - Lượt{" "}
-            {spot.queue?.queueNumber}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-3">
-            <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-2xl font-bold text-green-700">
-                {availableSpots}
-              </div>
-              <div className="text-xs text-green-600">Khả dụng</div>
-            </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-2xl font-bold text-blue-700">
-                {occupiedSpots}
-              </div>
-              <div className="text-xs text-blue-600">Đã chiếm</div>
-            </div>
-            <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="text-2xl font-bold text-orange-700">
-                {reservedSpots}
-              </div>
-              <div className="text-xs text-orange-600">Đang giữ slot</div>
-            </div>
-            <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="text-2xl font-bold text-purple-700">
-                {totalSpots}
-              </div>
-              <div className="text-xs text-purple-600">Tổng cộng</div>
             </div>
           </div>
         </CardContent>
@@ -431,15 +416,24 @@ export function MyQueueSpot({ spot }: Props) {
       {spot.reservation && (
         <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-400">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-600" />
-              Chi tiết phòng/giữ slot
-              {isRepresentative && (
-                <span className="text-sm bg-purple-600 text-white px-2 py-0.5 rounded">
-                  Trưởng nhóm
-                </span>
-              )}
-            </CardTitle>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-600" />
+                Chi tiết phòng/giữ slot
+                {isRepresentative && (
+                  <span className="text-sm bg-purple-600 text-white px-2 py-0.5 rounded">
+                    Trưởng nhóm
+                  </span>
+                )}
+              </CardTitle>
+              <RefreshButton
+                onClick={handleRefresh}
+                isLoading={isRefetching}
+                className="text-purple-600 !bg-transparent border-1 hover:text-purple-700 border-purple-200 hover:border-purple-300"
+              >
+                Làm mới
+              </RefreshButton>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Reservation Code - Visible to ALL members */}
@@ -613,6 +607,45 @@ export function MyQueueSpot({ spot }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {/* Queue Statistics Card */}
+      <Card className="bg-white/90 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="text-lg">Thống kê lượt của bạn</CardTitle>
+          <CardDescription>
+            Nhà ma {spot.queue?.hauntedHouse?.name} - Lượt{" "}
+            {spot.queue?.queueNumber}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="text-2xl font-bold text-green-700">
+                {availableSpots}
+              </div>
+              <div className="text-xs text-green-600">Khả dụng</div>
+            </div>
+            <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-2xl font-bold text-blue-700">
+                {occupiedSpots}
+              </div>
+              <div className="text-xs text-blue-600">Đã chiếm</div>
+            </div>
+            <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="text-2xl font-bold text-orange-700">
+                {reservedSpots}
+              </div>
+              <div className="text-xs text-orange-600">Đang giữ slot</div>
+            </div>
+            <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="text-2xl font-bold text-purple-700">
+                {totalSpots}
+              </div>
+              <div className="text-xs text-purple-600">Tổng cộng</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* People in Queue Card */}
       <Card className="bg-white/90 backdrop-blur">

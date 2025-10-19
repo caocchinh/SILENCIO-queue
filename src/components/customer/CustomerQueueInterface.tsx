@@ -94,7 +94,11 @@ export function CustomerQueueInterface({ customer, session }: Props) {
 
       <div className="p-4 hi md:p-6 flex flex-col min-w-[300px] md:w-[700px] gap-4 items-center justify-center w-full mx-auto">
         {mySpot ? (
-          <MyQueueSpot spot={mySpot} />
+          <MyQueueSpot
+            spot={mySpot}
+            isRefetching={spotRefetching}
+            onRefresh={refetchSpot}
+          />
         ) : (
           <Tabs defaultValue="join" className="mb-6 w-full">
             <TabsList className="bg-white/10 border border-white/20 w-full mb-2 flex flex-wrap !h-max">
@@ -131,7 +135,15 @@ export function CustomerQueueInterface({ customer, session }: Props) {
             ) : (
               <>
                 <TabsContent value="join" className="mt-0">
-                  <QueueList houses={houses} customerData={customerData} />
+                  <QueueList
+                    houses={houses}
+                    customerData={customerData}
+                    onRefresh={() => {
+                      refetchHouses();
+                      refetchSpot();
+                    }}
+                    isRefetching={housesRefetching || spotRefetching}
+                  />
                 </TabsContent>
                 <TabsContent value="reserve" className="mt-0">
                   <ReservationForm
