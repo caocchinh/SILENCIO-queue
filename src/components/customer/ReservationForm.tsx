@@ -18,6 +18,13 @@ import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { SelectionDeadlineCountdown } from "./SelectionDeadlineCountdown";
 import { useCallback } from "react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import Loader from "../Loader/Loader";
 
 interface Props {
   houses: HauntedHouseWithDetailedQueues[];
@@ -41,6 +48,8 @@ export function ReservationForm({
   const [selectedQueueNumber, setSelectedQueueNumber] = useState<number | "">(
     ""
   );
+  const [isJoining, setIsJoining] = useState(false);
+
   const [numberOfSpotsForReservation, setNumberOfSpotsForReservation] =
     useState(2);
   const [isDeadlineExpired, setIsDeadlineExpired] = useState(false);
@@ -59,10 +68,11 @@ export function ReservationForm({
     mutationFn: createReservation,
     onSuccess: (data) => {
       if (data.success) {
+        setIsJoining(true);
         const reservationCode = (data.data as { code?: string })?.code || "N/A";
         toast.success(
           <div className="flex flex-col gap-2">
-            <p className="font-bold">Đặt chỗ thành công!</p>
+            <p className="font-bold">Tạo phòng thành công!</p>
             <p className="text-2xl font-mono bg-white px-3 py-2 rounded text-black">
               {reservationCode}
             </p>
@@ -122,261 +132,279 @@ export function ReservationForm({
     (selectedQueue && selectedQueue.stats.availableSpots < safeNumberOfSpots);
 
   return (
-    <Card className="bg-white/90 backdrop-blur">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Tạo phòng/giữ slot
-        </CardTitle>
-        <CardDescription>
-          Giữ slot cho bạn và bạn bè. Bạn sẽ nhận được mã để họ có thể tham gia.
-          Mỗi người thêm 5 phút vào thời gian hết hạn.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <SelectionDeadlineCountdown
-            onExpiredChange={handleDeadlineExpiredChange}
-            title="Thời gian còn lại để tạo phòng"
-          />
-          {/* Haunted House Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Chọn nhà ma
-            </label>
-            <select
-              value={selectedHouse}
-              onChange={(e) => {
-                setSelectedHouse(e.target.value);
-                setSelectedQueueNumber("");
-              }}
-              className="w-full px-4 py-2 border rounded-md bg-white"
-              disabled={reservationAttempts >= 2 || isDeadlineExpired}
-            >
-              <option value="">Chọn nhà ma...</option>
-              {houses.map((house) => (
-                <option key={house.name} value={house.name}>
-                  {house.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Number of People */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Số người (bao gồm bạn)
-            </label>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center border rounded-md bg-white">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-l-md rounded-r-none border-r"
-                  onClick={() => {
-                    const newValue = Math.max(
-                      2,
-                      numberOfSpotsForReservation - 1
-                    );
-                    setNumberOfSpotsForReservation(newValue);
-                    setSelectedQueueNumber("");
-                  }}
-                  disabled={
-                    reservationAttempts >= 2 ||
-                    isDeadlineExpired ||
-                    numberOfSpotsForReservation <= 2
-                  }
-                >
-                  −
-                </Button>
-                <Input
-                  id="queue-number"
-                  type="number"
-                  placeholder="Số lượt"
-                  className="w-20 border-0 focus-visible:ring-0 text-center"
-                  value={numberOfSpotsForReservation}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 2) {
-                      setNumberOfSpotsForReservation(value);
-                      setSelectedQueueNumber("");
-                    }
-                  }}
-                  disabled={reservationAttempts >= 2 || isDeadlineExpired}
-                  min={2}
-                  max={10}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-r-md rounded-l-none border-l"
-                  onClick={() => {
-                    const newValue = Math.min(
-                      10,
-                      numberOfSpotsForReservation + 1
-                    );
-                    setNumberOfSpotsForReservation(newValue);
-                    setSelectedQueueNumber("");
-                  }}
-                  disabled={
-                    reservationAttempts >= 2 ||
-                    isDeadlineExpired ||
-                    numberOfSpotsForReservation >= 10
-                  }
-                >
-                  +
-                </Button>
-              </div>
-
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Hết hạn sau {safeNumberOfSpots * 5} phút
-              </span>
-            </div>
-          </div>
-
-          {/* Queue Selection */}
-          {selectedHouse && (
+    <>
+      <Card className="bg-white/90 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Tạo phòng/giữ slot
+          </CardTitle>
+          <CardDescription>
+            Giữ slot cho bạn và bạn bè. Bạn sẽ nhận được mã để họ có thể tham
+            gia. Mỗi người thêm 5 phút vào thời gian hết hạn.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <SelectionDeadlineCountdown
+              onExpiredChange={handleDeadlineExpiredChange}
+              title="Thời gian còn lại để tạo phòng"
+            />
+            {/* Haunted House Selection */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Chọn lượt
+                Chọn nhà ma
               </label>
-              {availableQueues.length > 0 ? (
-                <select
-                  value={selectedQueueNumber}
-                  onChange={(e) =>
-                    setSelectedQueueNumber(parseInt(e.target.value))
-                  }
-                  className="w-full px-4 py-2 border rounded-md bg-white"
-                  disabled={reservationAttempts >= 2 || isDeadlineExpired}
-                >
-                  <option value="">Chọn lượt...</option>
-                  {availableQueues.map((queue) => {
-                    const formatTime = (date: Date) => {
-                      return new Date(date).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      });
-                    };
+              <select
+                value={selectedHouse}
+                onChange={(e) => {
+                  setSelectedHouse(e.target.value);
+                  setSelectedQueueNumber("");
+                }}
+                className="w-full px-4 py-2 border rounded-md bg-white"
+                disabled={reservationAttempts >= 2 || isDeadlineExpired}
+              >
+                <option value="">Chọn nhà ma...</option>
+                {houses.map((house) => (
+                  <option key={house.name} value={house.name}>
+                    {house.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-                    return (
-                      <option key={queue.queueNumber} value={queue.queueNumber}>
-                        Lượt {queue.queueNumber} -{" "}
-                        {formatTime(queue.queueStartTime)} -{" "}
-                        {formatTime(queue.queueEndTime)} (
-                        {queue.stats.availableSpots} chỗ trống)
-                      </option>
-                    );
-                  })}
-                </select>
-              ) : (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
-                  <p className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    Không có lượt nào có {numberOfSpotsForReservation} hoặc
-                    nhiều hơn chỗ trống. Thử giảm số người.
-                  </p>
+            {/* Number of People */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Số người (bao gồm bạn)
+              </label>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center border rounded-md bg-white">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 rounded-l-md rounded-r-none border-r"
+                    onClick={() => {
+                      const newValue = Math.max(
+                        2,
+                        numberOfSpotsForReservation - 1
+                      );
+                      setNumberOfSpotsForReservation(newValue);
+                      setSelectedQueueNumber("");
+                    }}
+                    disabled={
+                      reservationAttempts >= 2 ||
+                      isDeadlineExpired ||
+                      numberOfSpotsForReservation <= 2
+                    }
+                  >
+                    −
+                  </Button>
+                  <Input
+                    id="queue-number"
+                    type="number"
+                    placeholder="Số lượt"
+                    className="w-20 border-0 focus-visible:ring-0 text-center"
+                    value={numberOfSpotsForReservation}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 2) {
+                        setNumberOfSpotsForReservation(value);
+                        setSelectedQueueNumber("");
+                      }
+                    }}
+                    disabled={reservationAttempts >= 2 || isDeadlineExpired}
+                    min={2}
+                    max={10}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 rounded-r-md rounded-l-none border-l"
+                    onClick={() => {
+                      const newValue = Math.min(
+                        10,
+                        numberOfSpotsForReservation + 1
+                      );
+                      setNumberOfSpotsForReservation(newValue);
+                      setSelectedQueueNumber("");
+                    }}
+                    disabled={
+                      reservationAttempts >= 2 ||
+                      isDeadlineExpired ||
+                      numberOfSpotsForReservation >= 10
+                    }
+                  >
+                    +
+                  </Button>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Selected Queue Info */}
-          {selectedQueue && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm">
-              <p className="font-semibold text-green-900 mb-1">
-                Chi tiết lượt:
-              </p>
-              <ul className="text-green-800 space-y-1 text-xs">
-                <li>• Chỗ trống: {selectedQueue.stats.availableSpots}</li>
-                <li>• Chỗ trống cho nhóm bạn: {safeNumberOfSpots}</li>
-                <li>
-                  • Chỗ trống còn lại sau khi đặt chỗ:{" "}
-                  {Math.max(
-                    0,
-                    selectedQueue.stats.availableSpots - safeNumberOfSpots
-                  )}
-                </li>
-              </ul>
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  Hết hạn sau {safeNumberOfSpots * 5} phút
+                </span>
+              </div>
             </div>
-          )}
 
-          {/* Important Information */}
-          <div
-            className={cn(
-              "p-4 rounded-md text-sm",
-              reservationAttempts >= 2
-                ? "bg-red-50 border border-red-200"
-                : "bg-blue-50 border border-blue-200"
+            {/* Queue Selection */}
+            {selectedHouse && (
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Chọn lượt
+                </label>
+                {availableQueues.length > 0 ? (
+                  <select
+                    value={selectedQueueNumber}
+                    onChange={(e) =>
+                      setSelectedQueueNumber(parseInt(e.target.value))
+                    }
+                    className="w-full px-4 py-2 border rounded-md bg-white"
+                    disabled={reservationAttempts >= 2 || isDeadlineExpired}
+                  >
+                    <option value="">Chọn lượt...</option>
+                    {availableQueues.map((queue) => {
+                      const formatTime = (date: Date) => {
+                        return new Date(date).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+                      };
+
+                      return (
+                        <option
+                          key={queue.queueNumber}
+                          value={queue.queueNumber}
+                        >
+                          Lượt {queue.queueNumber} -{" "}
+                          {formatTime(queue.queueStartTime)} -{" "}
+                          {formatTime(queue.queueEndTime)} (
+                          {queue.stats.availableSpots} chỗ trống)
+                        </option>
+                      );
+                    })}
+                  </select>
+                ) : (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
+                    <p className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Không có lượt nào có {numberOfSpotsForReservation} hoặc
+                      nhiều hơn chỗ trống. Thử giảm số người.
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
-          >
-            <p
+
+            {/* Selected Queue Info */}
+            {selectedQueue && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm">
+                <p className="font-semibold text-green-900 mb-1">
+                  Chi tiết lượt:
+                </p>
+                <ul className="text-green-800 space-y-1 text-xs">
+                  <li>• Chỗ trống: {selectedQueue.stats.availableSpots}</li>
+                  <li>• Chỗ trống cho nhóm bạn: {safeNumberOfSpots}</li>
+                  <li>
+                    • Chỗ trống còn lại sau khi đặt chỗ:{" "}
+                    {Math.max(
+                      0,
+                      selectedQueue.stats.availableSpots - safeNumberOfSpots
+                    )}
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {/* Important Information */}
+            <div
               className={cn(
-                "font-medium mb-2 flex items-center gap-2",
-                reservationAttempts >= 2 ? "text-red-900" : "text-blue-900"
+                "p-4 rounded-md text-sm",
+                reservationAttempts >= 2
+                  ? "bg-red-50 border border-red-200"
+                  : "bg-blue-50 border border-blue-200"
               )}
             >
-              {reservationAttempts >= 2 ? (
-                <>
-                  <AlertTriangle className="h-4 w-4" />
-                  Đã đạt giới hạn đặt chỗ
-                </>
-              ) : (
-                <>
-                  <Info className="h-4 w-4" />
-                  Thông tin quan trọng
-                </>
-              )}
-            </p>
-            {reservationAttempts >= 2 ? (
-              <p className="text-red-800">
-                Bạn đã sử dụng tất cả 2 lần tạo phòng. Bạn vẫn có thể tham gia
-                lượt trực tiếp hoặc tham gia phòng đã tạo với mã.
+              <p
+                className={cn(
+                  "font-medium mb-2 flex items-center gap-2",
+                  reservationAttempts >= 2 ? "text-red-900" : "text-blue-900"
+                )}
+              >
+                {reservationAttempts >= 2 ? (
+                  <>
+                    <AlertTriangle className="h-4 w-4" />
+                    Đã đạt giới hạn đặt chỗ
+                  </>
+                ) : (
+                  <>
+                    <Info className="h-4 w-4" />
+                    Thông tin quan trọng
+                  </>
+                )}
               </p>
-            ) : (
-              <ul className="list-disc list-inside space-y-1 text-blue-800">
-                <li>
-                  <strong>
-                    Lần giữ chỗ còn lại: {2 - reservationAttempts} / 2
-                  </strong>
-                </li>
-                <li>
-                  Nếu không phải tất cả {safeNumberOfSpots} người tham gia trước
-                  khi hết thời gian {safeNumberOfSpots * 5} phút, TẤT CẢ chỗ
-                  trống (bao gồm chỗ của bạn) sẽ được giải phóng cho người khác.
-                </li>
-                <li>Chia sẻ mã đặt chỗ với các thành viên nhóm ngay lập tức</li>
-                <li>Mỗi thành viên cần có vé hợp lệ để tham gia</li>
-              </ul>
-            )}
-          </div>
+              {reservationAttempts >= 2 ? (
+                <p className="text-red-800">
+                  Bạn đã sử dụng tất cả 2 lần tạo phòng. Bạn vẫn có thể tham gia
+                  lượt trực tiếp hoặc tham gia phòng đã tạo với mã.
+                </p>
+              ) : (
+                <ul className="list-disc list-inside space-y-1 text-blue-800">
+                  <li>
+                    <strong>
+                      Lần giữ chỗ còn lại: {2 - reservationAttempts} / 2
+                    </strong>
+                  </li>
+                  <li>
+                    Nếu không phải tất cả {safeNumberOfSpots} người tham gia
+                    trước khi hết thời gian {safeNumberOfSpots * 5} phút, TẤT CẢ
+                    chỗ trống (bao gồm chỗ của bạn) sẽ được giải phóng cho người
+                    khác.
+                  </li>
+                  <li>
+                    Chia sẻ mã đặt chỗ với các thành viên nhóm ngay lập tức
+                  </li>
+                  <li>Mỗi thành viên cần có vé hợp lệ để tham gia</li>
+                </ul>
+              )}
+            </div>
 
-          <Button
-            onClick={handleCreateReservation}
-            disabled={
-              createReservationMutation.isPending || cannotCreateReservation
-            }
-            className={cn(
-              "w-full",
-              isDeadlineExpired && "opacity-50 cursor-not-allowed"
-            )}
-            size="lg"
-          >
-            {createReservationMutation.isPending
-              ? "Đang tạo phòng..."
-              : isDeadlineExpired
-              ? "Hạn chót đã qua"
-              : reservationAttempts >= 2
-              ? "Đã đạt giới hạn đặt chỗ"
-              : cannotCreateReservation
-              ? "Vui lòng điền đủ số người tham gia và chọn lượt"
-              : `Tạo phòng cho ${safeNumberOfSpots} người`}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            <Button
+              onClick={handleCreateReservation}
+              disabled={
+                createReservationMutation.isPending || cannotCreateReservation
+              }
+              className={cn(
+                "w-full cursor-pointer",
+                isDeadlineExpired && "opacity-50 cursor-not-allowed"
+              )}
+              size="lg"
+            >
+              {createReservationMutation.isPending
+                ? "Đang tạo phòng..."
+                : isDeadlineExpired
+                ? "Hạn chót đã qua"
+                : reservationAttempts >= 2
+                ? "Đã đạt giới hạn đặt chỗ"
+                : cannotCreateReservation
+                ? "Vui lòng điền đủ số người tham gia và chọn lượt"
+                : `Tạo phòng cho ${safeNumberOfSpots} người`}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <AlertDialog open={isJoining}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center">
+              Đang tham gia phòng
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <Loader />
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

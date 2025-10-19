@@ -13,6 +13,13 @@ import {
 import { Loader2, Ticket } from "lucide-react";
 import { joinReservation } from "@/server/customer";
 import { errorToast, successToast } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import Loader from "../Loader/Loader";
 
 interface Props {
   customerData: {
@@ -27,11 +34,13 @@ interface Props {
 export function JoinReservation({ customerData }: Props) {
   const queryClient = useQueryClient();
   const [code, setCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
   const joinReservationMutation = useMutation({
     mutationFn: joinReservation,
     onSuccess: (data) => {
       if (data.success) {
+        setIsJoining(true);
         successToast({ message: "Đã tham gia phòng thành công!" });
         queryClient.invalidateQueries({ queryKey: ["haunted-houses"] });
         queryClient.invalidateQueries({
@@ -59,47 +68,62 @@ export function JoinReservation({ customerData }: Props) {
   };
 
   return (
-    <Card className="bg-white/90 backdrop-blur">
-      <CardHeader>
-        <CardTitle>Tham gia phòng</CardTitle>
-        <CardDescription>
-          Có mã phòng từ bạn bè? Nhập mã vào đây để tham gia nhóm của họ
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Mã phòng</label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Nhập mã (ví dụ: ABC123)"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  className="w-full pl-10 pr-4 py-2 border rounded-md uppercase"
-                  maxLength={10}
-                />
+    <>
+      {" "}
+      <Card className="bg-white/90 backdrop-blur">
+        <CardHeader>
+          <CardTitle>Tham gia phòng</CardTitle>
+          <CardDescription>
+            Có mã phòng từ bạn bè? Nhập mã vào đây để tham gia nhóm của họ
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Mã phòng</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Nhập mã (ví dụ: ABC123)"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    className="w-full pl-10 pr-4 py-2 border rounded-md uppercase"
+                    maxLength={10}
+                  />
+                </div>
+                <Button
+                  onClick={handleJoinReservation}
+                  className="flex items-center gap-2 cursor-pointer"
+                  disabled={
+                    joinReservationMutation.isPending || code.length < 6
+                  }
+                >
+                  {joinReservationMutation.isPending ? (
+                    <>
+                      Đang tham gia...
+                      <Loader2 className="animate-spin" />
+                    </>
+                  ) : (
+                    "Tham gia"
+                  )}
+                </Button>
               </div>
-              <Button
-                onClick={handleJoinReservation}
-                className="flex items-center gap-2 cursor-pointer"
-                disabled={joinReservationMutation.isPending || code.length < 6}
-              >
-                {joinReservationMutation.isPending ? (
-                  <>
-                    Đang tham gia...
-                    <Loader2 className="animate-spin" />
-                  </>
-                ) : (
-                  "Tham gia"
-                )}
-              </Button>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <AlertDialog open={isJoining}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center">
+              Đang tham gia phòng
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <Loader />
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

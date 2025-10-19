@@ -315,11 +315,11 @@ export function QueueList({
                                 </span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 sm:w-max w-full">
                               <RefreshButton
                                 onClick={onRefresh}
                                 isLoading={isRefetching}
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                className="bg-purple-600 hover:bg-purple-700 text-white sm:w-max w-1/2"
                               />
                               <Button
                                 disabled={
@@ -333,7 +333,7 @@ export function QueueList({
                                 }}
                                 size="lg"
                                 className={cn(
-                                  "cursor-pointer sm:w-max w-full",
+                                  "cursor-pointer sm:w-max w-1/2",
                                   hasAvailableSpots && !isDeadlineExpired
                                     ? "bg-green-600 hover:bg-green-700"
                                     : "",
@@ -457,8 +457,8 @@ export function QueueList({
                                   </span>
                                   <p className="text-xs mt-1">
                                     Một số slot đã được giữ tạm thời. Bạn có thể
-                                    tham gia với mã phòng chỗ hoặc chờ chúng trở
-                                    lại có sẵn.
+                                    tham gia với mã phòng chỗ hoặc chờ phòng của
+                                    người khác hết hạn.
                                   </p>
                                 </div>
                               </div>

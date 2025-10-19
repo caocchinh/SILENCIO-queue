@@ -465,7 +465,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                   size="sm"
                   variant="outline"
                   className={cn(
-                    "border-purple-300",
+                    "border-purple-300 cursor-pointer",
                     isDeadlineExpired && "opacity-50 cursor-not-allowed"
                   )}
                   disabled={isDeadlineExpired}
@@ -488,7 +488,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
               <p className="text-xs text-purple-600 mt-2">
                 {isDeadlineExpired
                   ? "Hạn chót đã qua - không thể thực hiện hành động nào nữa"
-                  : "Chia sẻ mã này với các thành viên để tham gia phòng"}
+                  : "Chia sẻ mã này với các thành viên để tham gia phòng. Khi phòng đủ người, phòng sẽ giải tán và nhóm bạn sẽ được tham gia lượt này bình thường với đầy đủ thành viên."}
               </p>
             </div>
 
@@ -537,8 +537,8 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                       {spotsNeededForReservation === 1 ? "người" : "người"} nữa
                     </p>
                     <p className="text-xs mt-1">
-                      Nếu nhóm không đủ đầy đủ khi hết thời gian, TẤT CẢ các chỗ
-                      sẽ được giải phóng
+                      Nếu nhóm không đủ thành viên trước khi countdown kết thúc,
+                      TẤT CẢ các chỗ sẽ được giải phóng và phòng sẽ bị giải tán.
                     </p>
                   </div>
                 </div>
