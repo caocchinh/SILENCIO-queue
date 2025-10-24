@@ -9,5 +9,7 @@ namespace NodeJS {
     OAUTH_GOOGLE_CLIENT_ID: string;
     GOOGLE_SERVICE_ACCOUNT_EMAIL: string;
     GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: string;
+    GMAIL_USER: string;
+    GMAIL_PASS: string;
   }
 }

@@ -17,8 +17,10 @@ import {
   createActionError,
   createActionSuccess,
 } from "@/constants/errors";
-import { retryDatabase, retryAuth } from "@/dal/retry";
+import { retryDatabase, retryAuth, retryEmail } from "@/dal/retry";
 import { nanoid } from "nanoid";
+import nodemailer from "nodemailer";
+import REMIND_EMAIL_TEMPLATE from "@/constants/remind-email-template";
 
 // Helper function to verify admin access
 async function verifyAdminAccess(): Promise<ActionResponse<void>> {
@@ -564,5 +566,68 @@ export async function cancelReservation(params: {
   } catch (error) {
     console.error("Error cancelling reservation:", error);
     return createActionError("DATABASE_ERROR", "Failed to cancel reservation");
+  }
+}
+
+export async function sendRemindEmail({
+  studentName,
+  email,
+}: {
+  email: string;
+  studentName: string;
+}) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      },
+    });
+
+    const htmlContent = REMIND_EMAIL_TEMPLATE({
+      studentName,
+    });
+
+    const mailOptionsPrivate = {
+      from: process.env.GMAIL_USER,
+      to: email,
+      subject: "Silencio VII: SPETTACOLO - Nhắc nhở chọn khung giờ nhà ma",
+      html: htmlContent,
+    };
+
+    try {
+      await retryEmail(async () => {
+        // Verify transporter configuration before sending
+        await transporter.verify();
+
+        const result = await transporter.sendMail(mailOptionsPrivate);
+
+        // Check if messageId exists (indicates successful queuing)
+        if (!result.messageId) {
+          throw new Error("Failed to send email - no message ID returned");
+        }
+
+        // Check accepted recipients
+        if (result.accepted.length === 0) {
+          throw new Error("No recipients accepted");
+        }
+
+        // Log successful send
+        console.log(
+          `Email sent successfully to ${email}, messageId: ${result.messageId}`
+        );
+      }, `sending success email to ${email}`);
+      return createActionSuccess({
+        message: `Email sent successfully to ${email}`,
+        email: email,
+      });
+    } catch (error) {
+      console.error(`Failed to send email to ${email}:`, error);
+      return createActionError("EMAIL_ERROR", "Failed to send email");
+    }
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error);
+    return createActionError("EMAIL_ERROR", "Failed to send email");
   }
 }

@@ -37,6 +37,13 @@ export const RETRY_CONFIGS = {
     backoffMultiplier: 2,
     jitterRange: 500,
   },
+  EMAIL: {
+    maxRetries: 2,
+    baseDelay: 1000,
+    maxDelay: 8000,
+    backoffMultiplier: 2,
+    jitterRange: 1000,
+  },
 } as const;
 
 /**
@@ -166,4 +173,11 @@ export function retryExternalApi<T>(
   operationName: string = "external API operation"
 ): Promise<T> {
   return retryWithBackoff(operation, RETRY_CONFIGS.EXTERNAL_API, operationName);
+}
+
+export function retryEmail<T>(
+  operation: () => Promise<T>,
+  operationName: string = "email operation"
+): Promise<T> {
+  return retryWithBackoff(operation, RETRY_CONFIGS.EMAIL, operationName);
 }

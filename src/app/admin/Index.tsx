@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
 import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { cn } from "@/lib/utils";
+import ReminderManager from "@/components/admin/ReminderManager";
 
 async function fetchHauntedHouses(): Promise<HauntedHouseWithDetailedQueues[]> {
   const response = await fetch("/api/haunted-houses");
@@ -59,12 +60,16 @@ export default function AdminIndex() {
             <TabsList>
               <TabsTrigger value="houses">Nhà ma</TabsTrigger>
               <TabsTrigger value="queues">Hàng đợi lấy số</TabsTrigger>
+              <TabsTrigger value="reminders">Nhắc nhở</TabsTrigger>
             </TabsList>
             <TabsContent value="houses">
               <HauntedHouseManager houses={houses} />
             </TabsContent>
             <TabsContent value="queues">
               <QueueManager houses={houses} />
+            </TabsContent>
+            <TabsContent value="reminders">
+              <ReminderManager />
             </TabsContent>
           </Tabs>
         )}

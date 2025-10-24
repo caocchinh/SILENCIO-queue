@@ -7,6 +7,7 @@ export const ERROR_CODES = {
   NOT_LOGGED_IN: "not-logged-in",
   SESSION_VERIFICATION_FAILED: "session-verification-failed",
   UNAUTHORIZED: "unauthorized",
+  EMAIL_ERROR: "email-error",
   DATABASE_ERROR: "database-error",
   INTERNAL_SERVER_ERROR: "internal-server-error",
   UNKNOWN_ERROR: "unknown-error",
@@ -35,6 +36,7 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.SESSION_VERIFICATION_FAILED]:
     "Không thể xác minh phiên đăng nhập. Vui lòng thử đăng nhập lại.",
   [ERROR_CODES.UNAUTHORIZED]: "Bạn không có quyền truy cập tài nguyên này",
+  [ERROR_CODES.EMAIL_ERROR]: "Lỗi gửi email. Vui lòng thử lại sau.",
   [ERROR_CODES.DATABASE_ERROR]: "Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.",
   [ERROR_CODES.INTERNAL_SERVER_ERROR]:
     "Lỗi máy chủ nội bộ. Vui lòng thử lại sau.",

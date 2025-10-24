@@ -1,0 +1,300 @@
+import {
+  EMAIL_BANNER,
+  SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL,
+} from "./constants";
+
+export default function REMIND_EMAIL_TEMPLATE({
+  studentName,
+}: {
+  studentName: string;
+}) {
+  const EMAIL = `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+ <head>
+  <!--  -->
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VTEAM</title>
+  <style>
+   body { margin: 0 !important; min-width: 100% !important; padding: 0 !important; width: 100% !important; }
+   
+   body, table, td, a, h1, h2, h3, h4, h5, h6, p { -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+   
+   img { border: 0; height: auto; line-height: 100%; }
+   
+   sup { font-size: 45%; line-height: 0; }
+   
+   u + .email-body #new-gmail-hack { display: block !important; }
+   
+   span.outlook-overflow-scaling { width: 100% !important; max-width: 100%; padding: 0 !important; }
+   
+   #MessageViewBody, #MessageWebViewDiv { margin: 0 !important; min-width: 100vw; padding: 0 !important; zoom: 1 !important; }
+   
+   #MessageViewBody #backgroundTable { min-width: 100vw; }
+   
+   .main div.contentcell { width: 640px; }
+  </style>
+  <style>
+   @import url("https://fonts.googleapis.com/css?family=Roboto+Slab:400,700");
+   @import url("https://fonts.googleapis.com/css?family=Roboto:400,700");
+   a, a:link { color: #000000; text-decoration: none; }
+   
+   h1, h2 { font-family: 'Roboto Slab', Rockwell, Arial, sans-serif; }
+   
+   p { font-family: 'Roboto', Arial, sans-serif; }
+   
+   li { text-align: -webkit-match-parent; display: list-item; }
+   
+   .email-body { background-color: #eaeaea; }
+   
+   .viz { display: none; }
+   
+   .padd-swap { padding: 20px 0px !important; }
+   
+   .bull-list { border-top: none !important; border-left: 10px solid #009cde; padding: 10px 18px 0px !important; }
+   
+   .full-300 img { width: 300px !important; }
+   
+   .full-290 img { width: 290px !important; }
+   
+   .full-200 img { width: 200px !important; }
+   
+   .logo-lockup { padding: 8px 30px 8px 0px !important; }
+   
+   .logo-desk { display: inline-block!important; height: inherit !important; }
+   
+   .logo-mob { display: none; height: 0; overflow: hidden; }
+   
+   .logo-partner { border-bottom: none !important; border-left: 1px solid #000000; padding: 0px 0px 0px 30px !important; }
+   
+   .logos-wrapper { font-size: 0; text-align: left; }
+   .logos-wrapper .column1, .logos-wrapper .column2 { display: inline-block; width: auto; text-align: left; vertical-align: middle; }
+   
+   .partners-wrapper { font-size: 0; text-align: left; }
+   .partners-wrapper .column1, .partners-wrapper .column2 { display: inline-block; width: auto; text-align: left; vertical-align: middle; }
+   
+   .stack-wrapper { font-size: 0; text-align: center; }
+   .stack-wrapper .column1, .stack-wrapper .column2, .stack-wrapper .column3 { display: inline-block; width: 100%; vertical-align: top; }
+   
+   .twoc .column1, .twoc .column2 { width: 300px; }
+   
+   .twoh .column1 { width: 200px; }
+   .twoh .column2 { width: 400px; }
+   
+   .twoi .column1 { width: 240px; }
+   .twoi .column2 { width: 360px; }
+   
+   .twol .column1 { width: 360px; }
+   .twol .column2 { width: 240px; }
+   
+   .tweec .column1, .tweec .column2 { width: 290px; }
+   .tweec .column3 { width: 20px; }
+   
+   .threec .column1, .threec .column2, .threec .column3 { width: 193px; }
+   
+   .threel .column1, .threel .column2, .threel .column3 { width: 186px; }
+   
+   @media only screen and (max-width: 639px) { .viz { display: table; }
+     .padd-swap { padding: 0px 20px !important; }
+     .bull-list { border-top: 10px solid #009cde !important; border-left: none !important; padding: 18px 4px 8px !important; }
+     .full-300 img { width: 100% !important; }
+     .full-290 img { width: 100% !important; }
+     .full-200 img { width: 100% !important; }
+     .logo-lockup { padding: 0px 0px 16px !important; }
+     .logo-desk { display: none !important; height: 0 !important; }
+     .logo-mob { display: inline-block; height: inherit; overflow: hidden; }
+     .logo-partner { border-bottom: 1px solid #000000 !important; border-left: none !important; padding: 16px 0px !important; }
+     .logos-wrapper { font-size: 0; text-align: center; }
+     .logos-wrapper .column1, .logos-wrapper .column2 { display: inline-block; width: 100%; text-align: center; vertical-align: top; }
+     .partners-wrapper { font-size: 0; text-align: center; }
+     .partners-wrapper .column1, .partners-wrapper .column2 { display: inline-block; width: auto; text-align: center; vertical-align: top; }
+     .twoc .column1, .twoc .column2, .twoc .column3, .twoh .column1, .twoh .column2, .twoh .column3, .twoi .column1, .twoi .column2, .twoi .column3, .twol .column1, .twol .column2, .twol .column3, .tweec .column1, .tweec .column2, .tweec .column3, .threec .column1, .threec .column2, .threec .column3, .threel .column1, .threel .column2, .threel .column3 { width: 100%; } }
+  </style>
+  
+
+
+  <!--[if !mso]><!-->
+  <style>
+   a[x-apple-data-detectors] { color: inherit !important; font-family: inherit !important; font-size: inherit !important; font-weight: inherit !important; line-height: inherit !important; text-decoration: none !important; }
+  </style>
+  <!--<![endif]-->
+  <!--[if (gte mso 9)|(IE)]>   
+<style>    table { border-collapse: collapse; }        table, td { mso-line-height-rule: exactly; mso-margin-bottom-alt: 0; mso-margin-top-alt: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }        div { margin: 0; padding: 0; }        sup { font-size: 75%; mso-text-raise: 12%; }        h1, h2 { font-family: Rockwell, Arial, sans-serif !important; }        p, a { font-family: Arial, sans-serif !important; }        li { text-align: -webkit-match-parent; display: list-item; text-indent: -1em; margin: 12px; }        .viz { display: none !important; }        .logo-desk { display: block !important; height: inherit !important; }        .logo-partner { border-bottom: none !important; border-left: none !important; border-right: 1px solid #000000; }        .bull-list { font-family: Arial,
+ sans-serif !important; }   </style>   <![endif]-->
+  <!--[if gte mso 9]>   <xml>    <o:OfficeDocumentSettings>     <o:AllowPNG/>     <o:PixelsPerInch>96</o:PixelsPerInch>    </o:OfficeDocumentSettings>   </xml>   <![endif]-->
+ </head>
+ <body class="email-body"><style type="text/css">
+div.preheader 
+{ display: none !important; } 
+</style>
+<div class="preheader" style="font-size: 1px; display: none !important;">Vui lòng chọn khung giờ tham gia nhà ma trước deadline.</div>
+  <div style="display: none; max-height: 0px; overflow: hidden;">
+   
+  
+ &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+  </div>
+  
+  <table id="backgroundTable" width="100%" border="0" cellspacing="0" cellpadding="0" role="presentation" style="background-color: #eaeaea;">
+   <tr>
+    <td align="center">
+     <table border="0" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+       <td class="main" align="center" style="width: 640px;">
+
+        <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+ 
+    <tr>
+     <td align="center" style="padding: 20px 20px 0px;">
+      <!-- Hero bgcolor="#" Here --><table bgcolor="#000000" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+       
+        <tr>
+         <td>
+          <!-- Logo Lockup --><!-- Logo bgcolor="#" Here --><table bgcolor="#000000" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+           
+            <tr>
+             <td>
+              <table border="0" cellpadding="0" cellspacing="0" role="presentation">
+               
+                <tr>
+                 <!-- Logo Here --><td bgcolor="#000000" style="font-size: 0; line-height: 0;">
+                   <img alt="VTEAM" src=${EMAIL_BANNER} style="display: block; margin: 0px; border: 0px; padding: 0px; width: 100%;font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="604"></td></tr></table></td></tr></table></td></tr><tr>
+         <td>
+         </td></tr></table>
+      </td></tr>
+  </table>
+        <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+ 
+  <tr>
+   <td align="center" style="padding: 20px 20px 0px;">
+    <!-- Hero bgcolor="#" Here --><table bgcolor="#000000" style="background: #000000 !important;" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+     
+      <tr>
+       <td>
+        <!-- Logo Lockup --><!-- Logo bgcolor="#" Here --><table bgcolor="#000000" style="background: #000000 !important;" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+         
+          <tr>
+           <td>
+            <table border="0" cellpadding="0" cellspacing="0" role="presentation">
+             
+              <tr>
+               <!-- Logo Here --><td bgcolor="#000000" style="font-size: 0; background: #000000 !important; line-height: 0;padding: 10px;">
+                <!-- Desktop Logo --><div class="logo-desk" style="display: none; height: 0; overflow: hidden;">
+                 <a  href="https://www.facebook.com/vteam.vcp" target="_blank"><img alt="VTEAM" src="https://vteam-online-ticket.vercel.app/assets/full-logo.png" style="display: block; margin: 0px; border: 0px; padding: 0px; width: 304px; font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="304"></a></div><!-- Mobile Logo --><!--[if !mso|(IE)]><!--><div class="logo-mob">
+                 <a  href="https://www.facebook.com/vteam.vcp" target="_blank"><img alt="VTEAM" src="https://vteam-online-ticket.vercel.app/assets/full-logo.png" style="display: block; margin: 0px; border: 0px; padding: 0px; width: 300px; font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="300"></a></div><!--<![endif]--></td><!-- Logo Ends --></tr></table></td></tr></table><!-- Logo Lockup --></td></tr><tr>
+       <td>
+       </td></tr></table>
+    </td></tr>
+</table>
+
+
+
+
+
+        <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="min-width: 100%; " class="stylingblock-content-wrapper"><tr><td class="stylingblock-content-wrapper camarker-inner"><table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+	
+		<tr>
+			<td align="center" style="padding: 0px 20px 10px;">
+				<!-- One-Column --><table bgcolor="#ffffff" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+					
+						<tr>
+							<td align="center" style="padding: 20px;">
+								<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+									<!-- Bodycopy Here -->
+										<tr>
+											<td align="left" style="padding: 0px 0px 12px;">
+												<p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
+													Xin chào bạn ${studentName}, <br>
+																						
+                                                <tr><td align="left" style="padding: 12px 0px 12px;">
+                                                  <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
+                                                      Để cho sự kiện SILENCIO được diễn ra suôn sẻ và thuận lợi, bạn hãy truy cập trang web dưới đây để lấy số thứ tự của bạn khi chơi nhà ma tại SILENCIO càng sớm càng tốt. Nếu bạn chưa lấy số thứ tự trước deadline <span style="font-weight: bold;color: crimson;">(11h trưa ngày 27/10/2025)</span>, vào hôm on-event bạn sẽ phải đi theo số thứ tự ngẫu nhiên: <br/> <a href=${SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL} target="_blank" rel="noopener" referrerpolicy="no-referrer" style="color:crimson;font-weight: bold;">${SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL}</a></p>
+
+                                              </td> </tr>
+
+                                              <tr><td align="left" style="padding: 12px 0px 12px;">
+                                                  <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
+                                                      Hẹn gặp bạn tại SILENCIO VII nhé!</p>
+
+                                              </td> </tr>
+
+                                                <tr><td align="left" style="padding: 12px 0px 12px;">
+                                                    <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: right; margin: 0px; padding: 0px;font-style: italic;text-decoration: underline;">
+                                                        VTEAM xin trân trọng cảm ơn.</p>
+                                                </td> </tr>             
+                                            </tr><!-- Bodycopy Ends --></table></td></tr></table></td></tr></table></td></tr></table>
+        <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="min-width: 100%; " class="stylingblock-content-wrapper"><tr><td class="stylingblock-content-wrapper camarker-inner"><span style="font-size: medium;">  </span>
+            
+            
+<table align="center" bgcolor="#000000" style="background: #000000 !important;" border="0" cellpadding="0" cellspacing="0" role="presentation" width="94%">
+    <tr>
+        <td align="center" style="padding: 10px 0px 10px;">
+        </td>
+    </tr>
+    <tr>
+        <td align="center" style="padding: 5px 5px 5px;">
+            <a href="https://www.facebook.com/vteam.vcp" target="_blank">
+                <img alt="VTEAM" src="https://vteam-online-ticket.vercel.app/assets/logo-inverted.png" style="display: block; margin: 0px auto; border: 0px; padding: 0px; width: 100px; font-family: Arial, sans-serif; font-size: 18px;" width="100">
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" style="padding: 5px 0px 5px;">
+        </td>
+    </tr>
+    <tr>
+        <td align="center" style="padding: 0px 10px 18px; font-family: Arial, sans-serif; font-size: 20px; line-height: 1;">
+            <a target="_blank" rel="noopener" referrerpolicy="no-referrer" data-linkto="https://" href="https://www.facebook.com/vteam.vcp" style="display: inline-block; margin: 0 5px;" title="">
+                <img alt="Facebook" data-assetid="35553" height="36" src="https://vteam-online-ticket.vercel.app/assets/facebook.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+            </a>
+            <a target="_blank" referrerpolicy="no-referrer" rel="noopener" data-linkto="https://" href="https://www.instagram.com/vteam.vcp" style="display: inline-block; margin: 0 5px;" title="">
+                <img alt="Instagram" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/instagram.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+            </a>
+            <a rel="noopener" target="_blank" referrerpolicy="no-referrer" data-linkto="https://" href="https://www.tiktok.com/@_vteam.vcp_" style="display: inline-block; margin: 0 5px;" title="">
+                <img alt="Tiktok" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/tiktok.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+            </a>
+            <a target="_blank" referrerpolicy="no-referrer" rel="noopener" data-linkto="https://" href="https://open.spotify.com/show/6HyeZrRlgEZPkXT09TPqJu?si=9ba07dbd1a5948f0" style="display: inline-block; margin: 0 5px;" title="">
+                <img alt="Spotify" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/spotify.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+            </a>
+        </td>
+    </tr>
+    <!-- end Social -->
+    <!-- bottom of footer start-->
+    <tr>
+        <td align="center" style="padding: 0px 0px 10px;">
+            <p style="font-family: Arial, sans-serif; font-size: 12px; font-weight: normal; line-height: 16px; color: white; text-align: center; margin: 5px; padding: 5px;">
+                Khu đô thị Vinhomes Central Park, Điện Biên Phủ, Bình Thạnh, TP. Hồ Chí Minh<br>
+                <br>
+                &copy; <span>2025</span>&nbsp;VTEAM
+            </p>
+        </td>
+    </tr>
+</table>
+<!-- bottom of footer end-->
+       </td>
+      </tr>
+     </table>
+    </td>
+   </tr>
+   <tr>
+    <td>
+     
+    </td>
+   </tr>
+  </table>
+  <section>
+   <div id="new-gmail-hack" style="display: none; white-space: nowrap; font: 15px courier; line-height: 0;">
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+   </div>
+  </section>
+  
+ 
+ </body>
+</html>`;
+  return EMAIL;
+}
