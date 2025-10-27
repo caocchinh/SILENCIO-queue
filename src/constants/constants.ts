@@ -4,3 +4,4 @@ export const EMAIL_BANNER =
   "https://drive.google.com/uc?id=1f_NVZZ3XSMnIWZr6J5jifmAEOa77ezVt";
 export const SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL =
   "https://silencio-vcp.vercel.app";
+export const REMIND_DEADLINE_TEXT = "11h trưa ngày 27/10/2025";

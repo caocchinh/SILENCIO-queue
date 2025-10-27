@@ -1,6 +1,7 @@
 import {
   EMAIL_BANNER,
   SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL,
+  REMIND_DEADLINE_TEXT,
 } from "./constants";
 
 export default function REMIND_EMAIL_TEMPLATE({
@@ -163,7 +164,7 @@ div.preheader
                
                 <tr>
                  <!-- Logo Here --><td bgcolor="#000000" style="font-size: 0; line-height: 0;">
-                   <img alt="VTEAM" src=${EMAIL_BANNER} style="display: block; margin: 0px; border: 0px; padding: 0px; width: 100%;font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="604"></td></tr></table></td></tr></table></td></tr><tr>
+                   <img alt="VTEAM" src="${EMAIL_BANNER}" style="display: block; margin: 0px; border: 0px; padding: 0px; width: 100%;font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="604"></td></tr></table></td></tr></table></td></tr><tr>
          <td>
          </td></tr></table>
       </td></tr>
@@ -181,12 +182,13 @@ div.preheader
           <tr>
            <td>
             <table border="0" cellpadding="0" cellspacing="0" role="presentation">
-             
-              <tr>
-               <!-- Logo Here --><td bgcolor="#000000" style="font-size: 0; background: #000000 !important; line-height: 0;padding: 10px;">
-                <!-- Desktop Logo --><div class="logo-desk" style="display: none; height: 0; overflow: hidden;">
-                 <a  href="https://www.facebook.com/vteam.vcp" target="_blank"><img alt="VTEAM" src="https://vteam-online-ticket.vercel.app/assets/full-logo.png" style="display: block; margin: 0px; border: 0px; padding: 0px; width: 304px; font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="304"></a></div><!-- Mobile Logo --><!--[if !mso|(IE)]><!--><div class="logo-mob">
-                 <a  href="https://www.facebook.com/vteam.vcp" target="_blank"><img alt="VTEAM" src="https://vteam-online-ticket.vercel.app/assets/full-logo.png" style="display: block; margin: 0px; border: 0px; padding: 0px; width: 300px; font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="300"></a></div><!--<![endif]--></td><!-- Logo Ends --></tr></table></td></tr></table><!-- Logo Lockup --></td></tr><tr>
+               
+                <tr>
+                 <!-- Logo Here --><td bgcolor="#000000" style="font-size: 0; line-height: 0;">
+                   <img alt="VTEAM" src="https://vteam-online-ticket.vercel.app/assets/banner.webp" style="object-fit: cover;min-height: 44px;object-position: left;display: block; margin: 0px; border: 0px; padding: 0px; width: 100%;font-family: Arial, sans-serif; font-size: 18px; text-align: center; color: #ffffff;" width="604"></td></tr>
+                </table>
+            
+            </td></tr></table><!-- Logo Lockup --></td></tr><tr>
        <td>
        </td></tr></table>
     </td></tr>
@@ -209,11 +211,11 @@ div.preheader
 										<tr>
 											<td align="left" style="padding: 0px 0px 12px;">
 												<p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
-													Xin chào bạn ${studentName}, <br>
+													Thân chào bạn ${studentName}, <br>
 																						
                                                 <tr><td align="left" style="padding: 12px 0px 12px;">
                                                   <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
-                                                      Để cho sự kiện SILENCIO được diễn ra suôn sẻ và thuận lợi, bạn hãy truy cập trang web dưới đây để lấy số thứ tự của bạn khi chơi nhà ma tại SILENCIO càng sớm càng tốt. Nếu bạn chưa lấy số thứ tự trước deadline <span style="font-weight: bold;color: crimson;">(11h trưa ngày 27/10/2025)</span>, vào hôm on-event bạn sẽ phải đi theo số thứ tự ngẫu nhiên: <br/> <a href=${SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL} target="_blank" rel="noopener" referrerpolicy="no-referrer" style="color:crimson;font-weight: bold;">${SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL}</a></p>
+                                                      Để cho sự kiện SILENCIO được diễn ra suôn sẻ và thuận lợi, bạn hãy truy cập trang web dưới đây để lấy số thứ tự của bạn khi chơi nhà ma tại SILENCIO càng sớm càng tốt. Nếu bạn chưa lấy số thứ tự trước deadline <span style="font-weight: bold;color: crimson;">(${REMIND_DEADLINE_TEXT})</span>, vào hôm on-event bạn sẽ phải đi theo số thứ tự ngẫu nhiên: <br/> <a href="${SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL}" target="_blank" rel="noopener" referrerpolicy="no-referrer" style="color:crimson;font-weight: bold;">https://silencio-vcp.vercel.app</a></p>
 
                                               </td> </tr>
 
@@ -236,13 +238,7 @@ div.preheader
         <td align="center" style="padding: 10px 0px 10px;">
         </td>
     </tr>
-    <tr>
-        <td align="center" style="padding: 5px 5px 5px;">
-            <a href="https://www.facebook.com/vteam.vcp" target="_blank">
-                <img alt="VTEAM" src="https://vteam-online-ticket.vercel.app/assets/logo-inverted.png" style="display: block; margin: 0px auto; border: 0px; padding: 0px; width: 100px; font-family: Arial, sans-serif; font-size: 18px;" width="100">
-            </a>
-        </td>
-    </tr>
+   
     <tr>
         <td align="center" style="padding: 5px 0px 5px;">
         </td>
@@ -250,16 +246,16 @@ div.preheader
     <tr>
         <td align="center" style="padding: 0px 10px 18px; font-family: Arial, sans-serif; font-size: 20px; line-height: 1;">
             <a target="_blank" rel="noopener" referrerpolicy="no-referrer" data-linkto="https://" href="https://www.facebook.com/vteam.vcp" style="display: inline-block; margin: 0 5px;" title="">
-                <img alt="Facebook" data-assetid="35553" height="36" src="https://vteam-online-ticket.vercel.app/assets/facebook.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+                <img alt="Facebook" data-assetid="35553" height="36" src="https://vteam-online-ticket.vercel.app/assets/facebook.png" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
             </a>
             <a target="_blank" referrerpolicy="no-referrer" rel="noopener" data-linkto="https://" href="https://www.instagram.com/vteam.vcp" style="display: inline-block; margin: 0 5px;" title="">
-                <img alt="Instagram" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/instagram.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+                <img alt="Instagram" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/instagram.png" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
             </a>
             <a rel="noopener" target="_blank" referrerpolicy="no-referrer" data-linkto="https://" href="https://www.tiktok.com/@_vteam.vcp_" style="display: inline-block; margin: 0 5px;" title="">
-                <img alt="Tiktok" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/tiktok.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+                <img alt="Tiktok" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/tiktok.png" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
             </a>
             <a target="_blank" referrerpolicy="no-referrer" rel="noopener" data-linkto="https://" href="https://open.spotify.com/show/6HyeZrRlgEZPkXT09TPqJu?si=9ba07dbd1a5948f0" style="display: inline-block; margin: 0 5px;" title="">
-                <img alt="Spotify" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/spotify.webp" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
+                <img alt="Spotify" data-assetid="35550" height="36" src="https://vteam-online-ticket.vercel.app/assets/spotify.png" style="display: inline-block; margin: 0px; width: 36px; padding: 0px; text-align: center; height: 36px; border: 0px;" width="36">
             </a>
         </td>
     </tr>
