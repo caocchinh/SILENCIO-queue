@@ -233,13 +233,11 @@ export function QueueList({
             <Button
               key={house.name}
               onClick={() => handleSelectHauntedHouse(house.name)}
-              disabled={isDeadlineExpired}
               className={cn(
                 currentHauntedHouseName === house.name
                   ? "bg-purple-600 text-white hover:bg-purple-700"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300",
-                "cursor-pointer",
-                isDeadlineExpired && "opacity-50 cursor-not-allowed"
+                "cursor-pointer"
               )}
             >
               {house.name}

@@ -631,3 +631,61 @@ export async function sendRemindEmail({
     return createActionError("EMAIL_ERROR", "Failed to send email");
   }
 }
+
+export async function assignCustomerWithoutSpotToRemainingAvailableSpotAction(params: {
+  customerIds: string[];
+}): Promise<ActionResponse> {
+  try {
+    const authCheck = await verifyAdminAccess();
+    if (!authCheck.success) {
+      return authCheck;
+    }
+
+    const { customerIds } = params;
+
+    if (!customerIds || customerIds.length === 0) {
+      return createActionError("INVALID_INPUT", "No customers selected");
+    }
+
+    // Find available queue spots
+    const availableSpots = await retryDatabase(
+      () =>
+        db.select().from(queueSpot).where(eq(queueSpot.status, "available")),
+      "find available spots"
+    );
+
+    // Assign spots to customers
+    const assignments = [];
+    for (let i = 0; i < availableSpots.length; i++) {
+      const spot = availableSpots[i];
+      if (i < customerIds.length) {
+        const customerId = customerIds[i];
+
+        const [updatedSpot] = await retryDatabase(
+          () =>
+            db
+              .update(queueSpot)
+              .set({
+                customerId,
+                status: "occupied",
+                occupiedAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(queueSpot.id, spot.id))
+              .returning(),
+          `assign spot ${spot.id} to customer ${customerId}`
+        );
+
+        assignments.push(updatedSpot);
+      }
+    }
+
+    return createActionSuccess({
+      message: `Successfully assigned ${assignments.length} customers to spots`,
+      assignments,
+    });
+  } catch (error) {
+    console.error("Error assigning customers to spots:", error);
+    return createActionError("DATABASE_ERROR", "Failed to assign customers");
+  }
+}

@@ -5,7 +5,7 @@ import { createApiError, HTTP_STATUS } from "@/constants/errors";
 import { retryAuth, retryDatabase } from "@/dal/retry";
 import { db } from "@/drizzle/db";
 import { customer } from "@/drizzle/schema";
-import { sql, notInArray, and } from "drizzle-orm";
+import { sql, notInArray, and, not, eq } from "drizzle-orm";
 import { UNSUPPORT_TICKET_TYPE } from "@/constants/constants";
 
 // GET /api/customer/without-queue - Get customers without queue spots (admin only)
@@ -45,7 +45,8 @@ export async function GET() {
               SELECT 1 FROM queue_spot
               WHERE queue_spot.customer_id = customer.student_id
             )`,
-            notInArray(customer.ticketType, UNSUPPORT_TICKET_TYPE)
+            notInArray(customer.ticketType, UNSUPPORT_TICKET_TYPE),
+            not(eq(customer.email, "chinhcaocu@gmail.com"))
           ),
           orderBy: customer.name,
         }),

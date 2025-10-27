@@ -8,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { sendRemindEmail } from "@/server/admin";
+import { errorToast, successToast } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,8 +21,8 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { sendRemindEmail } from "@/server/admin";
-import { errorToast, successToast } from "@/lib/utils";
+import { assignCustomerWithoutSpotToRemainingAvailableSpotAction } from "@/server/admin";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -256,7 +258,40 @@ const ReminderManager = () => {
     },
   });
 
-  // Retry failed email mutation
+  const queryClient = useQueryClient();
+
+  const assignSpotsMutation = useMutation({
+    mutationFn: async (customerIds: string[]) => {
+      const response =
+        await assignCustomerWithoutSpotToRemainingAvailableSpotAction({
+          customerIds,
+        });
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response;
+    },
+    onMutate: () => {
+      setRetryStatus("Đang phân công chỗ ngồi...");
+    },
+    onSuccess: () => {
+      successToast({
+        message: "Phân công chỗ ngồi thành công!",
+      });
+      setRetryStatus("Chỗ ngồi đã được phân công!");
+      setSelectedCustomers(new Set()); // Clear selection
+      setBatchValidationError("");
+      // Invalidate the query to refetch customers without queue
+      queryClient.invalidateQueries({ queryKey: ["customers-without-queue"] });
+    },
+    onError: (error: Error) => {
+      errorToast({
+        message: "Không thể phân công chỗ ngồi",
+        description: error.message,
+      });
+      setRetryStatus("Phân công chỗ ngồi thất bại");
+    },
+  });
   const retryFailedEmailMutation = useMutation({
     mutationFn: ({
       studentName,
@@ -381,6 +416,30 @@ const ReminderManager = () => {
     sendBatchEmailsMutation.mutate(emailData);
   };
 
+  const handleAssignSpots = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!customersWithoutQueue) {
+      setBatchValidationError("Không thể tải danh sách học sinh");
+      return;
+    }
+
+    const selectedCustomerList = customersWithoutQueue.filter((customer) =>
+      selectedCustomers.has(customer.studentId)
+    );
+
+    if (selectedCustomerList.length === 0) {
+      setBatchValidationError("Vui lòng chọn ít nhất một học sinh");
+      return;
+    }
+
+    const customerIds = selectedCustomerList.map(
+      (customer) => customer.studentId
+    );
+
+    assignSpotsMutation.mutate(customerIds);
+  };
+
   const handleRetryFailed = (failedEmail: FailedEmail) => {
     retryFailedEmailMutation.mutate({
       studentName: failedEmail.studentName,
@@ -426,9 +485,13 @@ const ReminderManager = () => {
           <div
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
-              sendEmailMutation.isSuccess || sendBatchEmailsMutation.isSuccess
+              sendEmailMutation.isSuccess ||
+                sendBatchEmailsMutation.isSuccess ||
+                assignSpotsMutation.isSuccess
                 ? "bg-green-100 text-green-800"
-                : sendEmailMutation.isError || sendBatchEmailsMutation.isError
+                : sendEmailMutation.isError ||
+                  sendBatchEmailsMutation.isError ||
+                  assignSpotsMutation.isError
                 ? "bg-red-100 text-red-800"
                 : "bg-blue-100 text-blue-800"
             )}
@@ -436,7 +499,9 @@ const ReminderManager = () => {
             {sendEmailMutation.isSuccess ||
             sendBatchEmailsMutation.isSuccess ? (
               <CheckCircle className="h-4 w-4" />
-            ) : sendEmailMutation.isError || sendBatchEmailsMutation.isError ? (
+            ) : sendEmailMutation.isError ||
+              sendBatchEmailsMutation.isError ||
+              assignSpotsMutation.isError ? (
               <AlertCircle className="h-4 w-4" />
             ) : (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -789,6 +854,29 @@ const ReminderManager = () => {
                     )}
                   </Button>
                 </form>
+
+                <Button
+                  onClick={handleAssignSpots}
+                  disabled={
+                    assignSpotsMutation.isPending ||
+                    !isBatchValid() ||
+                    isLoadingCustomers
+                  }
+                  className="w-full mt-2"
+                  variant="outline"
+                >
+                  {assignSpotsMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Đang phân công...
+                    </>
+                  ) : (
+                    <>
+                      <Users className="mr-2 h-4 w-4" />
+                      Phân công {selectedCustomers.size} chỗ ngồi
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
 
