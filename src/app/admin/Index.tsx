@@ -9,6 +9,8 @@ import { RefreshCw } from "lucide-react";
 import { HauntedHouseWithDetailedQueues } from "@/lib/types/queue";
 import { cn } from "@/lib/utils";
 import ReminderManager from "@/components/admin/ReminderManager";
+import { useState } from "react";
+import { sendTestConfirmationEmail } from "@/server/admin";
 
 async function fetchHauntedHouses(): Promise<HauntedHouseWithDetailedQueues[]> {
   const response = await fetch("/api/haunted-houses");
@@ -31,6 +33,8 @@ export default function AdminIndex() {
     queryKey: ["haunted-houses"],
     queryFn: fetchHauntedHouses,
   });
+
+  const [isSent, setIsSent] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -70,6 +74,15 @@ export default function AdminIndex() {
             </TabsContent>
             <TabsContent value="reminders">
               <ReminderManager />
+              <Button
+                onClick={() => {
+                  sendTestConfirmationEmail();
+                  setIsSent(true);
+                }}
+                disabled={isSent}
+              >
+                Gửi email
+              </Button>
             </TabsContent>
           </Tabs>
         )}

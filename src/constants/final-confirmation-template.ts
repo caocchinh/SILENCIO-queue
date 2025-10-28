@@ -1,4 +1,35 @@
-<!DOCTYPE html>
+import { CHECKIN_WEBSITE, TUTORIAL_LINK } from "./constants";
+import {
+  TicketInfo as TicketInfoType,
+  HauntedHouseInfo as HauntedHouseInfoType,
+} from "./types";
+
+export default function FINAL_CONFIRMATION_EMAIL_TEMPLATE({
+  studentName,
+  homeroom,
+  studentId,
+  email,
+  ticketType,
+  TicketInfo,
+  hauntedHouseName,
+  queueNumber,
+  queueStartTime,
+  queueEndTime,
+  HauntedHouseInfo,
+}: {
+  studentName: string;
+  homeroom: string;
+  studentId: string;
+  email: string;
+  ticketType: string;
+  queueNumber?: string;
+  queueStartTime?: string;
+  hauntedHouseName?: string;
+  queueEndTime?: string;
+  TicketInfo: TicketInfoType;
+  HauntedHouseInfo?: HauntedHouseInfoType;
+}) {
+  const EMAIL = `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
  <head>
   <!--  -->
@@ -199,28 +230,40 @@ div.preheader
 										<tr>
 											<td align="left" style="padding: 0px 0px 12px;">
 												<p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
-													Thân chào bạn Cao Cự Chính, <br>
+													Thân chào bạn ${studentName}, <br>
 													<br>
 													Để chuẩn bị cho sự kiện SILENCIO VII: SPETTACOLO vào ngày <span style="font-weight: bold;color: green;">31/10/2025</span>, xin bạn vui lòng kiểm tra lại thông tin của mình và thực hiện các bước bên dưới để có trải nghiệm tốt nhất. <span style="color:crimson;font-weight: bold;">Nếu phát hiện bất kỳ sai sót nào</span>, hãy liên hệ với chúng mình ngay bằng cách trả lời email này! <span>
 </p></td></tr><!-- Bodycopy Ends --><tr>
 											
-											<tr><td align="left" style="border:1px dashed rgba(87, 117, 161,1);border-radius: 10px;padding:10px;background: rgba(87, 117, 161,0.05);">
-                                            <p style="margin: 0px; font-weight: bold;color: rgba(87, 117, 161,1);font-size: 21px;text-align:center;">THÔNG TIN VÉ</p>
+											<tr><td align="left" style="border:1px dashed ${
+                        TicketInfo.borderColor
+                      };border-radius: 10px;padding:10px;background: ${
+    TicketInfo.backgroundColor
+  };">
+                                            <p style="margin: 0px; font-weight: bold;color: ${
+                                              TicketInfo.borderColor
+                                            };font-size: 21px;text-align:center;">THÔNG TIN VÉ</p>
                      <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                        Tên: <span style="font-weight: bold;">Cao Cự Chính</span></p>
+                                                        Tên: <span style="font-weight: bold;">${studentName}</span></p>
 
                                                         <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                            Lớp: <span style="font-weight: bold;">10B3</span></p>
+                                                            Lớp: <span style="font-weight: bold;">${homeroom}</span></p>
                                                             <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                                Mã số HS: <span style="font-weight: bold;">VS054678</span></p>
+                                                                Mã số HS: <span style="font-weight: bold;">${studentId}</span></p>
                                                         <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                            Email: <span style="font-weight: bold;">chinhcaocu@gmail.com</span></p>
+                                                            Email: <span style="font-weight: bold;">${email}</span></p>
                                                         <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                            Hạng vé: <span style="font-weight: bold;">Ringmaster</span></p>
+                                                            Hạng vé: <span style="font-weight: bold;">${ticketType}</span></p>
                                                             <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                            Vé có concert: <span style="font-weight: bold;">Có</span></p>
+                                                            Vé có concert: <span style="font-weight: bold;">${
+                                                              TicketInfo.concertIncluded
+                                                                ? "Có"
+                                                                : "Không"
+                                                            }</span></p>
                                                    
-                                                           <div><img src="https://vteam-online-ticket.vercel.app/assets/tamer.webp" style="width: 100%; border-radius: 5px;"/></div>
+                                                           <div><img src="${
+                                                             TicketInfo.ticketImageUrl
+                                                           }" style="width: 100%; border-radius: 5px;"/></div>
                                                        
                                                 
                                                 </td> </tr>
@@ -228,28 +271,30 @@ div.preheader
                                                 <tr><td align="left" style="padding: 10px 0px 10px;">
                                               </td> </tr>
 
-                                                <tr><td align="left" style="border:1px dashed rgba(75, 27, 123, 1);border-radius: 10px;padding:10px;background: rgba(75, 27, 123, 0.05)">
-                                            <p style="margin: 0px; font-weight: bold;color: rgba(75, 27, 123, 1);font-size: 21px;text-align:center;">THÔNG TIN NHÀ MA</p>
+                                               ${
+                                                 HauntedHouseInfo
+                                                   ? `<tr><td align="left" style="border:1px dashed ${HauntedHouseInfo.borderColor};border-radius: 10px;padding:10px;background: ${HauntedHouseInfo.backgroundColor}">
+                                            <p style="margin: 0px; font-weight: bold;color: ${HauntedHouseInfo.borderColor};font-size: 21px;text-align:center;">THÔNG TIN NHÀ MA</p>
                      <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
 
                                                         <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                            Tên nhà ma: <span style="font-weight: bold;">Melody Of Darkness</span></p>
+                                                            Tên nhà ma: <span style="font-weight: bold;">${hauntedHouseName}</span></p>
                                                             <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                              Số thứ tự lượt: <span style="font-weight: bold;">1</span></p>
+                                                              Số thứ tự lượt: <span style="font-weight: bold;">${queueNumber}</span></p>
                                                         <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                            Thời gian lượt bắt đầu: <span style="font-weight: bold;">05:15 PM</span></p>
+                                                            Thời gian lượt bắt đầu: <span style="font-weight: bold;">${queueStartTime}</span></p>
                                                         <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 30px; color: #000000; text-align: left; margin: 0px; padding: 0px;">
-                                                            Thời gian lượt kết thúc: <span style="font-weight: bold;">05:30 PM</span></p>
+                                                            Thời gian lượt kết thúc: <span style="font-weight: bold;">${queueEndTime}</span></p>
                                                           
                                                    
-                                                           <div><img src="https://vteam-online-ticket.vercel.app/assets/whispering_sewers.webp" style="width: 100%; border-radius: 5px;"/></div>
+                                                           <div><img src="${HauntedHouseInfo.ticketImageUrl}" style="width: 100%; border-radius: 5px;"/></div>
                                                 </td> </tr>
 
 
                                                 <tr><td align="left" style="padding: 12px 0px 12px;">
                                                   <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
                                                 <span style="font-weight: bold;color:crimson">Bạn phải tự đến</span> nơi tập hợp của nhà ma mà bạn đã đăng ký trước 10 phút trước khi lượt của bạn bắt đầu. Bạn hãy bấm vào link Canva dưới đây để xem hướng dẫn nhé:</p>
-                                                <a target="_blank" rel="noopener noreferrer" href="https://www.canva.com/design/DAG3CqAMfcw/sDN8XO0OuVAWQwWheZRjjg/edit?utm_content=DAG3CqAMfcw&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton" style="color: #1f5fcf;text-decoration: underline;word-break: break-all;">https://www.canva.com/design/DAG3CqAMfcw/sDN8XO0OuVAWQwWheZRjjg/edit?utm_content=DAG3CqAMfcw&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton</a>
+                                                <a target="_blank" rel="noopener noreferrer" href="${TUTORIAL_LINK}" style="color: #1f5fcf;text-decoration: underline;word-break: break-all;">${TUTORIAL_LINK}</a>
                                               </td> </tr>
 
                                               <tr><td align="left" style="padding: 12px 0px 12px;">
@@ -263,12 +308,20 @@ div.preheader
                                                                 <li style="text-align: left;margin-top: 4px;margin-bottom: 4px;">Khi hết thời gian chơi, vui lòng hợp tác để kết thúc lượt chơi.</li>
                                                                 <li style="text-align: left;margin-top: 4px;margin-bottom: 4px;">Không mang vật dụng sắt nhọn, vũ khí nguy hiểm khi chơi nhà ma nói riêng và tham gia SILENCIO nói chung.</li>
                                                             </0l>                                                       
-                                                </td> </tr>
+                                                </td> </tr>`
+                                                   : ""
+                                               }
 
 
                                                 <tr><td align="left" style="padding: 12px 0px 12px;">
                                                     <p style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
-                                                        Bạn phải check-in trước khi tham gia các hoạt động của sự kiện, và địa điểm check-in sẽ nằm ở sảnh thông tầng. Đối với hạng vé của bạn, khoảng thời gian bạn có thể check-in là từ <span style="font-weight: bold;">5:00 PM đến 7:30 PM</span>, và concert sẽ diễn ra từ  <span style="font-weight: bold;">7:45 PM đến 21:30 PM</span>. Bạn có thể check-in bằng hai cách:</p>
+                                                        Bạn phải check-in trước khi tham gia các hoạt động của sự kiện, và địa điểm check-in sẽ nằm ở sảnh thông tầng. Đối với hạng vé của bạn, khoảng thời gian bạn có thể check-in là từ <span style="font-weight: bold;">${
+                                                          TicketInfo.checkInTime
+                                                        }</span>${
+    TicketInfo.concertIncluded
+      ? `, và concert sẽ diễn ra từ  <span style="font-weight: bold;">7:45 PM đến 21:30 PM</span>`
+      : ""
+  }. Bạn có thể check-in bằng hai cách:</p>
                                                     <ol style="margin-bottom: -5px;margin-top: 3px;">
                                                         <div style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
                                                             <li style="font-weight: 600;">NẾU CHECK-IN TRỰC TIẾP</li>
@@ -282,7 +335,7 @@ div.preheader
                                                           <div style="font-family: Roboto, Arial, sans-serif; font-size: 18px; font-weight: normal; line-height: 22px; letter-spacing: 0.25px; color: #000000; text-align: justify; margin: 0px; padding: 0px;">
                                                             <li style="font-weight: 600;">NẾU CHECK-IN ONLINE</li>
                                                             <ul>
-                                                                <li style="text-align: left;margin-top: 4px;margin-bottom: 4px;">Vào website: <a href="https://silencio-checkin.vercel.app" target="_blank" style="color: #1f5fcf;text-decoration: underline;" rel="noopener noreferrer">https://silencio-checkin.vercel.app</a></li>
+                                                                <li style="text-align: left;margin-top: 4px;margin-bottom: 4px;">Vào website: <a href="${CHECKIN_WEBSITE}" target="_blank" style="color: #1f5fcf;text-decoration: underline;" rel="noopener noreferrer">${CHECKIN_WEBSITE}</a></li>
                                                                 <li style="text-align: left;margin-top: 4px;margin-bottom: 4px;">Đăng nhập vào tài khoản trường của bạn trên website</li>
                                                                 <li style="text-align: left;margin-top: 4px;margin-bottom: 4px;">Hiển thị QR code của bạn trên website để staff quét</li>
                                                                 <li style="text-align: left;margin-top: 4px;margin-bottom: 4px;">Staff của VTEAM sẽ đeo vòng cho bạn</li>
@@ -369,4 +422,6 @@ div.preheader
   
  
  </body>
-</html>
+</html>`;
+  return EMAIL;
+}

@@ -7,6 +7,10 @@ export const EMAIL_BANNER =
 export const SILENCIO_HAUNTED_HOUSE_QUEUE_MANAGER_URL =
   "https://silencio-vcp.vercel.app";
 export const REMIND_DEADLINE_TEXT = "11h trưa ngày 27/10/2025";
+export const CHECKIN_WEBSITE = "https://silencio-checkin.vercel.app";
+
+export const TUTORIAL_LINK =
+  "https://www.canva.com/design/DAG3CqAMfcw/sDN8XO0OuVAWQwWheZRjjg/edit?utm_content=DAG3CqAMfcw&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton";
 
 export const EMAIL_TICKET_INFO: EmailTicketInfo = {
   Ringmaster: {
@@ -42,7 +46,7 @@ export const EMAIL_TICKET_INFO: EmailTicketInfo = {
 };
 
 export const EMAIL_HAUNTED_HOUSE_TICKET_INFO: EmailHauntedHouseTicketInfo = {
-  "Melody Of Darkness": {
+  "Melody of Darkness": {
     ticketImageUrl:
       "https://vteam-online-ticket.vercel.app/assets/melody_of_darkness.webp",
     borderColor: "rgba(179, 93, 0, 1)",

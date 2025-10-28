@@ -6,11 +6,15 @@ export interface Student {
   ticketType: string;
 }
 
-type TicketType = "Ringmaster" | "Juggler" | "Jester" | "Tamer";
+export type TicketType = "Ringmaster" | "Juggler" | "Jester" | "Tamer";
 
-type HauntedHouseType = "Melody Of Darkness" | "Orphaned Soul" | "Whispering Sewers" | "Twins";
+export type HauntedHouseType =
+  | "Melody of Darkness"
+  | "Orphaned Soul"
+  | "Whispering Sewers"
+  | "Twins";
 
-interface TicketInfo {
+export interface TicketInfo {
   checkInTime: string;
   ticketImageUrl: string;
   borderColor: string;
@@ -18,11 +22,14 @@ interface TicketInfo {
   concertIncluded: boolean;
 }
 
-interface HauntedHouseInfo {
+export interface HauntedHouseInfo {
   ticketImageUrl: string;
   borderColor: string;
   backgroundColor: string;
 }
 
 export type EmailTicketInfo = Record<TicketType, TicketInfo>;
-export type EmailHauntedHouseTicketInfo = Record<HauntedHouseType, HauntedHouseInfo>;
+export type EmailHauntedHouseTicketInfo = Record<
+  HauntedHouseType,
+  HauntedHouseInfo
+>;

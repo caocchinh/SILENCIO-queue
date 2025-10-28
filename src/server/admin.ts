@@ -1,7 +1,13 @@
 "use server";
 
 import { db } from "@/drizzle/db";
-import { hauntedHouse, queue, queueSpot, reservation } from "@/drizzle/schema";
+import {
+  customer,
+  hauntedHouse,
+  queue,
+  queueSpot,
+  reservation,
+} from "@/drizzle/schema";
 import {
   createHauntedHouseSchema,
   updateHauntedHouseSchema,
@@ -21,6 +27,12 @@ import { retryDatabase, retryAuth, retryEmail } from "@/dal/retry";
 import { nanoid } from "nanoid";
 import nodemailer from "nodemailer";
 import REMIND_EMAIL_TEMPLATE from "@/constants/remind-email-template";
+import FINAL_CONFIRMATION_EMAIL_TEMPLATE from "@/constants/final-confirmation-template";
+import {
+  EMAIL_HAUNTED_HOUSE_TICKET_INFO,
+  EMAIL_TICKET_INFO,
+} from "@/constants/constants";
+import { HauntedHouseType, TicketType } from "@/constants/types";
 
 // Helper function to verify admin access
 async function verifyAdminAccess(): Promise<ActionResponse<void>> {
@@ -576,6 +588,10 @@ export async function sendRemindEmail({
   email: string;
   studentName: string;
 }) {
+  const authCheck = await verifyAdminAccess();
+  if (!authCheck.success) {
+    return authCheck;
+  }
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -687,5 +703,114 @@ export async function assignCustomerWithoutSpotToRemainingAvailableSpotAction(pa
   } catch (error) {
     console.error("Error assigning customers to spots:", error);
     return createActionError("DATABASE_ERROR", "Failed to assign customers");
+  }
+}
+
+export async function sendTestConfirmationEmail() {
+  const authCheck = await verifyAdminAccess();
+  if (!authCheck.success) {
+    return authCheck;
+  }
+  const testEmail = "chinh054678@stu.vinschool.edu.vn";
+
+  try {
+    const customerVal = await retryDatabase(
+      () =>
+        db.query.customer.findFirst({
+          with: {
+            queueSpots: {
+              with: {
+                queue: true,
+              },
+            },
+          },
+          where: eq(customer.studentId, "VS031441"),
+        }),
+      "get customers without queue spots"
+    );
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      },
+    });
+
+    const startTime = customerVal?.queueSpots[0]?.queue?.queueStartTime;
+    const endTime = customerVal?.queueSpots[0]?.queue?.queueEndTime;
+
+    const htmlContent = FINAL_CONFIRMATION_EMAIL_TEMPLATE({
+      studentName: customerVal?.name || "",
+      homeroom: customerVal?.homeroom || "",
+      studentId: customerVal?.studentId || "",
+      email: customerVal?.email || "",
+      ticketType: customerVal?.ticketType || "",
+      hauntedHouseName:
+        customerVal?.queueSpots[0]?.queue?.hauntedHouseName || "",
+      queueNumber:
+        customerVal?.queueSpots[0]?.queue?.queueNumber?.toString() || "",
+      queueStartTime: startTime
+        ? new Date(startTime).toLocaleString("vi-VN")
+        : "Không có",
+      queueEndTime: endTime
+        ? new Date(endTime).toLocaleString("vi-VN")
+        : "Không có",
+      TicketInfo: EMAIL_TICKET_INFO[customerVal?.ticketType as TicketType],
+      HauntedHouseInfo: customerVal?.queueSpots[0]?.queue?.hauntedHouseName
+        ? EMAIL_HAUNTED_HOUSE_TICKET_INFO[
+            customerVal?.queueSpots[0]?.queue
+              ?.hauntedHouseName as HauntedHouseType
+          ]
+        : undefined,
+    });
+
+    const mailOptionsPrivate = {
+      from: process.env.GMAIL_USER,
+      to: testEmail,
+      subject: "Silencio VII: SPETTACOLO - Kiểm Tra Thông Tin Trước Sự Kiện",
+      html: htmlContent,
+    };
+
+    try {
+      await retryEmail(async () => {
+        // Verify transporter configuration before sending
+        await transporter.verify();
+
+        const result = await transporter.sendMail(mailOptionsPrivate);
+
+        // Check if messageId exists (indicates successful queuing)
+        if (!result.messageId) {
+          throw new Error("Failed to send email - no message ID returned");
+        }
+
+        // Check accepted recipients
+        if (result.accepted.length === 0) {
+          throw new Error("No recipients accepted");
+        }
+
+        // Log successful send
+        console.log(
+          `Email sent successfully to ${testEmail}, messageId: ${result.messageId}`
+        );
+      }, `sending test confirmation email to ${testEmail}`);
+
+      return createActionSuccess({
+        message: `Test email sent successfully to ${testEmail}`,
+        email: testEmail,
+      });
+    } catch (error) {
+      console.error(`Failed to send test email to ${testEmail}:`, error);
+      return createActionError(
+        "EMAIL_ERROR",
+        `Failed to send test email: ${error}`
+      );
+    }
+  } catch (error) {
+    console.error(`Failed to send test email to ${testEmail}:`, error);
+    return createActionError(
+      "EMAIL_ERROR",
+      `Failed to send test email: ${error}`
+    );
   }
 }
