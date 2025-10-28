@@ -192,6 +192,9 @@ export const customer = pgTable("customer", {
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),
+  hasSentConfirmationEmail: boolean("has_sent_confirmation_email")
+    .notNull()
+    .default(false),
 });
 
 // Drizzle relations for better querying

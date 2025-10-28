@@ -16,7 +16,7 @@ import {
 } from "@/lib/validations/queue";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
-import { eq, and } from "drizzle-orm";
+import { eq, and, notInArray } from "drizzle-orm";
 import { createQueueSpots, adjustQueueSpots } from "@/server/queue-operations";
 import {
   ActionResponse,
@@ -714,9 +714,9 @@ export async function sendTestConfirmationEmail() {
   const testEmail = "chinh054678@stu.vinschool.edu.vn";
 
   try {
-    const customerVal = await retryDatabase(
+    const customerLists = await retryDatabase(
       () =>
-        db.query.customer.findFirst({
+        db.query.customer.findMany({
           with: {
             queueSpots: {
               with: {
@@ -724,88 +724,93 @@ export async function sendTestConfirmationEmail() {
               },
             },
           },
-          where: eq(customer.studentId, "VS031441"),
+          where: and(
+            notInArray(customer.studentId, [
+              "VS039262",
+              "VS044314",
+              "VS054678",
+            ]), // Lê Thanh Thiện Nhân && Đào Vỹ Luân and me
+            eq(customer.hasSentConfirmationEmail, false)
+          ),
         }),
       "get customers without queue spots"
     );
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
-      },
-    });
-
-    const startTime = customerVal?.queueSpots[0]?.queue?.queueStartTime;
-    const endTime = customerVal?.queueSpots[0]?.queue?.queueEndTime;
-
-    const htmlContent = FINAL_CONFIRMATION_EMAIL_TEMPLATE({
-      studentName: customerVal?.name || "",
-      homeroom: customerVal?.homeroom || "",
-      studentId: customerVal?.studentId || "",
-      email: customerVal?.email || "",
-      ticketType: customerVal?.ticketType || "",
-      hauntedHouseName:
-        customerVal?.queueSpots[0]?.queue?.hauntedHouseName || "",
-      queueNumber:
-        customerVal?.queueSpots[0]?.queue?.queueNumber?.toString() || "",
-      queueStartTime: startTime
-        ? new Date(startTime).toLocaleString("vi-VN")
-        : "Không có",
-      queueEndTime: endTime
-        ? new Date(endTime).toLocaleString("vi-VN")
-        : "Không có",
-      TicketInfo: EMAIL_TICKET_INFO[customerVal?.ticketType as TicketType],
-      HauntedHouseInfo: customerVal?.queueSpots[0]?.queue?.hauntedHouseName
-        ? EMAIL_HAUNTED_HOUSE_TICKET_INFO[
-            customerVal?.queueSpots[0]?.queue
-              ?.hauntedHouseName as HauntedHouseType
-          ]
-        : undefined,
-    });
-
-    const mailOptionsPrivate = {
-      from: process.env.GMAIL_USER,
-      to: testEmail,
-      subject: "Silencio VII: SPETTACOLO - Kiểm Tra Thông Tin Trước Sự Kiện",
-      html: htmlContent,
-    };
-
-    try {
-      await retryEmail(async () => {
-        // Verify transporter configuration before sending
-        await transporter.verify();
-
-        const result = await transporter.sendMail(mailOptionsPrivate);
-
-        // Check if messageId exists (indicates successful queuing)
-        if (!result.messageId) {
-          throw new Error("Failed to send email - no message ID returned");
-        }
-
-        // Check accepted recipients
-        if (result.accepted.length === 0) {
-          throw new Error("No recipients accepted");
-        }
-
-        // Log successful send
-        console.log(
-          `Email sent successfully to ${testEmail}, messageId: ${result.messageId}`
-        );
-      }, `sending test confirmation email to ${testEmail}`);
-
-      return createActionSuccess({
-        message: `Test email sent successfully to ${testEmail}`,
-        email: testEmail,
+    customerLists.forEach(async (customerVal) => {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_PASS,
+        },
       });
-    } catch (error) {
-      console.error(`Failed to send test email to ${testEmail}:`, error);
-      return createActionError(
-        "EMAIL_ERROR",
-        `Failed to send test email: ${error}`
-      );
-    }
+
+      const startTime = customerVal?.queueSpots[0]?.queue?.queueStartTime;
+      const endTime = customerVal?.queueSpots[0]?.queue?.queueEndTime;
+
+      const htmlContent = FINAL_CONFIRMATION_EMAIL_TEMPLATE({
+        studentName: customerVal?.name || "",
+        homeroom: customerVal?.homeroom || "",
+        studentId: customerVal?.studentId || "",
+        email: customerVal?.email || "",
+        ticketType: customerVal?.ticketType || "",
+        hauntedHouseName:
+          customerVal?.queueSpots[0]?.queue?.hauntedHouseName || "",
+        queueNumber:
+          customerVal?.queueSpots[0]?.queue?.queueNumber?.toString() || "",
+        queueStartTime: startTime
+          ? new Date(startTime).toLocaleString("vi-VN")
+          : "Không có",
+        queueEndTime: endTime
+          ? new Date(endTime).toLocaleString("vi-VN")
+          : "Không có",
+        TicketInfo: EMAIL_TICKET_INFO[customerVal?.ticketType as TicketType],
+        HauntedHouseInfo: customerVal?.queueSpots[0]?.queue?.hauntedHouseName
+          ? EMAIL_HAUNTED_HOUSE_TICKET_INFO[
+              customerVal?.queueSpots[0]?.queue
+                ?.hauntedHouseName as HauntedHouseType
+            ]
+          : undefined,
+      });
+
+      const mailOptionsPrivate = {
+        from: process.env.GMAIL_USER,
+        to: testEmail,
+        subject: "Silencio VII: SPETTACOLO - Kiểm Tra Thông Tin Trước Sự Kiện",
+        html: htmlContent,
+      };
+
+      try {
+        await retryEmail(async () => {
+          // Verify transporter configuration before sending
+          await transporter.verify();
+
+          const result = await transporter.sendMail(mailOptionsPrivate);
+
+          // Check if messageId exists (indicates successful queuing)
+          if (!result.messageId) {
+            throw new Error("Failed to send email - no message ID returned");
+          }
+
+          // Check accepted recipients
+          if (result.accepted.length === 0) {
+            throw new Error("No recipients accepted");
+          }
+
+          // Log successful send
+          console.log(
+            `Email sent successfully to ${testEmail}, messageId: ${result.messageId}`
+          );
+        }, `sending test confirmation email to ${testEmail}`);
+
+        await db
+          .update(customer)
+          .set({ hasSentConfirmationEmail: true })
+          .where(eq(customer.studentId, customerVal.studentId));
+      } catch (error) {
+        console.error(`Failed to send test email to ${testEmail}:`, error);
+      }
+    });
   } catch (error) {
     console.error(`Failed to send test email to ${testEmail}:`, error);
     return createActionError(
