@@ -6,7 +6,12 @@ export interface Student {
   ticketType: string;
 }
 
-export type TicketType = "Ringmaster" | "Juggler" | "Jester" | "Tamer";
+export type TicketType =
+  | "Ringmaster"
+  | "Juggler"
+  | "Jester"
+  | "Tamer"
+  | "Jester - Vé CTV";
 
 export type HauntedHouseType =
   | "Melody of Darkness"

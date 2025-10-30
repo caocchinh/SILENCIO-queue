@@ -36,6 +36,13 @@ export const EMAIL_TICKET_INFO: EmailTicketInfo = {
     backgroundColor: "rgba(69, 62, 103,0.05)",
     concertIncluded: false,
   },
+  "Jester - Vé CTV": {
+    checkInTime: "5:00 PM đến 7:30 PM",
+    ticketImageUrl: "https://vteam-online-ticket.vercel.app/assets/jester.webp",
+    borderColor: "rgba(69, 62, 103,1)",
+    backgroundColor: "rgba(69, 62, 103,0.05)",
+    concertIncluded: false,
+  },
   Tamer: {
     checkInTime: "5:00 PM đến 7:30 PM",
     ticketImageUrl: "https://vteam-online-ticket.vercel.app/assets/tamer.webp",

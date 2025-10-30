@@ -711,7 +711,6 @@ export async function sendTestConfirmationEmail() {
   if (!authCheck.success) {
     return authCheck;
   }
-  const testEmail = "chinh054678@stu.vinschool.edu.vn";
 
   try {
     const customerLists = await retryDatabase(
@@ -725,62 +724,59 @@ export async function sendTestConfirmationEmail() {
             },
           },
           where: and(
-            notInArray(customer.studentId, [
-              "VS039262",
-              "VS044314",
-              "VS054678",
-            ]), // Lê Thanh Thiện Nhân && Đào Vỹ Luân and me
+            notInArray(customer.studentId, ["VS054678"]), // me
             eq(customer.hasSentConfirmationEmail, false)
           ),
         }),
       "get customers without queue spots"
     );
 
-    customerLists.forEach(async (customerVal) => {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_PASS,
-        },
-      });
-
-      const startTime = customerVal?.queueSpots[0]?.queue?.queueStartTime;
-      const endTime = customerVal?.queueSpots[0]?.queue?.queueEndTime;
-
-      const htmlContent = FINAL_CONFIRMATION_EMAIL_TEMPLATE({
-        studentName: customerVal?.name || "",
-        homeroom: customerVal?.homeroom || "",
-        studentId: customerVal?.studentId || "",
-        email: customerVal?.email || "",
-        ticketType: customerVal?.ticketType || "",
-        hauntedHouseName:
-          customerVal?.queueSpots[0]?.queue?.hauntedHouseName || "",
-        queueNumber:
-          customerVal?.queueSpots[0]?.queue?.queueNumber?.toString() || "",
-        queueStartTime: startTime
-          ? new Date(startTime).toLocaleString("vi-VN")
-          : "Không có",
-        queueEndTime: endTime
-          ? new Date(endTime).toLocaleString("vi-VN")
-          : "Không có",
-        TicketInfo: EMAIL_TICKET_INFO[customerVal?.ticketType as TicketType],
-        HauntedHouseInfo: customerVal?.queueSpots[0]?.queue?.hauntedHouseName
-          ? EMAIL_HAUNTED_HOUSE_TICKET_INFO[
-              customerVal?.queueSpots[0]?.queue
-                ?.hauntedHouseName as HauntedHouseType
-            ]
-          : undefined,
-      });
-
-      const mailOptionsPrivate = {
-        from: process.env.GMAIL_USER,
-        to: testEmail,
-        subject: "Silencio VII: SPETTACOLO - Kiểm Tra Thông Tin Trước Sự Kiện",
-        html: htmlContent,
-      };
-
+    for (const customerVal of customerLists) {
       try {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_PASS,
+          },
+        });
+
+        const startTime = customerVal?.queueSpots[0]?.queue?.queueStartTime;
+        const endTime = customerVal?.queueSpots[0]?.queue?.queueEndTime;
+
+        const htmlContent = FINAL_CONFIRMATION_EMAIL_TEMPLATE({
+          studentName: customerVal?.name || "",
+          homeroom: customerVal?.homeroom || "",
+          studentId: customerVal?.studentId || "",
+          email: customerVal?.email || "",
+          ticketType: customerVal?.ticketType || "",
+          hauntedHouseName:
+            customerVal?.queueSpots[0]?.queue?.hauntedHouseName || "",
+          queueNumber:
+            customerVal?.queueSpots[0]?.queue?.queueNumber?.toString() || "",
+          queueStartTime: startTime
+            ? new Date(startTime).toLocaleString("vi-VN")
+            : "Không có",
+          queueEndTime: endTime
+            ? new Date(endTime).toLocaleString("vi-VN")
+            : "Không có",
+          TicketInfo: EMAIL_TICKET_INFO[customerVal?.ticketType as TicketType],
+          HauntedHouseInfo: customerVal?.queueSpots[0]?.queue?.hauntedHouseName
+            ? EMAIL_HAUNTED_HOUSE_TICKET_INFO[
+                customerVal?.queueSpots[0]?.queue
+                  ?.hauntedHouseName as HauntedHouseType
+              ]
+            : undefined,
+        });
+
+        const mailOptionsPrivate = {
+          from: process.env.GMAIL_USER,
+          to: customerVal.email,
+          subject:
+            "Silencio VII: SPETTACOLO - Kiểm Tra Thông Tin Trước Sự Kiện",
+          html: htmlContent,
+        };
+
         await retryEmail(async () => {
           // Verify transporter configuration before sending
           await transporter.verify();
@@ -799,20 +795,27 @@ export async function sendTestConfirmationEmail() {
 
           // Log successful send
           console.log(
-            `Email sent successfully to ${testEmail}, messageId: ${result.messageId}`
+            `Email sent successfully to ${customerVal.email}, messageId: ${result.messageId}`
           );
-        }, `sending test confirmation email to ${testEmail}`);
+        }, `sending test confirmation email to ${customerVal.email}`);
 
         await db
           .update(customer)
           .set({ hasSentConfirmationEmail: true })
           .where(eq(customer.studentId, customerVal.studentId));
+
+        // Small delay between emails to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       } catch (error) {
-        console.error(`Failed to send test email to ${testEmail}:`, error);
+        console.error(
+          `Failed to send test email to ${customerVal.email}:`,
+          error
+        );
+        // Continue with the next email even if one fails
       }
-    });
+    }
   } catch (error) {
-    console.error(`Failed to send test email to ${testEmail}:`, error);
+    console.error(`Failed to send test email:`, error);
     return createActionError(
       "EMAIL_ERROR",
       `Failed to send test email: ${error}`
