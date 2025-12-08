@@ -69,7 +69,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
     mutationFn: leaveQueue,
     onSuccess: (data, variables) => {
       if (data.success) {
-        successToast({ message: "Đã rời khỏi hàng đợi thành công" });
+        successToast({ message: "Left queue successfully" });
 
         // Update the cache immediately - remove the user's spot
         // Update haunted-houses query
@@ -135,12 +135,12 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
 
         setIsLeaveQueueDialogOpen(false);
       } else {
-        throw new Error(data.message || "Không thể rời khỏi hàng đợi");
+        throw new Error(data.message || "Cannot leave queue");
       }
     },
     onError: (error) => {
       errorToast({
-        message: "Không thể rời khỏi hàng đợi.",
+        message: "Cannot leave queue.",
         description: error.message,
       });
     },
@@ -158,7 +158,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
     if (spot.reservation?.code) {
       navigator.clipboard.writeText(spot.reservation.code);
       setCopied(true);
-      successToast({ message: "Đã sao chép mã phòng vào clipboard!" });
+      successToast({ message: "Copied room code to clipboard!" });
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -177,7 +177,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
 
       if (diff <= 0) {
         router.refresh();
-        setTimeRemaining("Hết hạn");
+        setTimeRemaining("Expired");
         setIsReservationExpiringSoon(false);
         return;
       }
@@ -237,11 +237,11 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-xl">
       <SelectionDeadlineCountdown
         onExpiredChange={handleDeadlineExpiredChange}
-        title="Thời gian còn lại để quản lý chỗ"
-        description="Bạn không thể rời lượt của mình nữa."
+        title="Timeleft to manage your spot"
+        description="You cannot leave your spot."
       />
       <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-500">
         <CardHeader>
@@ -254,13 +254,13 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                 )}
               >
                 {isDeadlineExpired
-                  ? "⚠ Hạn chót đã qua"
-                  : `✓ Bạn đang trong ${spot.reservation ? "phòng" : "lượt"}!`}
+                  ? "⚠ Deadline reached"
+                  : `✓ You are in ${spot.reservation ? "room" : "spot"}!`}
               </CardTitle>
               <CardDescription>
                 {isDeadlineExpired
-                  ? "Bạn không thể rời lượt của mình"
-                  : "Chỗ của bạn đã được giữ"}
+                  ? "You cannot leave your spot"
+                  : "Your spot has been reserved"}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -269,7 +269,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                 isLoading={isRefetching}
                 className="text-green-600 !bg-transparent border-1 hover:text-green-700 border-green-200 hover:border-green-300"
               >
-                Làm mới
+                Refresh
               </RefreshButton>
               <AlertDialog
                 open={isLeaveQueueDialogOpen}
@@ -287,33 +287,32 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     {isDeadlineExpired
-                      ? "Hạn chót đã qua"
-                      : `Rời ${spot.reservation ? "phòng" : "lượt"}`}
+                      ? "Deadline reached"
+                      : `Leave ${spot.reservation ? "room" : "spot"}`}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Rời khỏi {spot.reservation ? "phòng" : "lượt"}
+                      Leave {spot.reservation ? "room" : "spot"}
                       {}?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       {isRepresentative ? (
                         <>
-                          Bạn là trưởng nhóm? Rời khỏi sẽ{" "}
-                          <strong>hủy toàn bộ phòng</strong> và giải phóng tất
-                          cả các slot (bao gồm cả những người người khác trong
-                          phòng của bạn).
+                          You are the representative? Leaving will{" "}
+                          <strong>cancel the entire room</strong> and release
+                          all slots (including other people in your room).
                         </>
                       ) : spot.reservation ? (
                         <>
-                          Bạn sẽ được rời khỏi phòng này. Phòng này sẽ tiếp tục
-                          cho các thành viên khác tham gia.
+                          You will be leaving the room. The room will continue
+                          to be available for other members to join.
                         </>
                       ) : (
                         <>
-                          Bạn có chắc chắn muốn rời khỏi lượt này? Chỗ của bạn
-                          sẽ trở nên khả dụng cho người khác.
+                          Are you sure you want to leave this spot? Your spot
+                          will become available for others.
                         </>
                       )}
                     </AlertDialogDescription>
@@ -323,7 +322,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                       className="cursor-pointer"
                       disabled={leaveQueueMutation.isPending}
                     >
-                      Hủy
+                      Cancel
                     </AlertDialogCancel>
                     <Button
                       onClick={handleLeaveQueue}
@@ -332,11 +331,11 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                     >
                       {leaveQueueMutation.isPending ? (
                         <>
-                          Đang rời khỏi lượt...
+                          Leaving...
                           <Loader2 className="h-4 w-4 animate-spin" />
                         </>
                       ) : (
-                        "Có, rời khỏi lượt"
+                        "Yes, leave spot"
                       )}
                     </Button>
                   </AlertDialogFooter>
@@ -351,10 +350,10 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
               <MapPin className="h-5 w-5 text-green-600" />
               <div>
                 <p className="font-semibold">
-                  Nhà ma {spot.queue?.hauntedHouse?.name}
+                  Haunted House {spot.queue?.hauntedHouse?.name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Lượt {spot.queue?.queueNumber}
+                  Queue {spot.queue?.queueNumber}
                 </p>
               </div>
             </div>
@@ -363,9 +362,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
               <div className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
-                  <p className="font-semibold">
-                    Thời gian tham gia nhà ma của bạn
-                  </p>
+                  <p className="font-semibold">Your Haunted House timeframe</p>
                   <p className="text-sm text-muted-foreground">
                     {new Date(spot.queue.queueStartTime).toLocaleTimeString(
                       [],
@@ -379,13 +376,13 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}{" "}
-                    ( Lượt chơi dài{" "}
+                    ( Duration{" "}
                     {Math.round(
                       (new Date(spot.queue.queueEndTime).getTime() -
                         new Date(spot.queue.queueStartTime).getTime()) /
                         60000
                     )}{" "}
-                    phút )
+                    mins )
                   </p>
                 </div>
               </div>
@@ -396,14 +393,14 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
             <div className="flex items-start gap-2">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">
-                  Vui lòng vào hôm sự kiện, bạn hãy đến sớm trước 15 phút để chờ
-                  đến lượt mình chơi nhà ma.
+                  Please arrive 15 minutes early on the event day to wait for
+                  your turn.
                 </p>
                 {isRepresentative && (
                   <p className="text-sm text-orange-600 font-medium mt-2 flex items-center gap-1">
                     <AlertTriangle className="h-4 w-4" />
-                    Bạn là trưởng nhóm, nếu bạn rời phòng, toàn bộ nhóm và phòng
-                    hiện tại sẽ bị hủy.
+                    You are the representative. If you leave, the entire group
+                    and room will be cancelled.
                   </p>
                 )}
               </div>
@@ -419,10 +416,10 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-5 w-5 text-purple-600" />
-                Chi tiết phòng/giữ slot
+                Room Details / Reservation
                 {isRepresentative && (
                   <span className="text-sm bg-purple-600 text-white px-2 py-0.5 rounded">
-                    Trưởng nhóm
+                    Representative
                   </span>
                 )}
               </CardTitle>
@@ -431,7 +428,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                 isLoading={isRefetching}
                 className="text-purple-600 !bg-transparent border-1 hover:text-purple-700 border-purple-200 hover:border-purple-300"
               >
-                Làm mới
+                Refresh
               </RefreshButton>
             </div>
           </CardHeader>
@@ -440,7 +437,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
             <div className="bg-white border-2 border-purple-300 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold text-purple-900">
-                  Mã phòng
+                  Room Code
                 </p>
                 {spot.reservation.status === "active" && timeRemaining && (
                   <div
@@ -476,29 +473,29 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                       Copied!
                     </>
                   ) : isDeadlineExpired ? (
-                    "Hạn chót đã qua"
+                    "Deadline reached"
                   ) : (
                     <>
                       <Copy className="h-4 w-4 mr-1" />
-                      Sao chép
+                      Copy
                     </>
                   )}
                 </Button>
               </div>
               <p className="text-xs text-purple-600 mt-2">
                 {isDeadlineExpired
-                  ? "Hạn chót đã qua - không thể thực hiện hành động nào nữa"
-                  : "Chia sẻ mã này với các thành viên để tham gia phòng. Khi phòng đủ người, phòng sẽ giải tán và nhóm bạn sẽ được tham gia lượt này bình thường với đầy đủ thành viên."}
+                  ? "Deadline reached - no further actions possible"
+                  : "Share this code with members to join. When full, the room dissolves and your group joins the queue normally."}
               </p>
             </div>
 
             {/* Reservation Progress */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">Tiến độ nhóm</span>
+                <span className="text-sm font-semibold">Group Progress</span>
                 <span className="text-sm">
                   {spot.reservation.currentSpots} / {spot.reservation.maxSpots}{" "}
-                  người đã tham gia
+                  joined
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
@@ -533,12 +530,12 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                   <div>
                     <p className="font-semibold">
-                      Cần thêm {spotsNeededForReservation}{" "}
-                      {spotsNeededForReservation === 1 ? "người" : "người"} nữa
+                      Need {spotsNeededForReservation} more{" "}
+                      {spotsNeededForReservation === 1 ? "person" : "people"}
                     </p>
                     <p className="text-xs mt-1">
-                      Nếu nhóm không đủ thành viên trước khi countdown kết thúc,
-                      TẤT CẢ các chỗ sẽ được giải phóng và phòng sẽ bị giải tán.
+                      If the group is not full before countdown ends, ALL spots
+                      will be released and the room cancelled.
                     </p>
                   </div>
                 </div>
@@ -548,7 +545,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                 <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
                   <p className="font-semibold">
-                    Đặt chỗ hoàn tất! Tất cả chỗ đã đầy đủ.
+                    Reservation complete! All spots filled.
                   </p>
                 </div>
               )}
@@ -558,7 +555,7 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
             <div>
               <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Thành viên nhóm ({peopleInReservation.length})
+                Group Members ({peopleInReservation.length})
               </h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {peopleInReservation.map((person) => (
@@ -586,11 +583,11 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                         <p className="font-semibold">
                           {person.customer.name}
                           {person.isYou && (
-                            <span className="ml-1 text-green-600">(Bạn)</span>
+                            <span className="ml-1 text-green-600">(You)</span>
                           )}
                           {person.isRepresentative && (
                             <span className="ml-1 text-purple-600">
-                              ★ Trưởng nhóm
+                              ★ Representative
                             </span>
                           )}
                         </p>
@@ -611,9 +608,9 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
       {/* Queue Statistics Card */}
       <Card className="bg-white/90 backdrop-blur">
         <CardHeader>
-          <CardTitle className="text-lg">Thống kê lượt của bạn</CardTitle>
+          <CardTitle className="text-lg">Your Queue Statistics</CardTitle>
           <CardDescription>
-            Nhà ma {spot.queue?.hauntedHouse?.name} - Lượt{" "}
+            Haunted House {spot.queue?.hauntedHouse?.name} - Queue{" "}
             {spot.queue?.queueNumber}
           </CardDescription>
         </CardHeader>
@@ -623,25 +620,25 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
               <div className="text-2xl font-bold text-green-700">
                 {availableSpots}
               </div>
-              <div className="text-xs text-green-600">Khả dụng</div>
+              <div className="text-xs text-green-600">Available</div>
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-2xl font-bold text-blue-700">
                 {occupiedSpots}
               </div>
-              <div className="text-xs text-blue-600">Đã chiếm</div>
+              <div className="text-xs text-blue-600">Occupied</div>
             </div>
             <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
               <div className="text-2xl font-bold text-orange-700">
                 {reservedSpots}
               </div>
-              <div className="text-xs text-orange-600">Đang giữ slot</div>
+              <div className="text-xs text-orange-600">Reserved</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-2xl font-bold text-purple-700">
                 {totalSpots}
               </div>
-              <div className="text-xs text-purple-600">Tổng cộng</div>
+              <div className="text-xs text-purple-600">Total</div>
             </div>
           </div>
         </CardContent>
@@ -652,13 +649,13 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Người trong lượt ({occupiedSpots})
+            People in Queue ({occupiedSpots})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {peopleInQueue.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
-              Chưa có ai trong lượt này
+              No one in this queue yet
             </p>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -688,13 +685,13 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                         {person.customer.name}
                         {person.isYou && (
                           <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded">
-                            Bạn
+                            You
                           </span>
                         )}
                       </p>
                       <p className="text-xs text-gray-600">
                         {" "}
-                        • Vé {person.customer.ticketType}
+                        • Ticket {person.customer.ticketType}
                       </p>
                     </div>
                   </div>
