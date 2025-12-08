@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Clock, Calendar, Loader2, AlertCircle } from "lucide-react";
+import { Clock, Calendar, Loader2, AlertCircle, Mail } from "lucide-react";
 import {
   HauntedHouseWithDetailedQueues,
   QueueWithDetails,
@@ -218,6 +218,18 @@ export function QueueList({
         <SelectionDeadlineCountdown
           onExpiredChange={handleDeadlineExpiredChange}
         />
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="flex items-center gap-4 p-4 text-blue-900">
+            <Mail className="h-6 w-6 flex-shrink-0" />
+            <div>
+              <p className="font-semibold">Event Reminder</p>
+              <p className="text-sm">
+                We will be sending a mass email with your ticket and queue
+                position before the event starts. Please check your inbox!
+              </p>
+            </div>
+          </CardContent>
+        </Card>
         {houses.length === 0 && (
           <Card className="bg-white/90 backdrop-blur">
             <CardContent className="pt-6">

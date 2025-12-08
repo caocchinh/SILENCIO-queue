@@ -54,17 +54,34 @@ Managing hundreds of students clamoring for limited Haunted House slots is a log
 - **Real-time Status**: The interface polls for updates every 30 seconds, keeping students informed of their spot and estimated wait time.
 - **Capacity Management**: Automatically closes queues when they reach maximum capacity to prevent overbooking.
 
+<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+
 ### 🤝 Group Reservations
 
 - **"Create Room" Functionality**: A student can become a group leader, reserving a block of spots.
 - **Code Sharing**: Generates a unique 6-digit code for friends to join the reservation.
 - **Atomic Locking**: Ensures that if a group fits in the remaining capacity, all members get in; otherwise, the reservation is handled safely.
 
-### 🛡️ Security & Access Control
+<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
-- **Google Authentication**: Secure login via school email accounts.
-- **Ticket Validation**: Restricts access based on `ticketType` (e.g., blocking unauthorized or basic tiers from premium queues).
-- **Session Management**: Secure session verification with `better-auth` and robust error handling for expired sessions.
+### 📧 Mass Event Confirmation
+
+A comprehensive pre-event communication system that sends personalized confirmation emails to all registered students before the event day.
+
+- **Personalized Confirmation Emails**: Each student receives a beautifully designed HTML email containing:
+  - Their ticket information (name, homeroom, student ID, ticket type)
+  - Visual ticket representation based on tier
+  - Haunted House queue details (house name, queue number, start/end times) if registered
+  - Step-by-step check-in instructions (both in-person and online options)
+  - Event rules and guidelines
+
+<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+
+- **Batch Processing**: Admin can trigger mass email sending from the dashboard with built-in rate limiting (2-second delays) to avoid email provider restrictions.
+- **Tracking & Retry**: The system tracks which students have received their confirmation email and includes a robust retry mechanism with exponential backoff for failed deliveries.
+- **Reminder System**: Separate reminder emails can be sent to students who haven't selected their haunted house queue yet, with individual or batch sending options.
+
+<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
 ## 🛠️ Tech Stack
 
