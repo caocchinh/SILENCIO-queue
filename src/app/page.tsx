@@ -112,7 +112,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
       <div className="bg-[url('/assets/bg-2.png')] bg-no-repeat bg-cover bg-top max-w-[90%] relative">
         <div className=" absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-[40%] flex items-center justify-center flex-col min-w-[330px] w-[90%]">
           <h1 className="text-[#FFD700] -mt-10 mb-2 login_title text-[42px] font-bold font-italianno text-center  ">
-            Cổng đăng nhập lấy số thứ tự
+            Login portal
           </h1>
           <GoogleSignInButton />
           {errorMessage && (
