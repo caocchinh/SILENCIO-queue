@@ -309,7 +309,7 @@ export function QueueList({
                                 -
                                 <span className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
-                                  {duration} phút
+                                  {duration} minutes
                                 </span>
                               </div>
                             </div>

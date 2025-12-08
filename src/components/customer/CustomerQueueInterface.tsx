@@ -114,9 +114,7 @@ export function CustomerQueueInterface({ customer, session }: Props) {
               >
                 Create room
                 {customer.reservationAttempts >= 2 && (
-                  <span className="text-xs text-red-400">
-                    (Đã đạt giới hạn)
-                  </span>
+                  <span className="text-xs text-red-400">(Limit reached)</span>
                 )}
               </TabsTrigger>
               <TabsTrigger
