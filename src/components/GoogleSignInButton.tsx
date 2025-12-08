@@ -54,7 +54,7 @@ export function GoogleSignInButton() {
             </g>
           </svg>
 
-          <span>Đăng nhập bằng Google</span>
+          <span>Sign in with Google</span>
         </>
       </Button>
       {error && <span className="text-red-500">{error}</span>}
