@@ -57,14 +57,14 @@ export function LogoutButton() {
               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
             />
           </svg>
-          Đăng xuất
+          Logout
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xác nhận đăng xuất</AlertDialogTitle>
+          <AlertDialogTitle>Confirm signout</AlertDialogTitle>
           <AlertDialogDescription>
-            Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?
+            Are you sure you want to sign out?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -87,7 +87,7 @@ export function LogoutButton() {
                 <Loader2 className="animate-spin" />
               </>
             ) : (
-              "Đăng xuất"
+              "Signout"
             )}
           </Button>
         </AlertDialogFooter>

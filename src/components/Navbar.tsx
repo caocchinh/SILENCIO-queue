@@ -50,7 +50,7 @@ const Navbar = ({
         </div>
         <div>
           <CardTitle className="text-sm">
-            {student!.name} - {student?.homeroom} - Vé {student?.ticketType}
+            {student!.name} - {student?.homeroom} - {student?.ticketType}
           </CardTitle>
           <CardDescription className="text-[10px]">
             {session.user.email}
@@ -65,7 +65,7 @@ const Navbar = ({
           variant="outline"
         >
           <RefreshCw className={cn("mr-2 h-4", loading && "animate-spin")} />
-          Làm mới
+          Refresh
         </Button>
         <LogoutButton />
       </div>

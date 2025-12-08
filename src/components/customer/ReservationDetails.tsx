@@ -257,21 +257,21 @@ export function ReservationDetails({
                     </div>
                   ) : (
                     <div className="flex justify-center gap-3">
-                      {formatTime(timeLeft.days, "ngày")}
+                      {formatTime(timeLeft.days, "days")}
                       {timeLeft.days > 0 && (
                         <div className="text-purple-400 text-lg">:</div>
                       )}
-                      {formatTime(timeLeft.hours, "giờ")}
+                      {formatTime(timeLeft.hours, "hours")}
                       {(timeLeft.days > 0 || timeLeft.hours > 0) && (
                         <div className="text-purple-400 text-lg">:</div>
                       )}
-                      {formatTime(timeLeft.minutes, "phút")}
+                      {formatTime(timeLeft.minutes, "minutes")}
                       {(timeLeft.days > 0 ||
                         timeLeft.hours > 0 ||
                         timeLeft.minutes > 0) && (
                         <div className="text-purple-400 text-lg">:</div>
                       )}
-                      {formatTime(timeLeft.seconds, "giây")}
+                      {formatTime(timeLeft.seconds, "seconds")}
                     </div>
                   )}
                 </>
@@ -282,7 +282,7 @@ export function ReservationDetails({
 
         {/* Expiration Info */}
         <div className="text-xs text-gray-500 text-center">
-          Hết hạn vào: {new Date(reservation.expiresAt).toLocaleString("vi-VN")}
+          Expires at: {new Date(reservation.expiresAt).toLocaleString("vi-VN")}
         </div>
       </CardContent>
     </Card>

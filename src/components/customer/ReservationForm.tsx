@@ -72,11 +72,11 @@ export function ReservationForm({
         const reservationCode = (data.data as { code?: string })?.code || "N/A";
         toast.success(
           <div className="flex flex-col gap-2">
-            <p className="font-bold">Tạo phòng thành công!</p>
+            <p className="font-bold">Create room successfully!</p>
             <p className="text-2xl font-mono bg-white px-3 py-2 rounded text-black">
               {reservationCode}
             </p>
-            <p className="text-xs">Chia sẻ mã này với các thành viên nhóm</p>
+            <p className="text-xs">Share this code with your group members</p>
           </div>,
           {
             duration: 15000,
@@ -137,23 +137,23 @@ export function ReservationForm({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Tạo phòng/giữ slot
+            Create room/reserve spot
           </CardTitle>
           <CardDescription>
-            Giữ slot cho bạn và bạn bè. Bạn sẽ nhận được mã để họ có thể tham
-            gia. Mỗi người thêm 5 phút vào thời gian hết hạn.
+            Reserve a spot for you and your friends. You will receive a code for
+            them to join. Each person adds 5 minutes to the expiration time.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <SelectionDeadlineCountdown
               onExpiredChange={handleDeadlineExpiredChange}
-              title="Thời gian còn lại để tạo phòng"
+              title="Time left to create room"
             />
             {/* Haunted House Selection */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Chọn nhà ma
+                Choose haunted house
               </label>
               <select
                 value={selectedHouse}
@@ -164,7 +164,7 @@ export function ReservationForm({
                 className="w-full px-4 py-2 border rounded-md bg-white"
                 disabled={reservationAttempts >= 2 || isDeadlineExpired}
               >
-                <option value="">Chọn nhà ma...</option>
+                <option value="">Choose haunted house...</option>
                 {houses.map((house) => (
                   <option key={house.name} value={house.name}>
                     {house.name}
@@ -176,7 +176,7 @@ export function ReservationForm({
             {/* Number of People */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Số người (bao gồm bạn)
+                Amount of people (including you)
               </label>
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-muted-foreground" />
@@ -244,7 +244,7 @@ export function ReservationForm({
 
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  Hết hạn sau {safeNumberOfSpots * 5} phút
+                  Expires after {safeNumberOfSpots * 5} minutes
                 </span>
               </div>
             </div>
@@ -281,7 +281,7 @@ export function ReservationForm({
                           Lượt {queue.queueNumber} -{" "}
                           {formatTime(queue.queueStartTime)} -{" "}
                           {formatTime(queue.queueEndTime)} (
-                          {queue.stats.availableSpots} chỗ trống)
+                          {queue.stats.availableSpots} available slots)
                         </option>
                       );
                     })}
@@ -302,13 +302,15 @@ export function ReservationForm({
             {selectedQueue && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm">
                 <p className="font-semibold text-green-900 mb-1">
-                  Chi tiết lượt:
+                  Queue details:
                 </p>
                 <ul className="text-green-800 space-y-1 text-xs">
-                  <li>• Chỗ trống: {selectedQueue.stats.availableSpots}</li>
-                  <li>• Chỗ trống cho nhóm bạn: {safeNumberOfSpots}</li>
                   <li>
-                    • Chỗ trống còn lại sau khi đặt chỗ:{" "}
+                    • Available spots: {selectedQueue.stats.availableSpots}
+                  </li>
+                  <li>• Available spots for your group: {safeNumberOfSpots}</li>
+                  <li>
+                    • Available spots left after reservation:{" "}
                     {Math.max(
                       0,
                       selectedQueue.stats.availableSpots - safeNumberOfSpots
@@ -336,37 +338,37 @@ export function ReservationForm({
                 {reservationAttempts >= 2 ? (
                   <>
                     <AlertTriangle className="h-4 w-4" />
-                    Đã đạt giới hạn đặt chỗ
+                    Limit reached
                   </>
                 ) : (
                   <>
                     <Info className="h-4 w-4" />
-                    Thông tin quan trọng
+                    Important information
                   </>
                 )}
               </p>
               {reservationAttempts >= 2 ? (
                 <p className="text-red-800">
-                  Bạn đã sử dụng tất cả 2 lần tạo phòng. Bạn vẫn có thể tham gia
-                  lượt trực tiếp hoặc tham gia phòng đã tạo với mã.
+                  You have used all 2 times to create a room. You can still join
+                  the queue directly or join the room created with the code.
                 </p>
               ) : (
                 <ul className="list-disc list-inside space-y-1 text-blue-800">
                   <li>
                     <strong>
-                      Lần giữ chỗ còn lại: {2 - reservationAttempts} / 2
+                      Times left to create a room: {2 - reservationAttempts} / 2
                     </strong>
                   </li>
                   <li>
-                    Nếu không phải tất cả {safeNumberOfSpots} người tham gia
-                    trước khi hết thời gian {safeNumberOfSpots * 5} phút, TẤT CẢ
-                    chỗ trống (bao gồm chỗ của bạn) sẽ được giải phóng cho người
-                    khác.
+                    If not all {safeNumberOfSpots} people join before the end of
+                    time {safeNumberOfSpots * 5} minutes, ALL empty spots
+                    (including your spot) will be released for others. khác.
                   </li>
                   <li>
-                    Chia sẻ mã đặt chỗ với các thành viên nhóm ngay lập tức
+                    Share the reservation code with your group members
+                    immediately
                   </li>
-                  <li>Mỗi thành viên cần có vé hợp lệ để tham gia</li>
+                  <li>Each member must have a valid ticket to join</li>
                 </ul>
               )}
             </div>
@@ -383,14 +385,14 @@ export function ReservationForm({
               size="lg"
             >
               {createReservationMutation.isPending
-                ? "Đang tạo phòng..."
+                ? "Creating room..."
                 : isDeadlineExpired
-                ? "Hạn chót đã qua"
+                ? "Deadline has reached"
                 : reservationAttempts >= 2
-                ? "Đã đạt giới hạn đặt chỗ"
+                ? "You have reached the limit of creating rooms"
                 : cannotCreateReservation
-                ? "Vui lòng điền đủ số người tham gia và chọn lượt"
-                : `Tạo phòng cho ${safeNumberOfSpots} người`}
+                ? "Please fill in the number of participants and select a queue"
+                : `Create room for ${safeNumberOfSpots} people`}
             </Button>
           </div>
         </CardContent>
@@ -399,7 +401,7 @@ export function ReservationForm({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">
-              Đang tham gia phòng
+              Join room
             </AlertDialogTitle>
           </AlertDialogHeader>
           <Loader />

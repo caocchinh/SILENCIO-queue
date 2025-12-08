@@ -72,21 +72,24 @@ export function JoinReservation({ customerData }: Props) {
       {" "}
       <Card className="bg-white/90 backdrop-blur">
         <CardHeader>
-          <CardTitle>Tham gia phòng</CardTitle>
+          <CardTitle>Join room</CardTitle>
           <CardDescription>
-            Có mã phòng từ bạn bè? Nhập mã vào đây để tham gia nhóm của họ
+            Do you have a room code from your friends? Enter the code here to
+            join their group
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Mã phòng</label>
+              <label className="block text-sm font-medium mb-2">
+                Room code
+              </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Nhập mã (ví dụ: ABC123)"
+                    placeholder="Enter code (e.g: ABC123)"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     className="w-full pl-10 pr-4 py-2 border rounded-md uppercase"
@@ -102,11 +105,11 @@ export function JoinReservation({ customerData }: Props) {
                 >
                   {joinReservationMutation.isPending ? (
                     <>
-                      Đang tham gia...
+                      Joining...
                       <Loader2 className="animate-spin" />
                     </>
                   ) : (
-                    "Tham gia"
+                    "Join"
                   )}
                 </Button>
               </div>
@@ -118,7 +121,7 @@ export function JoinReservation({ customerData }: Props) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">
-              Đang tham gia phòng
+              Joining room
             </AlertDialogTitle>
           </AlertDialogHeader>
           <Loader />

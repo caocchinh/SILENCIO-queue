@@ -112,10 +112,10 @@ export function SelectionDeadlineCountdown({
           <div className="flex items-center gap-3 text-red-700">
             <AlertCircle className="h-5 w-5" />
             <div>
-              <div className="font-semibold">Hạn chót đã qua!</div>
+              <div className="font-semibold">Deadline has reached!</div>
               <div className="text-sm text-red-600">
                 {description ||
-                  "Bạn không thể chọn nữa, và bạn sẽ phải đi theo số thứ tự ngẫu nhiên"}
+                  "You are unable to select anymore, and you will be assigned to a random queue"}
               </div>
             </div>
           </div>
@@ -135,30 +135,30 @@ export function SelectionDeadlineCountdown({
           />
           <div className={`${isExpired ? "text-red-700" : "text-purple-700"}`}>
             <div className="font-semibold">
-              {title || "Thời gian còn lại để chọn nhà ma"}
+              {title || "Time left to select haunted house"}
             </div>
             <div className="text-sm text-purple-600">
-              Hạn chót: {SELECTION_DEADLINE.toLocaleString("vi-VN")}
+              Deadline: {SELECTION_DEADLINE.toLocaleString("vi-VN")}
             </div>
           </div>
         </div>
 
         <div className="flex justify-center gap-4">
-          {formatTime(timeLeft.days, "ngày")}
+          {formatTime(timeLeft.days, "days")}
           {timeLeft.days > 0 && (
             <div className="text-purple-400 text-xl">:</div>
           )}
-          {formatTime(timeLeft.hours, "giờ")}
+          {formatTime(timeLeft.hours, "hours")}
           {(timeLeft.days > 0 || timeLeft.hours > 0) && (
             <div className="text-purple-400 text-xl">:</div>
           )}
-          {formatTime(timeLeft.minutes, "phút")}
+          {formatTime(timeLeft.minutes, "minutes")}
           {(timeLeft.days > 0 ||
             timeLeft.hours > 0 ||
             timeLeft.minutes > 0) && (
             <div className="text-purple-400 text-xl">:</div>
           )}
-          {formatTime(timeLeft.seconds, "giây")}
+          {formatTime(timeLeft.seconds, "seconds")}
         </div>
       </CardContent>
     </Card>

@@ -106,13 +106,13 @@ export function CustomerQueueInterface({ customer, session }: Props) {
                 value="join"
                 className="data-[state=active]:bg-white data-[state=active]:text-black text-white cursor-pointer"
               >
-                Chọn lượt
+                Join queue
               </TabsTrigger>
               <TabsTrigger
                 value="reserve"
                 className="data-[state=active]:bg-white data-[state=active]:text-black text-white cursor-pointer"
               >
-                Tạo phòng
+                Create room
                 {customer.reservationAttempts >= 2 && (
                   <span className="text-xs text-red-400">
                     (Đã đạt giới hạn)
@@ -123,7 +123,7 @@ export function CustomerQueueInterface({ customer, session }: Props) {
                 value="code"
                 className="data-[state=active]:bg-white data-[state=active]:text-black text-white cursor-pointer"
               >
-                Tham gia với mã
+                Join with code
               </TabsTrigger>
             </TabsList>
 

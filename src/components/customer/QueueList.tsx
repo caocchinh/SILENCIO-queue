@@ -222,7 +222,7 @@ export function QueueList({
           <Card className="bg-white/90 backdrop-blur">
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">
-                Không có nhà ma nào có sẵn. Vui lòng kiểm tra lại sau!
+                No available haunted house. Please check again later!
               </p>
             </CardContent>
           </Card>
@@ -254,7 +254,7 @@ export function QueueList({
 
               <div className="relative z-10">
                 <CardTitle className="text-3xl font-bold flex items-center gap-3 text-purple-900 mb-2">
-                  Nhà ma {currentHauntedHouse.name}
+                  Haunted house {currentHauntedHouse.name}
                 </CardTitle>
                 <CardDescription className="text-lg text-purple-700/80 font-medium">
                   {currentHauntedHouse.queues &&
@@ -263,8 +263,8 @@ export function QueueList({
                         currentHauntedHouse.queues.filter(
                           (queue) => queue.stats.availableSpots > 0
                         ).length
-                      } lượt còn slot`
-                    : "Không có lượt nào có còn slot"}
+                      } available queue left`
+                    : "No slot available"}
                 </CardDescription>
               </div>
 
@@ -298,7 +298,7 @@ export function QueueList({
                           <div className="flex items-center justify-between sm:flex-row flex-col gap-4">
                             <div>
                               <h3 className="text-lg font-bold text-purple-900">
-                                Lượt {queue.queueNumber}
+                                Queue {queue.queueNumber}
                               </h3>
                               <div className="flex items-center gap-4 mt-1 text-sm text-purple-700 flex-wrap">
                                 <span className="flex items-center gap-1">
@@ -340,12 +340,12 @@ export function QueueList({
                                 )}
                               >
                                 {joinQueueMutation.isPending
-                                  ? "Đang tham gia..."
+                                  ? "Joining room..."
                                   : !hasAvailableSpots
-                                  ? "Lượt đầy"
+                                  ? "Room is full"
                                   : isDeadlineExpired
-                                  ? "Hạn chót đã qua"
-                                  : "Tham gia lượt"}
+                                  ? "Deadline has reached"
+                                  : "Join room"}
                               </Button>
                             </div>
                           </div>
@@ -359,7 +359,7 @@ export function QueueList({
                                 {queue.stats.availableSpots}
                               </div>
                               <div className="text-xs text-green-600">
-                                Có sẵn
+                                Available
                               </div>
                             </div>
                             <div className="text-center p-3 bg-blue-50 rounded-lg">
@@ -367,7 +367,7 @@ export function QueueList({
                                 {queue.stats.occupiedSpots}
                               </div>
                               <div className="text-xs text-blue-600">
-                                Đã có người
+                                Occupied
                               </div>
                             </div>
                             <div className="text-center p-3 bg-orange-50 rounded-lg">
@@ -375,7 +375,7 @@ export function QueueList({
                                 {queue.stats.reservedSpots}
                               </div>
                               <div className="text-xs text-orange-600">
-                                Đang giữ slot
+                                Reserved
                               </div>
                             </div>
                             <div className="text-center p-3 bg-purple-50 rounded-lg">
@@ -383,7 +383,7 @@ export function QueueList({
                                 {queue.stats.totalSpots}
                               </div>
                               <div className="text-xs text-purple-600">
-                                Tổng
+                                Total
                               </div>
                             </div>
                           </div>
@@ -391,7 +391,7 @@ export function QueueList({
                           {/* Visual Spot Representation */}
                           <div className="mb-4">
                             <div className="text-xs font-semibold text-gray-600 mb-2">
-                              Phân bổ slot:
+                              Slot distributiion:
                             </div>
                             <div className="flex flex-wrap gap-1">
                               {queue.spots
@@ -447,16 +447,16 @@ export function QueueList({
                                 <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                                 <div className="text-orange-800">
                                   <span className="font-semibold">
-                                    {queue.stats.activeReservations} phòng đang
-                                    giữ chỗ
+                                    {queue.stats.activeReservations} queue is
+                                    reserved
                                     {queue.stats.activeReservations !== 1
                                       ? "s"
                                       : ""}
                                   </span>
                                   <p className="text-xs mt-1">
-                                    Một số slot đã được giữ tạm thời. Bạn có thể
-                                    tham gia với mã phòng chỗ hoặc chờ phòng của
-                                    người khác hết hạn.
+                                    Some slots are reserved temporarily. You can
+                                    join with the queue code or wait for the
+                                    other person&apos;s queue to expire.
                                   </p>
                                 </div>
                               </div>
@@ -476,17 +476,15 @@ export function QueueList({
                           <div className="flex items-center gap-4 mt-3 text-xs flex-wrap">
                             <div className="flex items-center gap-1 min-w-[100px]">
                               <div className="w-4 h-4 bg-green-500 rounded"></div>
-                              <span className="text-gray-600">Có sẵn</span>
+                              <span className="text-gray-600">Available</span>
                             </div>
                             <div className="flex items-center gap-1 min-w-[100px]">
                               <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                              <span className="text-gray-600">Đã có người</span>
+                              <span className="text-gray-600">Occupied</span>
                             </div>
                             <div className="flex items-center gap-1 min-w-[100px]">
                               <div className="w-4 h-4 bg-orange-400 rounded"></div>
-                              <span className="text-gray-600">
-                                Đang được giữ slot
-                              </span>
+                              <span className="text-gray-600">Reserved</span>
                             </div>
                           </div>
                         </div>
@@ -496,7 +494,7 @@ export function QueueList({
                 </div>
               ) : (
                 <p className="text-muted-foreground text-center py-4">
-                  Không có lượt nào có sẵn cho nhà ma này
+                  No available queue
                 </p>
               )}
             </CardContent>
@@ -509,14 +507,14 @@ export function QueueList({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận tham gia lượt</AlertDialogTitle>
+            <AlertDialogTitle>Confirm join queue</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn tham gia{" "}
-              <strong>lượt {dialogDisplayQueue?.queueNumber}</strong> của nhà ma{" "}
-              <strong>{dialogDisplayQueue?.hauntedHouseName}</strong> không?
+              Are you sure you want to join{" "}
+              <strong>queue {dialogDisplayQueue?.queueNumber}</strong> of{" "}
+              <strong>{dialogDisplayQueue?.hauntedHouseName}</strong>?
               <br />
               <br />
-              Lượt này kéo dài{" "}
+              This queue runs for{" "}
               {dialogDisplayQueue?.queueStartTime &&
               dialogDisplayQueue?.queueEndTime
                 ? calculateDurationInMinutes(
@@ -524,13 +522,13 @@ export function QueueList({
                     dialogDisplayQueue.queueEndTime
                   )
                 : null}{" "}
-              phút, diễn ra từ{" "}
+              minutes, running from{" "}
               <strong className="text-red-500">
                 {" "}
                 {dialogDisplayQueue?.queueStartTime
                   ? formatTime(dialogDisplayQueue.queueStartTime)
                   : null}{" "}
-                đến{" "}
+                to{" "}
                 {dialogDisplayQueue?.queueEndTime
                   ? formatTime(dialogDisplayQueue.queueEndTime)
                   : null}
@@ -538,11 +536,13 @@ export function QueueList({
               </strong>
               <br />
               <br />
-              Hãy đảm bảo rằng bạn đã sẵn sàng và sẽ có mặt đúng giờ.
+              Make sure you are ready and will be there on time.
+              <br />
+              <br />
               {!isDeadlineExpired &&
-                " Bạn vẫn có thể đổi lượt và nhà ma trước khi countdown kết thúc."}
+                " You can still change your queue and Haunted House before the countdown ends."}
               {isDeadlineExpired &&
-                " Hạn chót đã qua nên bạn không thể thay đổi lựa chọn nữa."}
+                " Deadline is reached, you are unable to change your decision."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -550,7 +550,7 @@ export function QueueList({
               className="cursor-pointer"
               disabled={joinQueueMutation.isPending}
             >
-              Hủy
+              Cancel
             </AlertDialogCancel>
             <Button
               disabled={joinQueueMutation.isPending || isDeadlineExpired}
@@ -567,13 +567,13 @@ export function QueueList({
             >
               {!joinQueueMutation.isPending ? (
                 isDeadlineExpired ? (
-                  "Hạn chót đã qua"
+                  "Deadline is reached"
                 ) : (
-                  "Xác nhận tham gia"
+                  "Confirm join"
                 )
               ) : (
                 <>
-                  Đang tham gia...
+                  Joining...
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 </>
               )}
