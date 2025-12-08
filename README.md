@@ -53,8 +53,9 @@ Managing hundreds of students clamoring for limited Haunted House slots is a log
 - **Instant Join**: Students can view available Haunted Houses and join the queue with a single tap.
 - **Real-time Status**: The interface polls for updates every 30 seconds, keeping students informed of their spot and estimated wait time.
 - **Capacity Management**: Automatically closes queues when they reach maximum capacity to prevent overbooking.
-
-<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+  <img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/login.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+  <img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/overal.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+  <img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/overal2.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
 ### 🤝 Group Reservations
 
@@ -62,7 +63,10 @@ Managing hundreds of students clamoring for limited Haunted House slots is a log
 - **Code Sharing**: Generates a unique 6-digit code for friends to join the reservation.
 - **Atomic Locking**: Ensures that if a group fits in the remaining capacity, all members get in; otherwise, the reservation is handled safely.
 
-<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/create.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/room.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/room2.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/join.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
 ### 📧 Mass Event Confirmation
 
@@ -75,13 +79,13 @@ A comprehensive pre-event communication system that sends personalized confirmat
   - Step-by-step check-in instructions (both in-person and online options)
   - Event rules and guidelines
 
-<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/email1.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
 - **Batch Processing**: Admin can trigger mass email sending from the dashboard with built-in rate limiting (2-second delays) to avoid email provider restrictions.
 - **Tracking & Retry**: The system tracks which students have received their confirmation email and includes a robust retry mechanism with exponential backoff for failed deliveries.
 - **Reminder System**: Separate reminder emails can be sent to students who haven't selected their haunted house queue yet, with individual or batch sending options.
 
-<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/proof.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/SILENCIO-checkin/blob/master/public/assets/github/email2.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
 ## 🛠️ Tech Stack
 
