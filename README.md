@@ -79,13 +79,13 @@ A comprehensive pre-event communication system that sends personalized confirmat
   - Step-by-step check-in instructions (both in-person and online options)
   - Event rules and guidelines
 
-<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/email1.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/email2.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
 - **Batch Processing**: Admin can trigger mass email sending from the dashboard with built-in rate limiting (2-second delays) to avoid email provider restrictions.
 - **Tracking & Retry**: The system tracks which students have received their confirmation email and includes a robust retry mechanism with exponential backoff for failed deliveries.
 - **Reminder System**: Separate reminder emails can be sent to students who haven't selected their haunted house queue yet, with individual or batch sending options.
 
-<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/email2.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
+<img src="https://github.com/caocchinh/silencio-queue/blob/master/public/assets/github/email1.webp?raw=true" alt="400 students lined up and this system worked flawlessly" style="border-radius: 10px; margin-bottom: 10px; margin-top: 10px; width: 100%;" />
 
 ## 🛠️ Tech Stack
 
