@@ -77,7 +77,7 @@ export function QueueList({
     onSuccess: (data) => {
       if (data.success) {
         successToast({
-          message: "Thành công tham gia lượt!",
+          message: "Successfully joined queue!",
         });
 
         // Update the cache immediately by modifying existing data

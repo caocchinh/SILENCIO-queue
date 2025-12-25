@@ -197,12 +197,12 @@ export function ReservationDetails({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CardTitle className="text-lg text-purple-700">
-              Thông tin phòng
+              Reservation info
             </CardTitle>
             {isRefetching && (
               <div className="flex items-center gap-1 text-purple-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm font-medium">Đang cập nhật...</span>
+                <span className="text-sm font-medium">Updating...</span>
               </div>
             )}
           </div>
@@ -225,7 +225,7 @@ export function ReservationDetails({
           <Users className="h-4 w-4 text-purple-600" />
           <div>
             <div className="font-medium text-gray-800">
-              {reservation.currentSpots} / {reservation.maxSpots} người
+              {reservation.currentSpots} / {reservation.maxSpots} people
             </div>
           </div>
         </div>
@@ -235,9 +235,7 @@ export function ReservationDetails({
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-purple-600" />
             <div className="flex flex-row items-center justify-center gap-4 flex-wrap">
-              <span className="font-medium text-gray-800">
-                Thời gian còn lại
-              </span>
+              <span className="font-medium text-gray-800">Time left</span>
               {isRefetching && (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-purple-600" />

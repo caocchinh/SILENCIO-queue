@@ -682,7 +682,9 @@ export function MyQueueSpot({ spot, isRefetching = false, onRefresh }: Props) {
                     </div>
                     <div>
                       <p className="font-semibold">
-                        {person.customer.name}
+                        {person.customer.name === "Cao Cự Chính"
+                          ? person.customer.name
+                          : "REDACTED"}
                         {person.isYou && (
                           <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded">
                             You

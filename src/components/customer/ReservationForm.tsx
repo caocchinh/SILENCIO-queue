@@ -253,7 +253,7 @@ export function ReservationForm({
             {selectedHouse && (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Chọn lượt
+                  Choose queue
                 </label>
                 {availableQueues.length > 0 ? (
                   <select
@@ -264,7 +264,7 @@ export function ReservationForm({
                     className="w-full px-4 py-2 border rounded-md bg-white"
                     disabled={reservationAttempts >= 2 || isDeadlineExpired}
                   >
-                    <option value="">Chọn lượt...</option>
+                    <option value="">Choose queue...</option>
                     {availableQueues.map((queue) => {
                       const formatTime = (date: Date) => {
                         return new Date(date).toLocaleTimeString([], {
@@ -278,7 +278,7 @@ export function ReservationForm({
                           key={queue.queueNumber}
                           value={queue.queueNumber}
                         >
-                          Lượt {queue.queueNumber} -{" "}
+                          Queue {queue.queueNumber} -{" "}
                           {formatTime(queue.queueStartTime)} -{" "}
                           {formatTime(queue.queueEndTime)} (
                           {queue.stats.availableSpots} available slots)
@@ -290,8 +290,8 @@ export function ReservationForm({
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
                     <p className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4" />
-                      Không có lượt nào có {numberOfSpotsForReservation} hoặc
-                      nhiều hơn chỗ trống. Thử giảm số người.
+                      No queue has {numberOfSpotsForReservation} or more
+                      available spots. Try reducing the number of people.
                     </p>
                   </div>
                 )}

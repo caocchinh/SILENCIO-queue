@@ -63,7 +63,7 @@ export const successToast = ({
       zIndex: 9999,
     },
     action: {
-      label: "Đóng",
+      label: "Close",
       onClick: () => toast.dismiss(toastId),
     },
   });
@@ -107,7 +107,7 @@ export const errorToast = ({
       zIndex: 9999,
     },
     action: {
-      label: "Đóng",
+      label: "Close",
       onClick: () => toast.dismiss(toastId),
     },
   });
