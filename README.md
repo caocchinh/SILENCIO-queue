@@ -46,6 +46,14 @@ Managing hundreds of students clamoring for limited Haunted House slots is a log
 - **The "Ticket Validity" Check**: Ensuring only students with the correct ticket tier can access premium attractions.
   - _Solution_: **Integrated Ticket Verification** checks the user's ticket type against the database upon login, automatically filtering eligibility.
 
+## 🎥 Demo
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=gJ93Lmose4M" target="_blank">
+    <img src="https://img.youtube.com/vi/gJ93Lmose4M/maxresdefault.jpg" alt="Watch the Demo Video" width="100%" style="border-radius: 10px;" />
+  </a>
+</div>
+
 ## ✨ Features
 
 ### 🕒 Smart Virtual Queue
